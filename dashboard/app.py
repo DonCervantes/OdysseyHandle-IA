@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from data import improvement, load_run
+from demo import accepted_at, seconds_per_generation, select_runs, visible_curve
 from autoguard.rsi.lineage import ConfigRepo
 
 st.set_page_config(page_title='AUTOGUARD · Laboratorio RSI', page_icon='◈', layout='wide')
@@ -26,12 +27,14 @@ else:
     main_root = ROOT
 source = st.sidebar.text_input('Directorio de corridas', os.getenv('AUTOGUARD_RUNS_DIR') or str(main_root / 'var/runs'))
 runs_root = Path(source).expanduser()
-runs = sorted((p for p in runs_root.glob('*') if p.is_dir() and (p / 'curve.csv').exists()),
-              key=lambda p: p.stat().st_mtime, reverse=True)
+fallback = st.sidebar.text_input('Corrida de respaldo (plan B)', str(main_root / 'data/demo_run'))
+runs, using_fallback = select_runs(runs_root, Path(fallback).expanduser())
 if not runs:
-    st.info('Todavía no hay corridas con curve.csv en este directorio.')
+    st.info('Sin corridas nuevas ni de respaldo. Selecciona una carpeta con curve.csv o genera una corrida mock.')
     st.code('LLM_PROVIDER=mock .venv/bin/python -m autoguard.rsi.loop --seed 42')
     st.stop()
+if using_fallback:
+    st.sidebar.info('Plan B: mostrando una corrida pregrabada de respaldo.')
 run = st.sidebar.selectbox('Corrida', runs, format_func=lambda p: p.name)
 if st.sidebar.button('Recargar artefactos'):
     st.rerun()
@@ -47,40 +50,65 @@ max_gen = max(int(data['curve'].generation.max()),
               max((p.get('generation', 0) for p in data['patches']), default=0))
 st.sidebar.markdown('### Demo por generación')
 demo = st.sidebar.toggle('Activar reproducción', value=False)
-autoplay = st.sidebar.toggle('Avanzar automáticamente', value=False, disabled=not demo)
-key = f'frame-{run.name}'
-if key not in st.session_state:
+key = f'frame-{run.resolve()}'
+playing_key = f'playing-{run.resolve()}'
+timer_key = f'timer-{run.resolve()}'
+st.session_state.setdefault(key, 0)
+st.session_state.setdefault(playing_key, False)
+if not demo:
+    st.session_state[playing_key] = False
+speed = st.sidebar.select_slider('Velocidad', options=[0.5, 1.0, 2.0, 4.0], value=1.0,
+                                 format_func=lambda value: f'{value:g}×', disabled=not demo)
+interval = seconds_per_generation(max_gen, speed)
+
+
+def play():
+    if st.session_state[key] >= max_gen:
+        st.session_state[key] = 0
+    st.session_state[playing_key] = True
+    st.session_state[timer_key] = time.monotonic()
+
+
+def pause():
+    st.session_state[playing_key] = False
+
+
+def restart():
+    pause()
     st.session_state[key] = 0
+
+
+play_col, pause_col, restart_col = st.sidebar.columns(3)
+play_col.button('▶ Play', on_click=play, disabled=not demo or max_gen == 0)
+pause_col.button('Ⅱ Pausa', on_click=pause, disabled=not demo)
+restart_col.button('↺ Inicio', on_click=restart, disabled=not demo)
 if demo and max_gen:
-    control_key = f'slider-{run.name}'
+    control_key = f'slider-{run.resolve()}'
     st.session_state[control_key] = st.session_state[key]
     def select_generation():
+        pause()
         st.session_state[key] = st.session_state[control_key]
-    generation = st.sidebar.slider('Generación', 0, max_gen, key=control_key, on_change=select_generation)
-else:
-    generation = max_gen
+    st.sidebar.slider('Generación', 0, max_gen, key=control_key, on_change=select_generation)
+    st.sidebar.progress(st.session_state[key] / max_gen)
+    st.sidebar.caption(f"{'Reproduciendo' if st.session_state[playing_key] else 'En pausa'} · "
+                       f'{interval:.1f} s por generación · 1× ≈ 40 s por corrida')
 st.sidebar.caption('Las métricas de la vista se calculan con los lotes visibles. Gate 2 corresponde a la corrida completa.')
 
 
-@st.fragment(run_every='2s' if demo and autoplay else None)
+@st.fragment(run_every=interval if demo and st.session_state[playing_key] else None)
 def content():
-    if demo and autoplay:
+    if demo and st.session_state[playing_key]:
         now = time.monotonic()
-        timer = f'timer-{run.name}'
-        previous = st.session_state.get(timer, now)
-        st.session_state.setdefault(timer, now)
-        if now - previous >= 2 and st.session_state[key] < max_gen:
-            st.session_state[timer] = now
-            st.session_state[key] += 1
+        if now - st.session_state.get(timer_key, now) >= interval:
+            st.session_state[timer_key] = now
+            st.session_state[key] = min(max_gen, st.session_state[key] + 1)
+            if st.session_state[key] >= max_gen:
+                pause()
             st.rerun()
     gen = st.session_state[key] if demo else max_gen
     curve = data['curve']
     if demo:
-        # La variante estática siempre tiene generación 0: recortar todas por el mismo N.
-        k = int(summary.get('k', 1))
-        batch_size = int(summary.get('batch_size', 1))
-        cutoff = (gen + 1) * k * batch_size
-        curve = curve[curve.polizas <= cutoff]
+        curve = visible_curve(curve, gen, summary)
     if curve.empty:
         st.info('Sin lotes visibles en esta generación.')
         return
@@ -107,13 +135,18 @@ def content():
         panel.plotly_chart(fig, use_container_width=True)
     st.caption('Pérdida asimétrica y regret medidos sobre todas las cotizaciones; aprendizaje solo con ventas de train.')
     patches = [p for p in data['patches'] if p.get('generation', 0) <= gen]
+    newly_accepted = accepted_at(patches, gen) if demo else []
+    for patch in newly_accepted:
+        st.success(f"✓ Parche aceptado · {patch.get('variant', '')} · G{gen} · "
+                   f"{patch.get('patch_id', '')} · {patch.get('tipo', '')}")
+        st.caption(patch.get('diff') or patch.get('hipotesis', ''))
     tabs = st.tabs(['Parches', 'Linaje y reversión', 'Bandido', 'Resumen y datos'])
     with tabs[0]:
         if not patches:
             st.info('Sin parches en este corte.')
         for p in patches:
             title = f"{p.get('variant', '')} · G{p.get('generation', '?')} · {p.get('tipo', '')} · {p.get('veredicto', 'pendiente')}"
-            with st.expander(title):
+            with st.expander(title, expanded=p in newly_accepted):
                 st.write(p.get('hipotesis', ''))
                 before, after = st.columns(2)
                 before.json(p.get('metrics_before', {}))
@@ -123,8 +156,11 @@ def content():
                 st.json(p.get('cambios', []))
     with tabs[1]:
         versions = data['versions']
+        if 'revert_notice' in st.session_state:
+            st.success(st.session_state.pop('revert_notice'))
         if demo:
             st.caption('Historial completo de la corrida; la reversión está deshabilitada durante la demo.')
+        st.caption('Historial registrado al cerrar la corrida (artefacto original).')
         st.dataframe(pd.DataFrame(versions), hide_index=True, use_container_width=True)
         variant = st.selectbox('Repositorio de la variante', ['rsi', 'parametros', 'estatico'])
         repo_path = run / 'configs' / variant
@@ -133,10 +169,13 @@ def content():
             try:
                 history = repo.history()
                 st.caption(f'Campeón actual del repositorio: {history[0].git_sha[:10]}')
+                st.dataframe([version.model_dump(mode='json') for version in history],
+                             hide_index=True, use_container_width=True)
                 sha = st.selectbox('Restaurar versión', [v.git_sha for v in history], format_func=lambda s: s[:10])
                 if st.button('Revertir configuración de esta variante', disabled=demo, type='primary'):
                     new_sha = repo.revert_to(sha, 'Reversión manual desde tablero SIMULADO')
-                    st.success(f'Nueva versión: {new_sha[:10]}. El historial Git se conserva.')
+                    st.session_state['revert_notice'] = f'Nueva versión: {new_sha[:10]}. El historial Git se conserva.'
+                    st.rerun()
                 st.caption('La reversión crea un commit en esta corrida. Las curvas registradas conservan el resultado del experimento original.')
             except Exception as exc:
                 st.error(f'No se pudo leer o revertir el linaje: {exc}')
