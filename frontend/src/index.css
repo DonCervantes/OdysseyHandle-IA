@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Sistema de diseño AutoGuard AI. Tokens como tripletes RGB: usar rgb(var(--x)) en CSS o clases Tailwind (bg-x, text-x/50).
+   Claro y cálido (papel crema, tinta casi negra, acento taupe→arena en degradado), inspirado en la
+   referencia visual de la persona. Tema único claro a propósito. Usar SIEMPRE estos tokens. */
+:root {
+  --paper: 252 251 248;      /* fondo de página */
+  --cream: 246 242 234;      /* superficies cálidas (paneles de la maqueta, chips) */
+  --panel: 255 255 255;      /* tarjetas */
+  --line: 233 227 215;       /* bordes */
+  --ink: 28 26 23;        /* texto principal / botones primarios */
+  --muted: 111 103 89;      /* texto secundario */
+  --faint: 120 111 96;      /* etiquetas tenues */
+  --taupe: 140 122 95;      /* acento oscuro del degradado */
+  --sand: 203 185 156;       /* acento claro del degradado */
+  --ok: 47 125 82;         /* estado bueno / aceptado */
+  --warn: 140 100 22;       /* en proceso / media */
+  --alta: 179 65 47;       /* severidad alta / rechazado */
+  --info: 88 106 116;       /* severidad info */
+  color-scheme: light;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
+  font-family: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3 { text-wrap: balance; }
+::selection { background: #eadfcb; }
+
+@layer components {
+  /* palabra destacada del titular, en degradado taupe→arena */
+  .text-gradient {
+    background: linear-gradient(100deg, rgb(var(--taupe)) 0%, rgb(var(--sand)) 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .wrap {
+    @apply mx-auto w-full max-w-page;
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-[15px] font-semibold transition
+      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-taupe
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary { @apply btn bg-ink text-paper hover:bg-black; }
+  .btn-ghost { @apply btn border border-line bg-panel text-ink hover:border-sand; }
+  .btn-sm { @apply px-3.5 py-2 text-sm rounded-lg; }
+  .card { @apply rounded-xl2 border border-line bg-panel; }
+  .card-cream { @apply rounded-xl2 border border-line bg-cream; }
+  .eyebrow { @apply font-mono text-[11px] uppercase tracking-[0.14em] text-faint; }
+  .chip { @apply inline-flex items-center gap-2 rounded-full border border-line bg-cream px-3 py-1 text-[13px] text-muted; }
+  .num { @apply font-mono tabular-nums; }
+  .input {
+    @apply w-full rounded-lg border border-line bg-panel px-3 py-2 text-[15px] text-ink outline-none transition
+      placeholder:text-faint focus:border-taupe focus:ring-2 focus:ring-sand/40;
+  }
+  .label { @apply mb-1.5 block text-sm font-medium text-muted; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
