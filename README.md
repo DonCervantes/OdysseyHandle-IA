@@ -32,7 +32,7 @@ flowchart LR
     L -->|nuevo campeón| C
     API[API FastAPI] --- C
     API --- RSI
-    UI[Frontend Lovable<br/>valuador · cliente · actuario] --> API
+    UI[Frontend React local<br/>valuador · cliente · actuario] --> API
     TAB[Tablero Streamlit<br/>curvas RSI · bitácora · reversión] --- L
 ```
 
@@ -48,7 +48,7 @@ flowchart LR
 | Simulador | `autoguard/sim/market.py` | Mercado con función de riesgo oculta; produce ventas y costos reales. |
 | API | `autoguard/api/` | FastAPI: expedientes, cotización, outcomes, disparo del RSI, aprobación de parches, versiones y reversión. |
 | Tablero RSI | `dashboard/` | Streamlit: curvas de las 3 variantes, regret acumulado (área sombreada), bitácora de parches, bandido, linaje y reversión; modo demo de 40 s. |
-| Frontend | Lovable (repo aparte) | Expediente, cotización y aprobación de parches. Prompt en [`docs/lovable_prompt.md`](docs/lovable_prompt.md). |
+| Frontend | `frontend/` (React + Vite, local) | Expediente, dictamen, laboratorio RSI, bitácora con aprobar/rechazar y versiones. `scripts/demo.sh --start` lo levanta en `:5173` si existe; sin él, la demo usa el tablero y Swagger (`/docs`). |
 
 **Principios:** el LLM propone y el código certifica (comparar VIN, calcular primas, medir errores y
 evaluar parches es código determinístico); todo agente es configuración YAML versionada en Git (un parche
@@ -89,7 +89,7 @@ shell gana sobre `.env`. Variables relevantes (todas documentadas en [`.env.exam
 | `LLM_CACHE` | `0` | `1` guarda respuestas reales en disco (demos reproducibles con llave). |
 | `DATABASE_URL` | `sqlite:///var/autoguard.db` | SQLite local; Postgres/Supabase opcional (`db/migrations/001_init.sql`). |
 | `AUTOGUARD_API_KEY` | vacía | Si está definida, la API exige `X-API-Key`. Vacía ⇒ sin auth (solo local). |
-| `AUTOGUARD_CORS_ORIGINS` | `*` | Orígenes permitidos (p. ej. el dominio de Lovable). |
+| `AUTOGUARD_CORS_ORIGINS` | `*` | Orígenes permitidos (p. ej. `http://localhost:5173`, el frontend local). |
 | `AUTOGUARD_RUNS_DIR` | `var/runs` | Corridas del RSI que leen la API y el tablero. |
 | `TAVILY_API_KEY` / `FIRECRAWL_API_KEY` | vacías | Comparables web; vacías ⇒ caché/fallback. `VALUACION_OFFLINE=1` nunca sale a la red. |
 
@@ -103,8 +103,9 @@ Todos los comandos desde la raíz del repo, con el venv activado (o anteponiendo
 
 ```bash
 bash scripts/demo.sh            # prepara la corrida seed 42 (mock) e imprime cómo levantar todo
-bash scripts/demo.sh --start    # además levanta API (:8000) y tablero (:8501) en segundo plano
+bash scripts/demo.sh --start    # además levanta API (:8000), tablero (:8501) y frontend (:5173, si existe) en segundo plano
 bash scripts/demo.sh --stop     # detiene lo que levantó --start
+bash scripts/demo.sh --start --llm-real   # usa .env (OPENAI_API_KEY y LLM_PROVIDER=auto) en vez de forzar mock
 ```
 
 Detalle y guion segundo a segundo en [`docs/demo.md`](docs/demo.md).
@@ -242,7 +243,7 @@ reportamos tal cual en lugar de ajustar la meta o el evaluador (que están conge
   local). La API no guarda los archivos subidos.
 - **Persistencia opcional.** Las curvas del experimento viven en disco (`var/runs/`); la BD solo guarda
   parches y versiones si hay `DATABASE_URL`.
-- **Frontend en repo aparte.** El frontend de Lovable no vive en este repositorio.
+- **Todo local.** No hay despliegue: API, tablero y frontend corren en la máquina de la demo.
 
 ---
 
@@ -255,7 +256,8 @@ dashboard/        tablero RSI (Streamlit)
 tools/progreso/   tablero de progreso del equipo
 data/             muestras SIMULADAS (docs, fotos), caché de comparables, costos de reparación
 db/migrations/    esquema SQL (8 tablas)
-docs/             demo, auditoría, evaluación LLM, prompt de Lovable
+frontend/         frontend React + Vite (local)
+docs/             demo, auditoría, evaluación LLM (lovable_prompt.md es histórico: Lovable no se usa)
 scripts/          demo.sh, eval_llm.py, tasks.sh (coordinación)
 tests/            suite pytest (modo mock, sin red)
 ```

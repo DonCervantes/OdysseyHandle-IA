@@ -33,10 +33,10 @@ Comprobación rápida antes de subir al escenario: `bash scripts/demo.sh` imprim
 
 ## Preparación (10 min antes)
 
-1. `bash scripts/demo.sh --start` → corrida seed 42 lista, API en `:8000`, tablero en `:8501`.
+1. `bash scripts/demo.sh --start` → corrida seed 42 lista, API en `:8000`, tablero en `:8501` y frontend en `:5173`.
 2. Navegador con **dos pestañas** ya abiertas y con zoom al 125 %:
-   - Pestaña A: frontend de Lovable (o, si no está desplegado, Swagger `http://localhost:8000/docs` en
-     `POST /expedientes`) con los archivos `data/samples/docs/EXP-002-{FAC,TC,POL}.png` y
+   - Pestaña A: frontend local `http://localhost:5173` (pantalla de nuevo expediente; si el frontend no
+     arrancó, Swagger `http://localhost:8000/docs` en `POST /expedientes`) con los archivos `data/samples/docs/EXP-002-{FAC,TC,POL}.png` y
      `data/samples/fotos/FOTO-002.png` a mano (EXP-002 es el que trae la alerta más clara: `VIN_NO_COINCIDE`, severidad alta, y dos daños).
    - Pestaña B: tablero `http://localhost:8501`, corrida **demo-seed42** seleccionada, *Activar
      reproducción* encendido, velocidad **2×** (20 generaciones en ~20 s) y en generación 0 (↺ Inicio).
