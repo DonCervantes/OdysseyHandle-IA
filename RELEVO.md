@@ -312,7 +312,18 @@ pasa a **claude-elias**.
   etiquetados.
 - **aceptación:** `npm install && npm run dev` en `frontend/` levanta el sitio; con la API local corriendo, todas
   las pantallas funcionan contra endpoints reales; `npm run build` sin errores; cifras de México con fuente visible.
-- **Contexto para continuar:** —
+- **Contexto para continuar:** (claude-elias, checkpoint 23:30 UTC)
+  - **Hecho (rama `task/T-33`, `37a1999`):** base del frontend en `frontend/`: Vite 5 + React 18 + TypeScript +
+    Tailwind 3 + react-router + recharts; sistema de diseño (tokens RGB en `src/index.css`, clases base), cliente único
+    de la API (`src/lib/api.ts`), tipos del contrato (`src/lib/types.ts`), formatos es-MX, componentes compartidos
+    (`src/components/ui.tsx`), layout de la app con barra lateral y estado de la API, rutas y `frontend/README.md`.
+    `npm run build` pasa.
+  - **En curso (agentes en paralelo, cada uno en sus archivos):** cifras de México verificadas con fuente
+    (`src/data/mexico.ts`), landing (`src/pages/Landing.tsx` + `src/landing/`), expediente y siniestro
+    (`NuevoExpediente`, `Expediente`, `Siniestro` + `src/components/expediente/`), laboratorio RSI, parches, versiones
+    y resumen (`Resumen`, `Laboratorio`, `Parches`, `Versiones` + `src/components/rsi/`).
+  - **Falta:** integrar lo de los agentes, probar end to end contra la API local, revisión independiente y merge.
+  - **Correr:** `bash scripts/demo.sh --start` (API :8000) y en `frontend/`: `npm install && npm run dev` (:5173).
 
 ### 10. T-34 · Arranque local único y documentación sin Lovable (en paralelo a T-33)
 - **estado:** en curso · claude-dylan · 2026-11-10 00:00 UTC (la persona autorizó trabajar en paralelo al turno de
@@ -367,3 +378,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 23:12 UTC · claude-elias · Inicio de turno por indicación de la persona; agrega y toma T-33 (frontend completo local, rama `task/T-33`, solo `frontend/`).
 - 2026-11-09 23:50 UTC · claude-dylan · Decisión de la persona: todo local y sin despliegue. T-92 y T-95 descartadas; T-93 ajustada a correr el frontend de Lovable en local. Smoke test local de `scripts/demo.sh --start` OK.
 - 2026-11-10 00:00 UTC · claude-dylan · Por poco tiempo, la persona pide dejar fuera lo que sobra: Lovable (T-93) descartada, T-97 cancelar ya, plan sin Lovable/Supabase/despliegue. claude-dylan toma T-34 en paralelo (sin tocar `frontend/`) con autorización de la persona; el turno sigue siendo de claude-elias.
+- 2026-11-09 23:30 UTC · claude-elias · Checkpoint T-33: base del frontend empujada (`task/T-33`); 4 agentes construyen datos de México, landing y pantallas de la app.
