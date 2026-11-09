@@ -32,6 +32,8 @@ from autoguard.sim.market import MarketSimulator
 CONV_WINDOW = 3  # lotes de la media móvil
 CONV_TOL = 0.10  # convergida = pérdida media móvil ≤ (1 + CONV_TOL) × la del oráculo, de ahí al final
 TABU_GENS = 2  # generaciones sin re-proponer un objetivo rechazado
+ROUNDS_MAX = int(os.getenv('X1_ROUNDS', '2'))
+_X1 = os.getenv('X1_VARIANT', '')
 
 
 def _append(path, records):
@@ -108,13 +110,49 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
         return s
 
     def improve(s):
-        arms = ['ajuste_factor'] * 3 if s['variant'] == 'parametros' else s['meta'].choose_arms(3)
+        subs = None
+        if s['variant'] == 'parametros':
+            arms = ['ajuste_factor'] * 3
+        elif 'A' in _X1:
+            arms, subs = s['meta'].plan_arms(3)
+        else:
+            arms = s['meta'].choose_arms(3)
         evitar = {t for t, until in s['tabu'].items() if until >= s['generation']}
         s['patches'] = propose(s['cfg'], s['hypotheses'], arms, s['generation'],
-                               lecciones=s['meta'].lecciones, train=s['train'], evitar=evitar)
+                               lecciones=s['meta'].lecciones, train=s['train'], evitar=evitar,
+                               sustitutos=subs)
+        s['_arms'], s['_subs'] = arms, subs
         return s
 
     def evaluator(s):
+        s = _evaluate_round(s)
+        if 'B' in _X1:
+            all_patches = list(s['patches'])
+            all_accepted = list(s['accepted'])
+            for r in range(2, ROUNDS_MAX + 1):
+                if not s['accepted']:
+                    break
+                # Nueva ronda sobre el campeón ya actualizado, mismas filas train/holdout.
+                s['train'] = s['train'].assign(prima=quote_df(s['train'], s['cfg']))
+                s['train']['loss'] = loss(s['train']['prima'], s['train']['costo_real'])
+                s['train']['error_rel'] = (s['train']['prima'] - s['train']['costo_real']) / s['train']['costo_real']
+                s['hypotheses'] = analyze(s['train'], top_k=12)
+                evitar = {t for t, until in s['tabu'].items() if until >= s['generation']}
+                evitar |= {patch_target(p) for p in all_patches if patch_target(p)}
+                arms = s['_arms'] if s['variant'] == 'parametros' else (
+                    s['meta'].plan_arms(3)[0] if 'A' in _X1 else s['meta'].choose_arms(3))
+                s['patches'] = propose(s['cfg'], s['hypotheses'], arms, s['generation'],
+                                       lecciones=s['meta'].lecciones, train=s['train'], evitar=evitar,
+                                       sustitutos=s['_subs'])
+                for p in s['patches']:
+                    p.patch_id += f'-r{r}'
+                s = _evaluate_round(s)
+                all_patches += s['patches']
+                all_accepted += s['accepted']
+            s['patches'], s['accepted'] = all_patches, all_accepted
+        return s
+
+    def _evaluate_round(s):
         # 1) Todos los parches de la generación contra el MISMO campeón: veredictos y ganancias
         #    comparables (y recompensas justas para el bandido).
         champion = s['cfg']

@@ -569,7 +569,8 @@ def _candidates(arm, cfg, hyps, used_hyps, used_targets, train, prima, costo, ba
     return [t[1:] for t in out]
 
 
-def _propose_data(cfg, hypotheses, arms, generation, lecciones, max_patches, train, evitar) -> list[Patch]:
+def _propose_data(cfg, hypotheses, arms, generation, lecciones, max_patches, train, evitar,
+                  sustitutos=None) -> list[Patch]:
     train = train.reset_index(drop=True)
     costo = train["costo_real"].to_numpy(dtype=float)
     prima = quote_df(train, cfg)  # prima del campeón vigente (no la histórica)
@@ -582,6 +583,15 @@ def _propose_data(cfg, hypotheses, arms, generation, lecciones, max_patches, tra
     used_targets: set[str] = set(evitar)
     patches: list[Patch] = []
 
+    agotados: set[str] = set()  # brazos que ya no encontraron cambio válido en esta generación
+
+    def _slot_arms(arm):
+        # El brazo elegido primero; si se agota, los sustitutos (sin repetir agotados).
+        yield arm
+        for s in sustitutos or []:
+            if s != arm and s in NIVEL and s != "cambio_prompt":
+                yield s
+
     for j, arm in enumerate(arms[:max_patches]):
         patch_id = f"g{generation}-{j}-{arm}"
         if arm not in NIVEL:
@@ -589,34 +599,53 @@ def _propose_data(cfg, hypotheses, arms, generation, lecciones, max_patches, tra
                                  hipotesis="", cambios=[], veredicto="invalido",
                                  razon=f"brazo desconocido: {arm}"))
             continue
+        if sustitutos is not None and arm != "cambio_prompt":
+            for k_try, cand_arm in enumerate(_slot_arms(arm)):
+                if cand_arm in agotados:
+                    continue
+                pid = patch_id if k_try == 0 else f"g{generation}-{j}s{k_try}-{cand_arm}"
+                patch = _data_slot(cand_arm, pid, cfg, hyps, used_hyps, used_targets, train, prima, costo,
+                                   base, generation, j, existing_ids, l_before, lecciones, use_llm)
+                patches.append(patch)
+                if patch.veredicto == "invalido":
+                    agotados.add(cand_arm)
+                    continue
+                break
+            continue
         if arm == "cambio_prompt":
             h = hyps[0] if hyps else None
             heur = _heur_cambio_prompt(cfg, h, lecciones)
             prop = _llm_proposal(arm, cfg, h, lecciones, "ctl", heur) if use_llm else heur
             patches.append(_make_patch(cfg, patch_id, generation, arm, h, prop or heur))
             continue
-        chosen = None
-        for target, i, h, prop, text, seg in _candidates(arm, cfg, hyps, used_hyps, used_targets, train,
-                                                         prima, costo, base, generation, j, existing_ids):
-            if use_llm:
-                rid = _rule_id(generation, j, h, existing_ids)
-                prop = _llm_proposal(arm, cfg, h, lecciones, rid, prop) or prop
-            robust = _robustify(cfg, prop, train, costo, l_before, seg)
-            if robust is not None:
-                chosen = (target, i, h, robust, text, seg)
-                break
-        if chosen is None:
-            patches.append(Patch(patch_id=patch_id, generation=generation, tipo=arm, nivel=NIVEL[arm],
-                                 hipotesis=_texto_hipotesis(hyps[0] if hyps else None), cambios=[],
-                                 veredicto="invalido",
-                                 razon=f"sin cambio para {arm} que mejore train sin empeorar segmentos"))
-            continue
-        target, i, h, prop, text, seg = chosen
-        used_targets.add(target)
-        if i >= 0:
-            used_hyps.add(i)
-        patches.append(_make_patch(cfg, patch_id, generation, arm, h, prop, hipotesis=text, segmento=seg))
+        patches.append(_data_slot(arm, patch_id, cfg, hyps, used_hyps, used_targets, train, prima, costo,
+                                  base, generation, j, existing_ids, l_before, lecciones, use_llm))
     return patches
+
+
+def _data_slot(arm, patch_id, cfg, hyps, used_hyps, used_targets, train, prima, costo, base, generation, j,
+               existing_ids, l_before, lecciones, use_llm) -> Patch:
+    """Un slot del modo con datos: el mejor candidato robusto del brazo, o un parche inválido."""
+    chosen = None
+    for target, i, h, prop, text, seg in _candidates(arm, cfg, hyps, used_hyps, used_targets, train,
+                                                     prima, costo, base, generation, j, existing_ids):
+        if use_llm:
+            rid = _rule_id(generation, j, h, existing_ids)
+            prop = _llm_proposal(arm, cfg, h, lecciones, rid, prop) or prop
+        robust = _robustify(cfg, prop, train, costo, l_before, seg)
+        if robust is not None:
+            chosen = (target, i, h, robust, text, seg)
+            break
+    if chosen is None:
+        return Patch(patch_id=patch_id, generation=generation, tipo=arm, nivel=NIVEL[arm],
+                     hipotesis=_texto_hipotesis(hyps[0] if hyps else None), cambios=[],
+                     veredicto="invalido",
+                     razon=f"sin cambio para {arm} que mejore train sin empeorar segmentos")
+    target, i, h, prop, text, seg = chosen
+    used_targets.add(target)
+    if i >= 0:
+        used_hyps.add(i)
+    return _make_patch(cfg, patch_id, generation, arm, h, prop, hipotesis=text, segmento=seg)
 
 
 # ---------------------------------------------------------------- LLM
@@ -702,15 +731,19 @@ def propose(
     max_patches: int = 3,
     train: Optional[pd.DataFrame] = None,
     evitar: Optional[set[str]] = None,
+    sustitutos: Optional[list[str]] = None,
 ) -> list[Patch]:
     """Genera hasta max_patches parches, uno por brazo en `arms` (elegidos por el meta-mejorador).
     LLM con fallback heurístico determinístico.
 
     Sin `train`: la heurística corrige el sesgo medio del segmento (comportamiento original de T-08).
     Con `train` (filas train con VEHICLE_COLUMNS + costo_real): modo con datos (ver docstring del módulo);
-    `evitar` = objetivos (`patch_target`) rechazados hace poco, que no se re-proponen."""
+    `evitar` = objetivos (`patch_target`) rechazados hace poco, que no se re-proponen.
+    `sustitutos` (solo modo con datos) = brazos, en orden de preferencia, que ocupan el slot de un brazo
+    que no encuentra cambio válido (el intento fallido queda como parche inválido para el bandido)."""
     if train is not None and len(train) > 0 and "costo_real" in train.columns:
-        return _propose_data(cfg, hypotheses, arms, generation, lecciones, max_patches, train, evitar or set())
+        return _propose_data(cfg, hypotheses, arms, generation, lecciones, max_patches, train, evitar or set(),
+                             sustitutos)
     hyps = sorted(hypotheses, key=lambda h: -h.impacto)
     existing_ids = {r.id for r in cfg.reglas}
     used: dict[str, set[int]] = {}
