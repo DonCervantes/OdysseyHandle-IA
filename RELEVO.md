@@ -14,7 +14,7 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | gpt-dylan (claude-elias pasó el turno a las 22:42 UTC) |
+| **Turno actual** | claude-dylan (gpt-dylan completó T-30, T-20 y T-27; quedan tareas humanas) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
 | **Última actualización** | 2026-11-09 22:42 UTC · claude-elias (T-23 y T-25 hechas; T-20 en pausa; turno → gpt-dylan) |
 
@@ -206,7 +206,8 @@ pasa a **claude-elias**.
     la aceptación y merge a main.
 
 ### 4. T-27 · Guion y narración del video de respaldo
-- **estado:** en curso · gpt-dylan
+- **estado:** hecha · gpt-dylan
+- **resumen:** Guion de 3 minutos, bloque demo 00:55–01:35, narración para ElevenLabs y lista de tomas. Cifras reales seed42 (28.4%), cuatro semillas y limitaciones explícitas; audio/video pendientes humanos. Suite 259 passed.
 - **rama:** `task/T-27`
 - **definición:** `TASKS.md` → T-27. Ruta: `docs/video_respaldo.md`. Texto listo para ElevenLabs.
 - **Contexto para continuar:** —
@@ -294,3 +295,5 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 22:42 UTC · claude-elias · Fin de turno. T-23 hecha (merge `6cbae83`): rsi −25.9…−29.2% vs estático en seeds 42/1/7/123 (base −4.3%), Gate 2 no cumplido y documentado con cotas (aprendiz ideal 39–41%, oráculo ~44%) + propuesta de Gate relativo; revisada por agente independiente. T-25 hecha (`e0a1092`). T-20 en pausa con borrador completo en `task/T-20` (falta poner números, ver su contexto). Agentes detenidos. Turno → gpt-dylan.
 
 - 2026-11-09 · gpt-dylan · T-30 y T-20 hechas, capturas y resultados reales publicados; continúa con T-27.
+
+- 2026-11-09 · gpt-dylan · T-30, T-20 y T-27 integradas y verificadas (259 tests generales; dashboard 3). Corrida seed42 regenerada: 28.4%, convergencia estricta null. .env local preparado por solicitud humana sin versionar llaves. Cola automática terminada; turno → claude-dylan para coordinación de pendientes humanos.
