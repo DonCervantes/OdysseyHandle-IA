@@ -1,0 +1,173 @@
+{
+  "nota": "Documentos SIMULADOS para la demo de KAVAK AUTOGUARD AI. No corresponden a personas ni autos reales.",
+  "fecha_referencia": "2026-11-09",
+  "documentos": {
+    "EXP-001-FAC": {
+      "tipo": "factura",
+      "vin": "3N1CN7AD3KL812345",
+      "placas": null,
+      "marca": "Nissan",
+      "modelo": "Versa",
+      "anio": 2019,
+      "vigencia": null,
+      "campos_extra": {
+        "folio": "SIM-F001",
+        "emisor": "Agencia SIMULADA SA de CV",
+        "valor_factura": 260000
+      },
+      "archivo": "EXP-001-FAC.png",
+      "expediente": "EXP-001"
+    },
+    "EXP-001-TC": {
+      "tipo": "tarjeta_circulacion",
+      "vin": "3N1CN7AD3KL812345",
+      "placas": "NXA-123-A",
+      "marca": "Nissan",
+      "modelo": "Versa",
+      "anio": 2019,
+      "vigencia": "2029-12-31",
+      "campos_extra": {
+        "propietario": "PERSONA SIMULADA"
+      },
+      "archivo": "EXP-001-TC.png",
+      "expediente": "EXP-001"
+    },
+    "EXP-001-POL": {
+      "tipo": "poliza_anterior",
+      "vin": "3N1CN7AD3KL812345",
+      "placas": "NXA-123-A",
+      "marca": "Nissan",
+      "modelo": "Versa",
+      "anio": 2019,
+      "vigencia": "2026-05-01",
+      "campos_extra": {
+        "aseguradora": "Aseguradora SIMULADA",
+        "numero_poliza": "SIM-P001"
+      },
+      "archivo": "EXP-001-POL.png",
+      "expediente": "EXP-001"
+    },
+    "EXP-002-FAC": {
+      "tipo": "factura",
+      "vin": "3VWRV1BU5HM034567",
+      "placas": null,
+      "marca": "Volkswagen",
+      "modelo": "Jetta",
+      "anio": 2017,
+      "vigencia": null,
+      "campos_extra": {
+        "folio": "SIM-F002",
+        "emisor": "Agencia SIMULADA SA de CV",
+        "valor_factura": 270000
+      },
+      "archivo": "EXP-002-FAC.png",
+      "expediente": "EXP-002"
+    },
+    "EXP-002-TC": {
+      "tipo": "tarjeta_circulacion",
+      "vin": "3VWRV1BUXHM098765",
+      "placas": "PBL-456-B",
+      "marca": "Volkswagen",
+      "modelo": "Jetta",
+      "anio": 2017,
+      "vigencia": "2028-06-30",
+      "campos_extra": {
+        "propietario": "PERSONA SIMULADA"
+      },
+      "archivo": "EXP-002-TC.png",
+      "expediente": "EXP-002"
+    },
+    "EXP-002-POL": {
+      "tipo": "poliza_anterior",
+      "vin": "3VWRV1BU5HM034567",
+      "placas": "PBL-456-B",
+      "marca": "Volkswagen",
+      "modelo": "Jetta",
+      "anio": 2017,
+      "vigencia": "2027-03-15",
+      "campos_extra": {
+        "aseguradora": "Aseguradora SIMULADA",
+        "numero_poliza": "SIM-P002"
+      },
+      "archivo": "EXP-002-POL.png",
+      "expediente": "EXP-002"
+    },
+    "EXP-003-FAC": {
+      "tipo": "factura",
+      "vin": "3G1TA5AF5FL156789",
+      "placas": null,
+      "marca": "Chevrolet",
+      "modelo": "Aveo",
+      "anio": 2015,
+      "vigencia": null,
+      "campos_extra": {
+        "folio": "SIM-F003",
+        "emisor": "Agencia SIMULADA SA de CV",
+        "valor_factura": 280000
+      },
+      "archivo": "EXP-003-FAC.png",
+      "expediente": "EXP-003"
+    },
+    "EXP-003-TC": {
+      "tipo": "tarjeta_circulacion",
+      "vin": "3G1TA5AF5FL156789",
+      "placas": "MEX-789-C",
+      "marca": "Chevrolet",
+      "modelo": "Aveo",
+      "anio": 2015,
+      "vigencia": "2023-06-30",
+      "campos_extra": {
+        "propietario": "PERSONA SIMULADA"
+      },
+      "archivo": "EXP-003-TC.png",
+      "expediente": "EXP-003"
+    },
+    "EXP-003-POL": {
+      "tipo": "poliza_anterior",
+      "vin": "3G1TA5AF5FL156789",
+      "placas": "MEX-789-C",
+      "marca": "Chevrolet",
+      "modelo": "Aveo",
+      "anio": 2015,
+      "vigencia": "2027-03-15",
+      "campos_extra": {
+        "aseguradora": "Aseguradora SIMULADA",
+        "numero_poliza": "SIM-P003"
+      },
+      "archivo": "EXP-003-POL.png",
+      "expediente": "EXP-003"
+    }
+  },
+  "expedientes": {
+    "EXP-001": {
+      "documentos": [
+        "EXP-001-FAC",
+        "EXP-001-TC",
+        "EXP-001-POL"
+      ],
+      "alertas_esperadas": [
+        "DOCUMENTO_VENCIDO:poliza_anterior"
+      ]
+    },
+    "EXP-002": {
+      "documentos": [
+        "EXP-002-FAC",
+        "EXP-002-TC",
+        "EXP-002-POL"
+      ],
+      "alertas_esperadas": [
+        "VIN_NO_COINCIDE"
+      ]
+    },
+    "EXP-003": {
+      "documentos": [
+        "EXP-003-FAC",
+        "EXP-003-TC",
+        "EXP-003-POL"
+      ],
+      "alertas_esperadas": [
+        "DOCUMENTO_VENCIDO:tarjeta_circulacion"
+      ]
+    }
+  }
+}

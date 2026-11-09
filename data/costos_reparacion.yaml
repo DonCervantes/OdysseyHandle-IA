@@ -1,0 +1,26 @@
+# Tabla de costos de reacondicionamiento (MXN, mano de obra + refacción + pintura). SIMULADA.
+# Valores ilustrativos para la demo de KAVAK AUTOGUARD AI; no son una cotización real.
+# Estructura: zonas.<zona>.<tipo> = costo MXN. `default` cubre zonas/tipos no listados.
+moneda: MXN
+nota: "SIMULADO"
+tipos: [rayon, abolladura, reparacion, reemplazo, estrellado]
+zonas:
+  defensa_delantera:   {rayon: 1800, abolladura: 2800, reparacion: 3500, reemplazo: 7500}
+  defensa_trasera:     {rayon: 1800, abolladura: 2800, reparacion: 3500, reemplazo: 7000}
+  cofre:               {rayon: 2200, abolladura: 3500, reparacion: 4500, reemplazo: 9500}
+  cajuela:             {rayon: 2000, abolladura: 3200, reparacion: 4200, reemplazo: 8500}
+  toldo:               {rayon: 2500, abolladura: 4500, reparacion: 6000, reemplazo: 14000}
+  puerta_delantera_izq: {rayon: 1900, abolladura: 3000, reparacion: 4000, reemplazo: 9000}
+  puerta_delantera_der: {rayon: 1900, abolladura: 3000, reparacion: 4000, reemplazo: 9000}
+  puerta_trasera_izq:  {rayon: 1900, abolladura: 3000, reparacion: 4000, reemplazo: 8800}
+  puerta_trasera_der:  {rayon: 1900, abolladura: 3000, reparacion: 4000, reemplazo: 8800}
+  salpicadera_izq:     {rayon: 1700, abolladura: 2700, reparacion: 3600, reemplazo: 6500}
+  salpicadera_der:     {rayon: 1700, abolladura: 2700, reparacion: 3600, reemplazo: 6500}
+  parabrisas:          {rayon: 900, estrellado: 3200, reemplazo: 6500}
+  faro_izq:            {rayon: 600, estrellado: 2500, reparacion: 1500, reemplazo: 4800}
+  faro_der:            {rayon: 600, estrellado: 2500, reparacion: 1500, reemplazo: 4800}
+  calavera_izq:        {rayon: 500, estrellado: 1800, reparacion: 1200, reemplazo: 3500}
+  calavera_der:        {rayon: 500, estrellado: 1800, reparacion: 1200, reemplazo: 3500}
+  espejo_izq:          {rayon: 500, estrellado: 900, reparacion: 1100, reemplazo: 2800}
+  espejo_der:          {rayon: 500, estrellado: 900, reparacion: 1100, reemplazo: 2800}
+  default:             {rayon: 1500, abolladura: 2500, reparacion: 3500, reemplazo: 7000, estrellado: 2000}
