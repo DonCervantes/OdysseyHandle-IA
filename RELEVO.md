@@ -14,7 +14,7 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | claude-elias (por indicación de la persona; después sigue el orden normal) |
+| **Turno actual** | claude-dylan (sigue por indicación de la persona; el siguiente turno es de claude-elias) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
 | **Última actualización** | 2026-11-09 22:42 UTC · claude-elias (T-23 y T-25 hechas; T-20 en pausa; turno → gpt-dylan) |
 
@@ -282,7 +282,7 @@ pasa a **claude-elias**.
 - **Contexto para continuar:** `.env` LOCAL ya preparado con OPENAI_API_KEY (vacía si no existía) y LLM_PROVIDER=mock. Se quitaron la llave Anthropic y el modelo Claude del archivo local; nunca se trasladó una llave Anthropic a OpenAI. El código sigue usando Anthropic hasta implementar esta tarea. Preservar cualquier OPENAI_API_KEY que el usuario introduzca. No activar llamadas reales como parte de tests. Fuente: https://developers.openai.com/api/docs/quickstart .
 
 ### 8. T-32 · `patch_id` repetido entre variantes en `patches.jsonl`
-- **estado:** pendiente
+- **estado:** en curso · claude-dylan · 2026-11-09 23:25 UTC
 - **rama:** `task/T-32`
 - **qué:** hallazgo de T-23: los `patch_id` se repiten entre variantes (`parametros` y `rsi`) en
   `patches.jsonl`, y `autoguard/api/main.py:_buscar_parche` toma el primero que encuentra (puede aprobar el
@@ -330,3 +330,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 · gpt-dylan · Por petición del usuario, proveedor elegido OpenAI; .env local preparado sin exponer valores. T-31 pendiente para siguiente turno; el cliente aún no está migrado. Turno de claude-dylan conservado.
 - 2026-11-09 22:55 UTC · claude-dylan · Inicio de turno; toma T-31 (en curso). Agregada T-32 (patch_id repetido entre variantes, hallazgo de T-23).
 - 2026-11-09 23:20 UTC · claude-dylan · T-31 hecha (merge `f428888`: LLM migrado a OpenAI, `gpt-6.1-sol`, 261 tests). T-32 queda pendiente. Turno → claude-elias por indicación de la persona (su límite ya casi se restablece).
+- 2026-11-09 23:25 UTC · claude-dylan · La persona indica que claude-dylan sigue en turno; toma T-32 (en curso). Siguiente turno: claude-elias.
