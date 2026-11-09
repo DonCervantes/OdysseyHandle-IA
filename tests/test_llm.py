@@ -88,6 +88,23 @@ def test_mock_provider_ignores_injected_client(monkeypatch):
     assert fake.calls == []
 
 
+def test_retained_client_not_used_after_key_removed(monkeypatch):
+    """Regresión: con un cliente retenido y sin llave, NO se llama al cliente (modo mock)."""
+    fake = _inject(monkeypatch, _msg(GOOD), _msg(GOOD))
+    assert llm.complete_json("s", "u", fallback=_fallback) != FB  # con llave: usa el cliente
+    monkeypatch.delenv("ANTHROPIC_API_KEY")
+    assert llm.is_mock()
+    assert llm.complete_json("s", "u", fallback=_fallback) == FB
+    assert len(fake.calls) == 1
+
+
+def test_injected_client_without_key_is_mock(monkeypatch):
+    fake = FakeClient(_msg(GOOD))
+    llm.set_client(fake)
+    assert llm.complete_json("s", "u", fallback=_fallback) == FB
+    assert fake.calls == []
+
+
 # ---------------------------------------------------------------- cliente falso
 def test_success_with_schema_and_request_shape(monkeypatch):
     thinking = SimpleNamespace(type="thinking", thinking="")

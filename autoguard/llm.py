@@ -12,7 +12,8 @@ Variables de entorno:
 - `LLM_CACHE_DIR`: directorio de caché (default `var/llm_cache/`).
 
 Tests: `set_client(fake)` inyecta un cliente falso (cualquier objeto con `.beta.messages.create(**kw)`)
-y evita la red; `set_client(None)` lo quita.
+y evita la red; `set_client(None)` lo quita. El modo mock (sin llave o LLM_PROVIDER=mock) manda siempre:
+ni un cliente inyectado se usa sin ANTHROPIC_API_KEY.
 """
 from __future__ import annotations
 
@@ -266,9 +267,8 @@ def complete_json(
 ) -> dict[str, Any]:
     """Pide al LLM una respuesta JSON (validada contra `schema` si se da). En modo mock o ante
     error de red/parseo/validación (tras 1 reintento), devuelve `fallback()`."""
-    if os.getenv("LLM_PROVIDER", "auto") == "mock":
-        return fallback()
-    if _client is None and is_mock():
+    # Siempre se respeta el modo mock, aunque haya un cliente (real o inyectado) retenido.
+    if is_mock():
         return fallback()
 
     model = os.getenv("LLM_MODEL", DEFAULT_MODEL)
