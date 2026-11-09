@@ -17,8 +17,8 @@ EXP-002 + FOTO-002 muestran discrepancia de VIN y daños. Preparar la carga ante
 
 ### 0:00–0:25 · El problema
 
-**Toma:** expediente simulado, documentos y fotos; después prima con factores. Si Lovable no está
-operativo, usar Swagger /expedientes y recortar a los campos legibles, sin fingir que existe un frontend.
+**Toma:** expediente simulado, documentos y fotos; después prima con factores. Grabar en el frontend
+local (`http://localhost:5173`); si no está listo, usar Swagger /expedientes y recortar a los campos legibles, sin fingir que existe un frontend.
 
 **Voz:**
 Comprar un auto seminuevo implica revisar documentos, detectar daños y estimar su riesgo.
