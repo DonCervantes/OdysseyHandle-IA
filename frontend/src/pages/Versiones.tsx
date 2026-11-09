@@ -71,7 +71,7 @@ export default function Versiones() {
                       </dl>
                     </div>
                     {v.estado !== "campeon" && (
-                      <button type="button" className="btn-ghost btn-sm" onClick={() => setObjetivo(v)}>Revertir a esta versión</button>
+                      <button type="button" className="btn-ghost btn-sm" onClick={() => setObjetivo(v)} aria-label={`Revertir a la versión ${v.id}`}>Revertir a esta versión</button>
                     )}
                   </div>
                   {metricas.length > 0 ? (

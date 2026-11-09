@@ -1,6 +1,6 @@
 // Formulario para lanzar una corrida RSI y sondear su estado cada 3 s.
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { api } from "../../lib/api";
+import { api, ApiError } from "../../lib/api";
 import type { RsiJob } from "../../lib/types";
 import { Dot } from "../ui";
 
@@ -11,6 +11,11 @@ const guardarJob = (id: string | null) => {
 };
 
 type Campos = { seed: string; batches: string; batch_size: string; k: string };
+const POLL_MS = 3000;
+const MAX_FALLOS = 5;
+const es404 = (e: unknown) => e instanceof ApiError && e.status === 404;
+const msgDe = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
 const DEFAULTS: Campos = { seed: "42", batches: "60", batch_size: "200", k: "3" };
 const CAMPOS: { key: keyof Campos; label: string; min: number; max: number; hint: string }[] = [
   { key: "seed", label: "Semilla", min: 0, max: 2 ** 31 - 1, hint: "reproducible" },
@@ -26,36 +31,81 @@ export default function RunPanel({ onDone, onToast }: { onDone: () => void; onTo
   const [enviando, setEnviando] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ahora, setAhora] = useState(Date.now());
-  const timer = useRef<number | null>(null);
+  // evita avisar dos veces (toast/onDone) del final del mismo job
+  const avisados = useRef<Set<string>>(new Set());
 
   const corriendo = job?.estado === "corriendo";
-
-  // retoma un job lanzado antes de recargar/navegar
+  // sin API no tiene sentido abrir el formulario: se deshabilita el botón con una explicación
+  const [apiCaida, setApiCaida] = useState<string | null>(null);
   useEffect(() => {
-    const id = leerJob();
-    if (id) api.estadoRsi(id).then(setJob, () => guardarJob(null));
+    let cancelado = false;
+    api.health().then(
+      () => { if (!cancelado) setApiCaida(null); },
+      (e) => { if (!cancelado) { setApiCaida(msgDe(e)); setAbierto(false); } },
+    );
+    return () => { cancelado = true; };
   }, []);
 
+  // retoma un job lanzado antes de recargar/navegar; si ya terminó (o no existe) se borra la llave
+  useEffect(() => {
+    const id = leerJob();
+    if (!id) return;
+    let cancelado = false;
+    api.estadoRsi(id).then(
+      (st) => {
+        if (st.estado !== "corriendo") guardarJob(null);
+        if (!cancelado) setJob(st);
+      },
+      (e) => { if (es404(e)) guardarJob(null); },
+    );
+    return () => { cancelado = true; };
+  }, []);
+
+  // sondeo encadenado (setTimeout tras cada respuesta): sin solapes ni setState después de desmontar
   useEffect(() => {
     if (!job || job.estado !== "corriendo") return;
     const id = job.job_id;
-    timer.current = window.setInterval(async () => {
+    let cancelado = false;
+    let timer: number | undefined;
+    let fallos = 0;
+
+    const terminar = (st: RsiJob) => {
+      guardarJob(null);
+      if (avisados.current.has(st.job_id)) return;
+      avisados.current.add(st.job_id);
+      if (st.estado === "terminado") { onToast("Corrida terminada. Se cargó la nueva curva."); onDone(); }
+      else onToast(`La corrida terminó con error (código ${String(st.returncode ?? "?")}). Revisa el log: ${String(st.log ?? "")}`, "alta");
+    };
+
+    const tick = async () => {
+      if (cancelado) return;
       setAhora(Date.now());
       try {
         const st = await api.estadoRsi(id);
+        if (cancelado) return;
+        fallos = 0;
         setJob(st);
-        if (st.estado !== "corriendo") {
-          guardarJob(null);
-          if (st.estado === "terminado") { onToast("Corrida terminada. Se cargó la nueva curva."); onDone(); }
-          else onToast(`La corrida terminó con error (código ${String(st.returncode ?? "?")}). Revisa el log: ${String(st.log ?? "")}`, "alta");
-        }
+        if (st.estado !== "corriendo") { terminar(st); return; } // el efecto se re-ejecuta y no programa más
       } catch (e) {
-        guardarJob(null);
-        setJob(null);
-        onToast(e instanceof Error ? e.message : String(e), "alta");
+        if (cancelado) return;
+        if (es404(e)) {
+          // la API ya no conoce el job (p.ej. se reinició): se olvida
+          guardarJob(null);
+          setJob(null);
+          onToast(`La API ya no reconoce el job ${id}: ${msgDe(e)}`, "alta");
+          return;
+        }
+        fallos += 1;
+        if (fallos >= MAX_FALLOS) {
+          setJob(null);
+          onToast(`Se dejó de consultar el job ${id} tras ${MAX_FALLOS} fallos seguidos (${msgDe(e)}). Recarga la página para reintentar.`, "alta");
+          return;
+        }
       }
-    }, 3000);
-    return () => { if (timer.current) window.clearInterval(timer.current); };
+      timer = window.setTimeout(tick, POLL_MS);
+    };
+    timer = window.setTimeout(tick, POLL_MS);
+    return () => { cancelado = true; if (timer !== undefined) window.clearTimeout(timer); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job?.job_id, job?.estado]);
 
@@ -78,7 +128,22 @@ export default function RunPanel({ onDone, onToast }: { onDone: () => void; onTo
       guardarJob(st.job_id);
       setAbierto(false);
     } catch (e2) {
-      setErr(e2 instanceof Error ? e2.message : String(e2));
+      // 409 "ya hay una corrida RSI en curso: job-…": se adopta ese job en lugar de mostrar solo el error
+      const enCurso = e2 instanceof ApiError && e2.status === 409 ? /job-[0-9a-f]+/i.exec(e2.message)?.[0] : undefined;
+      if (enCurso) {
+        try {
+          const st = await api.estadoRsi(enCurso);
+          setJob(st);
+          setAhora(Date.now());
+          if (st.estado === "corriendo") guardarJob(st.job_id);
+          setAbierto(false);
+          onToast(`Ya había una corrida en curso (${st.job_id}); se sigue esa.`);
+        } catch (e3) {
+          setErr(`${msgDe(e2)} (no se pudo consultar ${enCurso}: ${msgDe(e3)})`);
+        }
+      } else {
+        setErr(msgDe(e2));
+      }
     } finally {
       setEnviando(false);
     }
@@ -98,12 +163,18 @@ export default function RunPanel({ onDone, onToast }: { onDone: () => void; onTo
           <span className="text-muted">Se consulta el estado cada 3 s; puedes seguir navegando.</span>
         </div>
       ) : (
-        <button type="button" className="btn-primary btn-sm" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto} aria-controls="rsi-form">
-          {abierto ? "Cerrar" : "Correr nueva corrida"}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" className="btn-primary btn-sm" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto} aria-controls="rsi-form"
+            disabled={!!apiCaida} aria-describedby={apiCaida ? "rsi-api-caida" : undefined}>
+            {abierto ? "Cerrar" : "Correr nueva corrida"}
+          </button>
+          {apiCaida && (
+            <span id="rsi-api-caida" className="text-[13px] text-alta">No disponible: la API no responde. Levántala y recarga la página.</span>
+          )}
+        </div>
       )}
 
-      {abierto && !corriendo && (
+      {abierto && !corriendo && !apiCaida && (
         <form id="rsi-form" onSubmit={lanzar} className="card space-y-4 p-4 sm:p-5">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {CAMPOS.map((c) => (
@@ -118,7 +189,7 @@ export default function RunPanel({ onDone, onToast }: { onDone: () => void; onTo
           <p className="text-[13px] text-warn">
             Con los valores por defecto la corrida tarda ~2 minutos (modo simulado). Al terminar se convierte en la “última corrida”.
           </p>
-          {invalido && <p className="text-[13px] text-alta">Revisa “{invalido.label}”: entero entre {invalido.min} y {fmtMax(invalido.max)}.</p>}
+          {invalido && <p className="text-[13px] text-alta" role="alert">Revisa “{invalido.label}”: entero entre {invalido.min} y {fmtMax(invalido.max)}.</p>}
           {err && <p className="text-[13px] text-alta" role="alert">{err}</p>}
           <div className="flex flex-wrap gap-2">
             <button type="submit" className="btn-primary btn-sm" disabled={enviando || !!invalido}>{enviando ? "Lanzando…" : "Lanzar corrida"}</button>

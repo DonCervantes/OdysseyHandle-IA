@@ -59,6 +59,7 @@ export function EstadoBadge({ estado }: { estado: AgentVersion["estado"] }) {
 /* ------------------------------------------------------------------ métricas */
 export const METRICA_LABEL: Record<string, string> = {
   loss: "Pérdida media",
+  loss_asimetrica: "Pérdida asimétrica",
   ganancia: "Ganancia",
   peor_delta: "Peor segmento (Δ)",
   loss_holdout: "Pérdida holdout",
@@ -82,6 +83,23 @@ export function cambioPerdida(p: Patch): number | null {
 
 export const fmtSegmento = (seg: Record<string, unknown>) =>
   Object.entries(seg ?? {}).map(([k, v]) => `${k}=${typeof v === "object" ? JSON.stringify(v) : String(v)}`);
+
+/* ------------------------------------------------------------------ origen del parche
+   Los parches de una corrida se guardan como `<run_id>-<variante>-g<gen>-…` (autoguard/rsi/loop.py), p.ej.
+   `demo-seed42-rsi-g1-1-ajuste_factor` o `sim-42-02652207-parametros-g3-0-…`. Los aprobados a mano o de otras
+   fuentes pueden no traer prefijo: entonces runId/variante quedan en null. */
+export const VARIANTES = ["estatico", "parametros", "rsi"] as const;
+export type Variante = (typeof VARIANTES)[number];
+const ORIGEN_RE = /^(?:(.+?)-)?(estatico|parametros|rsi)-(g\d.*)$/;
+export function origenParche(patchId: string): { runId: string | null; variante: Variante | null } {
+  const m = ORIGEN_RE.exec(patchId ?? "");
+  if (!m) return { runId: null, variante: null };
+  return { runId: m[1] || null, variante: m[2] as Variante };
+}
+
+/** Tono según el signo de una mejora (positiva = bien). */
+export const tonoMejora = (v: number | null | undefined): "ok" | "alta" | undefined =>
+  v == null || Number.isNaN(v) || v === 0 ? undefined : v > 0 ? "ok" : "alta";
 
 /** Saludo según la hora local. */
 export function saludo(d = new Date()) {

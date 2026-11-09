@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { EmptyState, ErrorState, PageHeader, SimBadge, Skeleton, Stat, useAsync, useToast } from "../components/ui";
 import { LossChart, RegretChart, pivotCurva } from "../components/rsi/Charts";
 import RunPanel from "../components/rsi/RunPanel";
-import { VARIANTE_TONO } from "../components/rsi/shared";
+import { tonoMejora, VARIANTE_TONO } from "../components/rsi/shared";
 import { api, ApiError } from "../lib/api";
 import { fmtMillones, fmtNum, fmtPct, fmtSignedPct, VARIANTE_LABEL } from "../lib/format";
 import type { RunSummary } from "../lib/types";
@@ -66,7 +66,7 @@ function ResumenCorrida({ s }: { s: RunSummary }) {
         <dl className="mt-3 divide-y divide-line text-[14px]">
           <div className="flex justify-between gap-3 py-2">
             <dt className="text-muted">Mejora RSI vs reglas fijas</dt>
-            <dd className="num font-semibold text-ok">{fmtPct(s.mejora_rsi)}</dd>
+            <dd className={`num font-semibold ${s.mejora_rsi > 0 ? "text-ok" : s.mejora_rsi < 0 ? "text-alta" : "text-ink"}`}>{fmtSignedPct(s.mejora_rsi)}</dd>
           </div>
           <div className="flex items-start justify-between gap-3 py-2">
             <dt className="text-muted">Gate 2 · convergencia a ≤10% del oráculo</dt>
@@ -153,8 +153,8 @@ export default function Laboratorio() {
 
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat label="Regret reglas fijas" value={fmtMillones(s.regret.estatico)} sub="línea base" />
-            <Stat label="Regret auto-mejora" value={fmtMillones(s.regret.rsi)} sub={`${fmtSignedPct(-s.mejora_rsi)} vs reglas fijas`} tone="ok" />
-            <Stat label="Regret ahorrado" value={fmtMillones(ahorro)} sub="MXN simulados" tone="ok" />
+            <Stat label="Regret auto-mejora" value={fmtMillones(s.regret.rsi)} sub={`${fmtSignedPct(-s.mejora_rsi)} vs reglas fijas`} tone={tonoMejora(s.mejora_rsi)} />
+            <Stat label="Regret ahorrado" value={fmtMillones(ahorro)} sub="MXN simulados" tone={tonoMejora(ahorro)} />
             <Stat label="Gate 2" value={s.gate2 ? "Cumple" : "No cumple"} sub="convergencia ≤10% del oráculo" tone={s.gate2 ? "ok" : "alta"} />
           </div>
 
@@ -169,8 +169,8 @@ export default function Laboratorio() {
               </section>
               <section className="card p-4 sm:p-5" aria-labelledby="h-curva-loss">
                 <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 id="h-curva-loss" className="text-[17px] font-semibold">Pérdida media por lote</h2>
-                  <span className="text-[13px] text-muted">Pérdida asimétrica: cobrar de menos cuesta 1.5×, de más 1×.</span>
+                  <h2 id="h-curva-loss" className="text-[17px] font-semibold">Pérdida media por lote <span className="text-[13px] font-normal text-muted">(MXN por póliza)</span></h2>
+                  <span className="text-[13px] text-muted">Pérdida asimétrica en MXN por póliza: cobrar de menos cuesta 1.5×, de más 1×.</span>
                 </div>
                 <LossChart filas={filas} />
               </section>

@@ -100,7 +100,7 @@ export default function PatchDetail({ patch }: { patch: Patch }) {
       </div>
       <div className="space-y-3">
         <div>
-          <div className="eyebrow mb-1">Métricas antes / después · {patch.metrica_objetivo || "objetivo"}</div>
+          <div className="eyebrow mb-1">Métricas antes / después · {patch.metrica_objetivo ? labelMetrica(patch.metrica_objetivo) : "objetivo"}</div>
           <MetricsTable patch={patch} />
         </div>
         {patch.razon && (

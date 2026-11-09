@@ -36,6 +36,14 @@ export function pivotCurva(curva: CurvePoint[]): FilaCurva[] {
 }
 
 const axisTick = { fontSize: 12 };
+/** Marcas del eje X cada 3,000 pólizas, desde 0 hasta el máximo de la curva. */
+const PASO_X = 3000;
+function ticksX(filas: FilaCurva[]): number[] {
+  const max = filas.reduce((m, f) => Math.max(m, f.polizas), 0);
+  const out: number[] = [];
+  for (let t = 0; t <= max; t += PASO_X) out.push(t);
+  return out;
+}
 const fmtK = (v: number) => (Math.abs(v) >= 1000 ? `${(v / 1000).toLocaleString("es-MX", { maximumFractionDigits: 1 })}k` : String(v));
 
 function TooltipBox({ active, payload, label, kind }: {
@@ -48,10 +56,11 @@ function TooltipBox({ active, payload, label, kind }: {
   return (
     <div className="rounded-lg border border-line bg-panel px-3 py-2 text-[12px] shadow-soft">
       <div className="mb-1 font-medium text-ink">Lote {fila?.batch} · {fmtNum(label)} pólizas</div>
+      {kind === "loss" && <div className="mb-1 text-faint">Pérdida media · MXN por póliza</div>}
       {items.map((p) => (
         <div key={String(p.dataKey)} className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-1.5 text-muted"><span className="h-2 w-2 rounded-full" style={{ background: p.color }} />{p.name}</span>
-          <span className="num text-ink">{kind === "regret" ? fmtMillones(p.value as number) : fmtNum(Math.round(p.value as number))}</span>
+          <span className="num text-ink">{kind === "regret" ? fmtMillones(p.value as number) : `${fmtNum(Math.round(p.value as number))} MXN`}</span>
         </div>
       ))}
       {kind === "regret" && fila?.ahorro && (
@@ -85,7 +94,7 @@ export function RegretChart({ filas }: { filas: FilaCurva[] }) {
     <ResponsiveContainer width="100%" height={320}>
       <ComposedChart data={filas} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
         <CartesianGrid stroke={c.line} strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="polizas" type="number" domain={["dataMin", "dataMax"]} tickFormatter={fmtK} tick={{ ...axisTick, fill: c.muted }} stroke={c.line}
+        <XAxis dataKey="polizas" type="number" domain={[0, "dataMax"]} ticks={ticksX(filas)} tickFormatter={fmtK} tick={{ ...axisTick, fill: c.muted }} stroke={c.line}
           label={{ value: "Pólizas cotizadas", position: "insideBottom", offset: -2, fill: c.faint, fontSize: 12 }} height={38} />
         <YAxis tickFormatter={(v: number) => fmtMillones(v, 0)} tick={{ ...axisTick, fill: c.muted }} stroke={c.line} width={44} />
         <Tooltip content={<TooltipBox kind="regret" />} />
@@ -112,7 +121,7 @@ export function LossChart({ filas }: { filas: FilaCurva[] }) {
     <ResponsiveContainer width="100%" height={280}>
       <LineChart data={filas} margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
         <CartesianGrid stroke={c.line} strokeDasharray="3 3" vertical={false} />
-        <XAxis dataKey="polizas" type="number" domain={["dataMin", "dataMax"]} tickFormatter={fmtK} tick={{ ...axisTick, fill: c.muted }} stroke={c.line}
+        <XAxis dataKey="polizas" type="number" domain={[0, "dataMax"]} ticks={ticksX(filas)} tickFormatter={fmtK} tick={{ ...axisTick, fill: c.muted }} stroke={c.line}
           label={{ value: "Pólizas cotizadas", position: "insideBottom", offset: -2, fill: c.faint, fontSize: 12 }} height={38} />
         <YAxis tickFormatter={fmtK} tick={{ ...axisTick, fill: c.muted }} stroke={c.line} width={44} domain={["auto", "auto"]} />
         <Tooltip content={<TooltipBox kind="loss" />} />

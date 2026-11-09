@@ -2,8 +2,8 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Dot, ErrorState, Skeleton, Stat, useAsync } from "../components/ui";
-import { saludo, veredictoDe, type Tono } from "../components/rsi/shared";
-import { api, ApiError } from "../lib/api";
+import { origenParche, saludo, tonoMejora, veredictoDe, type Tono } from "../components/rsi/shared";
+import { api, API_URL, ApiError } from "../lib/api";
 import { fmtFecha, fmtMillones, fmtNum, fmtSignedPct, shortSha, TIPO_PARCHE_LABEL } from "../lib/format";
 
 interface Actividad { key: string; tone: Tono; agente: string; texto: ReactNode; estado: ReactNode }
@@ -29,14 +29,25 @@ export default function Resumen() {
   const s = run.data?.summary;
   const sinCorrida = run.error instanceof ApiError && run.error.status === 404;
   const ps = patches.data?.patches ?? [];
-  const aceptados = ps.filter((p) => p.veredicto === "aceptado").length;
+  const runId = run.data?.run_id ?? null;
+  // parches con su origen (corrida y variante, sacados del patch_id) y su orden en la respuesta
+  const conOrigen = ps.map((p, i) => ({ p, i, ...origenParche(p.patch_id) }));
+  const deUltima = runId ? conOrigen.filter((x) => x.runId === runId) : [];
+  // KPI: solo la última corrida y solo la variante de auto-mejora (rsi)
+  const kpiPs = deUltima.filter((x) => x.variante === "rsi").map((x) => x.p);
+  const aceptados = kpiPs.filter((p) => p.veredicto === "aceptado").length;
   const campeona = versions.data?.versions.find((v) => v.estado === "campeon") ?? versions.data?.versions[0];
-  const recientes = ps.map((p, i) => ({ p, i })).sort((a, b) => b.p.generation - a.p.generation || a.i - b.i).slice(0, 5).map((x) => x.p);
+  // Actividad: preferentemente de la última corrida; primero los aceptados más recientes, luego el resto
+  const recientes = (deUltima.length ? deUltima : conOrigen)
+    .sort((a, b) =>
+      Number(b.p.veredicto === "aceptado") - Number(a.p.veredicto === "aceptado")
+      || b.p.generation - a.p.generation || a.i - b.i)
+    .slice(0, 5);
 
   const actividad: Actividad[] = [];
   if (!health.loading) {
     actividad.push(health.error
-      ? { key: "api", tone: "alta", agente: "API local", texto: "Sin conexión con la API en localhost:8000", estado: "Revisar" }
+      ? { key: "api", tone: "alta", agente: "API local", texto: `Sin conexión con la API en ${API_URL.replace(/^https?:\/\//, "")}`, estado: "Revisar" }
       : { key: "api", tone: "ok", agente: "API local", texto: `En línea · LLM ${health.data?.llm === "real" ? "real" : "simulado"}${health.data?.auth ? " · con llave" : ""}`, estado: "Ahora" });
   }
   if (campeona) {
@@ -49,10 +60,10 @@ export default function Resumen() {
       estado: s.gate2 ? "Gate 2 cumple" : "Gate 2 no cumple",
     });
   }
-  for (const p of recientes) {
+  for (const { p, variante } of recientes) {
     const v = veredictoDe(p);
     actividad.push({
-      key: p.patch_id, tone: v.tone, agente: `Parche · gen. ${p.generation}`,
+      key: p.patch_id, tone: v.tone, agente: `Parche · gen. ${p.generation}${variante ? ` · ${variante === "rsi" ? "auto-mejora" : variante === "parametros" ? "parámetros" : "reglas fijas"}` : ""}`,
       texto: <>{TIPO_PARCHE_LABEL[p.tipo] ?? p.tipo}<span className="text-faint"> — </span><span className="text-muted">{p.razon || p.hipotesis}</span></>,
       estado: v.label,
     });
@@ -78,18 +89,18 @@ export default function Resumen() {
 
       <section aria-label="Indicadores" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi loading={run.loading} error={run.error}>
-          {s && <Stat label="Regret RSI vs reglas fijas" value={fmtSignedPct(-s.mejora_rsi)} sub={`${fmtMillones(s.regret.rsi)} vs ${fmtMillones(s.regret.estatico)}`} tone="ok" />}
+          {s && <Stat label="Regret RSI vs reglas fijas" value={fmtSignedPct(-s.mejora_rsi)} sub={`${fmtMillones(s.regret.rsi)} vs ${fmtMillones(s.regret.estatico)}`} tone={tonoMejora(s.mejora_rsi)} />}
         </Kpi>
         <Kpi loading={run.loading} error={run.error}>
           {s && <Stat label="Pólizas por variante" value={fmtNum(s.batches * s.batch_size)} sub={`${fmtNum(s.batches)} lotes × ${fmtNum(s.batch_size)}`} />}
         </Kpi>
-        <Kpi loading={patches.loading} error={patches.error}>
-          <Stat label="Parches aceptados" value={<>{fmtNum(aceptados)}<span className="text-[15px] text-faint"> / {fmtNum(ps.length)}</span></>}
-            sub={ps.length ? `${Math.round((aceptados / ps.length) * 100)}% pasa el evaluador` : "sin parches aún"} />
+        <Kpi loading={patches.loading || run.loading} error={patches.error || (run.error && !sinCorrida ? run.error : null)}>
+          <Stat label="Aceptados en la última corrida (auto-mejora)" value={<>{fmtNum(aceptados)}<span className="text-[15px] text-faint"> / {fmtNum(kpiPs.length)}</span></>}
+            sub={kpiPs.length ? `${Math.round((aceptados / kpiPs.length) * 100)}% pasa el evaluador` : runId ? "sin parches de esta corrida" : "sin corridas aún"} />
         </Kpi>
         <Kpi loading={versions.loading} error={versions.error}>
           <Stat label="Versión campeona" value={campeona ? shortSha(campeona.git_sha) : "—"}
-            sub={versions.data ? `${fmtNum(versions.data.versions.length)} versión${versions.data.versions.length === 1 ? "" : "es"} en el linaje` : undefined} />
+            sub={versions.data ? `${fmtNum(versions.data.versions.length)} ${versions.data.versions.length === 1 ? "versión" : "versiones"} en el linaje` : undefined} />
         </Kpi>
       </section>
 
@@ -114,7 +125,7 @@ export default function Resumen() {
               <li key={a.key} className="grid grid-cols-[auto_1fr_auto] items-start gap-x-3 gap-y-0.5 py-2.5 text-[14px] sm:grid-cols-[auto_190px_1fr_auto] sm:items-center">
                 <span className="pt-1.5 sm:pt-0"><Dot tone={a.tone} /></span>
                 <span className="font-medium text-ink">{a.agente}</span>
-                <span className="col-start-2 row-start-2 min-w-0 truncate text-muted sm:col-start-3 sm:row-start-1" title={typeof a.texto === "string" ? a.texto : undefined}>{a.texto}</span>
+                <span className="col-start-2 col-end-4 row-start-2 min-w-0 whitespace-normal break-words text-muted line-clamp-2 sm:col-start-3 sm:col-end-auto sm:row-start-1 sm:truncate sm:line-clamp-none" title={typeof a.texto === "string" ? a.texto : undefined}>{a.texto}</span>
                 <span className={`col-start-3 row-start-1 whitespace-nowrap text-right text-[13px] sm:col-start-4 ${a.tone === "ok" ? "text-faint" : a.tone === "warn" ? "text-warn" : a.tone === "alta" ? "text-alta" : "text-info"}`}>{a.estado}</span>
               </li>
             ))}
