@@ -233,7 +233,21 @@ def test_correction_bounds():
 
 
 def test_mejorador_does_not_import_evaluator():
-    tree = ast.parse(Path(mejorador.__file__).read_text())
+    tree = ast.parse(Path(mejorador.__file__).read_text(encoding="utf-8"))
     mods = [n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)] + \
            [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
     assert not any(m and m.startswith("autoguard.evaluator") for m in mods)
+
+
+def test_sustitutos_fill_slots_of_exhausted_arm(cfg):
+    df = synthetic_data(cfg, n=3000)
+    hyps = [hypothesis_for(df, {"uso": "app_transporte"})]
+    evitar = {f"nueva:{v}" for v in mejorador.VARIABLES_PERMITIDAS}
+    sin = propose(cfg, hyps, ["nueva_variable"] * 3, 1, train=df, evitar=evitar)
+    assert all(p.veredicto == "invalido" for p in sin)
+    con = propose(cfg, hyps, ["nueva_variable"] * 3, 1, train=df, evitar=set(evitar),
+                  sustitutos=["ajuste_factor", "cambio_regla"])
+    invalid = [p for p in con if p.veredicto == "invalido"]
+    valid = [p for p in con if p.veredicto != "invalido"]
+    assert [p.tipo for p in invalid] == ["nueva_variable"]  # el brazo agotado se registra una sola vez
+    assert len(valid) == 3 and len({p.patch_id for p in con}) == len(con)

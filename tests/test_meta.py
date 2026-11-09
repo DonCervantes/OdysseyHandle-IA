@@ -181,3 +181,12 @@ def test_meta_does_not_import_evaluator():
     mods = [n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
     mods += [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
     assert not any(m and m.startswith("autoguard.evaluator") for m in mods)
+
+
+def test_plan_arms_caps_control_and_returns_substitutes():
+    m = MetaImprover(ARMS, seed=3)
+    m.alpha["cambio_prompt"] = 50.0  # el control domina los sorteos
+    for _ in range(20):
+        arms, subs = m.plan_arms(3)
+        assert len(arms) == 3 and arms.count("cambio_prompt") <= 1
+    assert "cambio_prompt" not in subs and set(subs) == set(ARMS) - {"cambio_prompt"}

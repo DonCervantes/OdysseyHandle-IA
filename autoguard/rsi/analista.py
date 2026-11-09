@@ -1,16 +1,24 @@
-"""Analista de errores por segmento (T-07).
+"""Analista de errores por segmento (T-07, reorientado a la pérdida asimétrica en T-23).
 
 Entrada: DataFrame del recolector (VEHICLE_COLUMNS + prima, costo_real, loss, error_rel).
-Segmentos candidatos: bins de antigüedad, kilometraje y siniestros; categorías de uso, zona y marca;
-y todos los pares de condiciones de variables distintas. Por segmento (n ≥ min_n):
+Segmentos candidatos: bins de antigüedad, kilometraje, siniestros y daños preexistentes; categorías de
+uso, zona y marca; y todos los pares de condiciones de variables distintas. Por segmento (n ≥ min_n):
 
-- sesgo_medio = media de error_rel (>0 sobrecotiza, <0 subcotiza)
-- p_value     = t-test de una muestra vs 0 (scipy)
-- impacto     = suma de loss del segmento × |sesgo_medio|
+- sesgo_medio = media de error_rel (>0 sobrecotiza, <0 subcotiza). Solo descriptivo.
+- multiplicador óptimo m* = argmin_m Σ L(m·prima, costo) con la pérdida CONGELADA L. Con L lineal por
+  tramos (α por cobrar de menos, β por cobrar de más) el argmin exacto es el cuantil de nivel α/(α+β) de
+  costo/prima ponderado por prima (`best_multiplier`), no el que anula el sesgo medio. Se encoge hacia 1
+  en escala log por n/(n+SHRINK_N0) para no sobre-reaccionar a segmentos chicos.
+- impacto     = pérdida reducible = Σ L(prima, costo) − Σ L(m*·prima, costo) en el segmento.
+- p_value     = prueba de signo: en el óptimo, P(costo > prima) = β/(α+β); se contrasta la fracción
+  observada de pólizas subcotizadas contra ese valor (aproximación normal a la binomial).
 
 Se devuelven las top_k hipótesis significativas (p < 0.05) por impacto, evitando redundancia: se
 descarta un segmento contenido en (o que contiene a) otro ya elegido con el mismo signo de sesgo.
 El texto es determinístico (sin LLM).
+
+α y β NO se importan: se leen evaluando la pérdida congelada (`loss(0, 1) = α`, `loss(1, 0) = β`), de modo
+que el RSI solo hace lectura de `loss`.
 """
 from __future__ import annotations
 
@@ -28,14 +36,80 @@ from autoguard.evaluator.objective import loss as objective_loss
 P_MAX = 0.05
 MAX_CATEGORIAS = 15  # por variable categórica (las más frecuentes), acota el número de pares
 
+# Pesos de la pérdida congelada, leídos (no importados) de la función objetivo.
+ALPHA_L = float(objective_loss(0.0, 1.0))  # cobrar 0 a un costo 1 => α
+BETA_L = float(objective_loss(1.0, 0.0))  # cobrar 1 a un costo 0 => β
+NIVEL_CUANTIL = ALPHA_L / (ALPHA_L + BETA_L)  # 0.6 con α=1.5, β=1.0
+P_SUBCOTIZA_OPTIMO = 1.0 - NIVEL_CUANTIL  # fracción de pólizas con costo > prima en el óptimo
+SHRINK_N0 = 30  # encogimiento: m = exp(log(m*) · n / (n + SHRINK_N0))
+MULT_MIN, MULT_MAX = 0.5, 2.0  # corrección máxima por parche (estabilidad ante ruido)
+
 # Bordes inferiores de los bins numéricos (enteros). El último bin queda abierto (solo `_min`).
 BINS: dict[str, list[int]] = {
     "antiguedad": [0, 5, 10, 20, 30],
     "kilometraje": [0, 50_000, 100_000, 150_000, 200_000],
     "siniestros_previos": [0, 1, 2, 3],
+    # daños preexistentes en MXN (enteros): sin daño / leve / medio / fuerte
+    "danos_costo": [0, 1, 10_000, 20_000],
 }
 CATEGORICAS = ["uso", "zona", "marca"]
-ORDEN = ["antiguedad", "kilometraje", "siniestros_previos", "uso", "zona", "marca"]
+ORDEN = ["antiguedad", "kilometraje", "siniestros_previos", "uso", "zona", "marca", "danos_costo"]
+
+
+# ---------------------------------------------------------------- multiplicador óptimo
+def row_loss(prima, costo) -> np.ndarray:
+    """Pérdida congelada por póliza (lectura de `objective.loss`)."""
+    return np.asarray(objective_loss(prima, costo), dtype=float)
+
+
+def total_loss(prima, costo) -> float:
+    """Σ de la pérdida congelada (lectura de `objective.loss`)."""
+    return float(np.sum(objective_loss(prima, costo)))
+
+
+def optimal_multiplier(prima, costo) -> float:
+    """argmin_m Σ L(m·prima, costo), exacto (sin encogimiento ni cotas).
+
+    Σ_i p_i·[α(r_i − m)⁺ + β(m − r_i)⁺] con r_i = c_i/p_i es convexa en m; su subgradiente se anula
+    cuando la fracción del peso Σp de las pólizas con r_i < m alcanza α/(α+β): cuantil ponderado.
+    """
+    p = np.asarray(prima, dtype=float)
+    c = np.asarray(costo, dtype=float)
+    ok = np.isfinite(p) & np.isfinite(c) & (p > 0)
+    p, c = p[ok], c[ok]
+    if len(p) == 0:
+        return 1.0
+    r = c / p
+    order = np.argsort(r, kind="stable")
+    r, w = r[order], p[order]
+    cw = np.cumsum(w)
+    k = int(np.searchsorted(cw, NIVEL_CUANTIL * cw[-1], side="left"))
+    return float(r[min(k, len(r) - 1)])
+
+
+def best_multiplier(prima, costo, n0: float = SHRINK_N0) -> float:
+    """Multiplicador corrector para un grupo de pólizas: `optimal_multiplier` encogido hacia 1 en escala
+    log por n/(n+n0) y acotado a [MULT_MIN, MULT_MAX]."""
+    n = int(np.isfinite(np.asarray(costo, dtype=float)).sum())
+    if n == 0:
+        return 1.0
+    m = optimal_multiplier(prima, costo)
+    if not np.isfinite(m) or m <= 0:
+        return MULT_MAX if not np.isfinite(m) else MULT_MIN
+    shrunk = float(np.exp(np.log(m) * n / (n + n0)))
+    return float(min(MULT_MAX, max(MULT_MIN, shrunk)))
+
+
+def _sign_test_p(costo: np.ndarray, prima: np.ndarray) -> float:
+    """p-value bilateral de H0: P(costo > prima) = P_SUBCOTIZA_OPTIMO (la prima ya es óptima)."""
+    n = len(costo)
+    if n == 0:
+        return 1.0
+    k = float(np.sum(costo > prima))
+    q = P_SUBCOTIZA_OPTIMO
+    sd = np.sqrt(n * q * (1 - q))
+    z = (k - n * q) / sd
+    return float(2 * stats.norm.sf(abs(z)))
 
 
 def _py(v: Any) -> Any:
@@ -68,19 +142,19 @@ def _single_segments(df: pd.DataFrame) -> list[tuple[str, dict[str, Any]]]:
     return out
 
 
-def _texto(seg: dict[str, Any], n: int, sesgo: float, p: float) -> str:
+def _texto(seg: dict[str, Any], n: int, sesgo: float, p: float, mult: float, reducible: float) -> str:
     accion = "sobrecotiza" if sesgo > 0 else "subcotiza"
-    mult = 1.0 / (1.0 + sesgo) if sesgo > -1 else float("inf")
     return (
         f"En el segmento [{segments.describe(seg)}] el cotizador {accion} en promedio "
-        f"{abs(sesgo) * 100:.1f}% (n={n}, p={p:.2g}). Un multiplicador ≈ {mult:.3f} para este "
-        f"segmento corregiría el sesgo."
+        f"{abs(sesgo) * 100:.1f}% (n={n}, p={p:.2g}). Con la pérdida asimétrica, un multiplicador "
+        f"≈ {mult:.3f} para este segmento reduciría la pérdida en train en {reducible:,.0f}."
     )
 
 
 def analyze(errors: pd.DataFrame, top_k: int = 3, min_n: int = 30) -> list[Hypothesis]:
-    """Agrupa errores por segmentos candidatos (1 y 2 variables), calcula sesgo medio de error_rel,
-    significancia (t-test vs 0) e impacto; devuelve las top_k hipótesis significativas (p<0.05)."""
+    """Agrupa errores por segmentos candidatos (1 y 2 variables), calcula el multiplicador que minimiza la
+    pérdida congelada, la pérdida reducible (impacto) y la significancia (prueba de signo contra el
+    óptimo); devuelve las top_k hipótesis significativas (p<0.05) por pérdida reducible."""
     if errors is None or len(errors) == 0 or top_k <= 0:
         return []
     df = errors.reset_index(drop=True)
@@ -95,6 +169,8 @@ def analyze(errors: pd.DataFrame, top_k: int = 3, min_n: int = 30) -> list[Hypot
     if len(df) < min_n:
         return []
     lss = df["loss"].to_numpy(dtype=float)
+    prima = df["prima"].to_numpy(dtype=float)
+    costo = df["costo_real"].to_numpy(dtype=float)
 
     singles = [(var, seg, segments.segment_mask(df, seg)) for var, seg in _single_segments(df)]
     singles = [s for s in singles if s[2].sum() >= min_n]
@@ -111,20 +187,20 @@ def analyze(errors: pd.DataFrame, top_k: int = 3, min_n: int = 30) -> list[Hypot
         e = err[m]
         n = int(m.sum())
         sesgo = float(e.mean())
-        if e.std(ddof=1) == 0:
-            p = 0.0 if sesgo != 0 else 1.0
-        else:
-            p = float(stats.ttest_1samp(e, 0.0).pvalue)
+        p = _sign_test_p(costo[m], prima[m])
         if not (p < P_MAX) or sesgo == 0:
             continue
-        impacto = float(lss[m].sum() * abs(sesgo))
-        scored.append((impacto, -len(seg), seg, m, n, sesgo, p))
+        mult = best_multiplier(prima[m], costo[m])
+        reducible = float(lss[m].sum() - total_loss(mult * prima[m], costo[m]))
+        if not reducible > 0:
+            continue
+        scored.append((reducible, -len(seg), seg, m, n, sesgo, p, mult))
     # orden determinístico: impacto desc, luego segmentos más simples, luego por descripción
     scored.sort(key=lambda t: (-t[0], -t[1], segments.describe(t[2])))
 
     chosen: list[tuple[np.ndarray, float]] = []
     out: list[Hypothesis] = []
-    for impacto, _, seg, m, n, sesgo, p in scored:
+    for impacto, _, seg, m, n, sesgo, p, mult in scored:
         redundante = any(
             np.sign(sesgo) == np.sign(s2) and (not (m & ~m2).any() or not (m2 & ~m).any())
             for m2, s2 in chosen
@@ -133,7 +209,7 @@ def analyze(errors: pd.DataFrame, top_k: int = 3, min_n: int = 30) -> list[Hypot
             continue
         chosen.append((m, sesgo))
         out.append(Hypothesis(segmento=seg, n=n, sesgo_medio=sesgo, p_value=p, impacto=impacto,
-                              texto=_texto(seg, n, sesgo, p)))
+                              texto=_texto(seg, n, sesgo, p, mult, impacto)))
         if len(out) >= top_k:
             break
     return out
