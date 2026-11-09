@@ -235,14 +235,6 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 
 ## Tareas humanas (no las reclama un agente; se marcan con `mark-done`)
 
-### T-90 · Conectar Linear con GitHub y crear 3 ciclos
-- **tipo:** humano
-- **deps:** —
-
-### T-91 · Event storming y arquitectura en Miro
-- **tipo:** humano
-- **deps:** —
-
 ### T-92 · Crear proyecto Supabase y aplicar migración
 - **tipo:** humano
 - **deps:** T-02

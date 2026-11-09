@@ -253,7 +253,7 @@ El grafo operativo registra cada predicción en PostgreSQL; el grafo RSI compara
 
 ## Tecnologías a implementar
 
-El núcleo es Python con LangGraph y Streamlit para los datos; de los beneficios permitidos usamos Lovable, Linear y Miro de forma esencial, Tavily y Firecrawl solo para la valuación, ElevenLabs solo para el video de respaldo y backboard.io queda en reserva.
+El núcleo es Python con LangGraph y Streamlit para los datos. De los beneficios permitidos solo usamos los que aportan algo que el proyecto no tiene: Lovable para el frontend, Tavily y Firecrawl para la valuación y ElevenLabs para el video de respaldo. Linear, Miro y backboard.io no se usan porque duplicarían lo que ya resuelven el repo y PostgreSQL.
 
 ### Stack núcleo
 
@@ -272,17 +272,17 @@ El núcleo es Python con LangGraph y Streamlit para los datos; de los beneficios
 
 ### Beneficios Hacktoberfest: qué usamos y para qué
 
-Solo se usan estos 7 beneficios; ningún otro servicio de pago entra al proyecto. La ingestión de resultados, el disparo del ciclo RSI y la aprobación de parches se operan directo con la API desde el frontend y el tablero.
+Solo se usan beneficios de la lista permitida, y únicamente los que aportan algo; ningún otro servicio de pago entra al proyecto. La ingestión de resultados, el disparo del ciclo RSI y la aprobación de parches se operan directo con la API desde el frontend y el tablero.
 
 | Herramienta | Decisión | Uso concreto | Cuidado |
 | --- | --- | --- | --- |
 | Lovable Pro | Usar con presupuesto | Frontend de usuario: carga de documentos y expediente; el tablero de datos va en Streamlit | 100 créditos: un prompt inicial muy detallado, máximo unas 10 iteraciones grandes, conectar GitHub desde el inicio y hacer ajustes menores en código. Cancelar antes de la renovación |
-| Linear Business | Usar | Backlog, 3 ciclos de una semana, issues por historia de usuario | Ninguno: dura hasta abril de 2027 |
-| Miro Enterprise | Usar | Event storming, arquitectura, storyboard del pitch | Ninguno: dura hasta enero de 2027 |
+| Linear Business | No usar | El backlog vive en `TASKS.md` y el estado en `scripts/tasks.sh` (rama `tasks-state`), que coordina a las 4 sesiones; llevarlo también en Linear sería doble captura | Ninguno |
+| Miro Enterprise | No usar | Los diagramas de arquitectura y de sprints ya están en Mermaid dentro del plan y del repo; el storyboard del pitch va en `docs/demo.md` | Ninguno |
 | Tavily | Usar solo en valuación | Buscar anuncios de autos comparables | Cachear resultados; presupuestar unas 300 búsquedas |
 | Firecrawl | Usar solo en valuación | Convertir anuncios a precio, año y km estructurados | Respetar términos de uso de cada portal; cachear |
-| ElevenLabs Creator | Opcional | Narración de un video de respaldo del pitch por si falla la demo en vivo | No es parte del producto |
-| backboard.io | No usar | La memoria del sistema ya vive en PostgreSQL | Reservar los USD 5 |
+| ElevenLabs Creator | Usar solo para el video | Narración del video de respaldo del pitch por si falla la demo en vivo | No es parte del producto; vence a fines de noviembre |
+| backboard.io | No usar | La memoria del sistema ya vive en PostgreSQL | Ninguno |
 
 ### Por qué LangGraph y sin n8n
 
@@ -303,14 +303,13 @@ flowchart LR
     S1 --> G1 --> S2 --> G2 --> S3 --> H
 ```
 
-Cada gate se revisa en la retrospectiva del sprint; los sprints se crean como ciclos en Linear.
+Cada gate se revisa en la retrospectiva del sprint; el avance se sigue en `TASKS.md` con `scripts/tasks.sh list`.
 
 ### Backlog por sprint
 
 **Sprint 1: cimientos**
 
-- [ ] Crear repo, estructura de carpetas y conectar Linear con GitHub
-- [ ] Event storming y arquitectura en Miro
+- [ ] Crear repo, estructura de carpetas y protocolo multi-sesión (`AGENTS.md`, `scripts/tasks.sh`)
 - [ ] Definir contratos JSON con Pydantic (perfil, predicción, parche)
 - [ ] Crear tablas en Supabase (vehicles, predictions, outcomes, errors, agent_versions, patches, meta_strategy)
 - [ ] Simulador: población sintética, riesgo oculto, demanda y siniestros con semilla fija
