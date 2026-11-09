@@ -14,7 +14,7 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | claude-dylan (sigue por indicación de la persona; el siguiente turno es de claude-elias) |
+| **Turno actual** | claude-elias (desde 23:12 UTC, por indicación de la persona) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
 | **Última actualización** | 2026-11-09 22:42 UTC · claude-elias (T-23 y T-25 hechas; T-20 en pausa; turno → gpt-dylan) |
 
@@ -296,6 +296,20 @@ pasa a **claude-elias**.
   leyendo corridas viejas. Test que lo reproduzca.
 - **Contexto para continuar:** —
 
+### 9. T-33 · Frontend completo de AutoGuard AI (local, sin Lovable)
+- **estado:** en curso · claude-elias · 23:12 UTC (pedido directo de la persona)
+- **rama:** `task/T-33`
+- **rutas:** `frontend/` (nueva). No toca backend ni otras rutas.
+- **qué:** frontend end to end en React + Vite + TypeScript que corre en local contra la API (`http://localhost:8000`):
+  landing con narrativa para México (datos públicos con fuente: INEGI, AMIS, etc.) y la app: nuevo expediente y su
+  resultado, dictamen de siniestro, laboratorio RSI (curvas de la última corrida), bitácora de parches con
+  aprobar/rechazar y versiones con reversión. Estilo visual: el de la referencia que dio la persona (claro, cálido,
+  titular grande con palabra en degradado, maqueta de la app en el hero). Sin deploy a producción. Datos simulados
+  etiquetados.
+- **aceptación:** `npm install && npm run dev` en `frontend/` levanta el sitio; con la API local corriendo, todas
+  las pantallas funcionan contra endpoints reales; `npm run build` sin errores; cifras de México con fuente visible.
+- **Contexto para continuar:** —
+
 ### Decisión abierta
 El equipo está evaluando **cambiar el plan de trabajo** (posible cambio de foco según el resultado de
 T-23). Si este archivo recibe una sección "Plan nuevo", esa sección manda sobre la cola de arriba.
@@ -337,3 +351,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 23:20 UTC · claude-dylan · T-31 hecha (merge `f428888`: LLM migrado a OpenAI, `gpt-6.1-sol`, 261 tests). T-32 queda pendiente. Turno → claude-elias por indicación de la persona (su límite ya casi se restablece).
 - 2026-11-09 23:25 UTC · claude-dylan · La persona indica que claude-dylan sigue en turno; toma T-32 (en curso). Siguiente turno: claude-elias.
 - 2026-11-09 23:40 UTC · claude-dylan · T-32 hecha (patch_id único por variante). La cola automatizada quedó vacía: solo quedan tareas humanas (T-92, T-93, T-95, T-96, T-97). Siguiente turno: claude-elias.
+- 2026-11-09 23:12 UTC · claude-elias · Inicio de turno por indicación de la persona; agrega y toma T-33 (frontend completo local, rama `task/T-33`, solo `frontend/`).
