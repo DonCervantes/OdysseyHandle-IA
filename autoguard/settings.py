@@ -23,7 +23,7 @@ DOTENV_PATH = REPO_ROOT / ".env"
 # Todas las variables de entorno que lee el código (mantener en sync con `.env.example`).
 ENV_VARS: tuple[str, ...] = (
     # LLM (autoguard/llm.py)
-    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
     "LLM_PROVIDER",
     "LLM_MODEL",
     "LLM_EFFORT",
@@ -46,7 +46,8 @@ ENV_VARS: tuple[str, ...] = (
 
 # Variables con secretos o que habilitan red/BD externa: los tests las limpian.
 SECRET_VARS: tuple[str, ...] = (
-    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",  # legado: se sigue limpiando por si quedó en un .env viejo
     "TAVILY_API_KEY",
     "FIRECRAWL_API_KEY",
     "AUTOGUARD_API_KEY",

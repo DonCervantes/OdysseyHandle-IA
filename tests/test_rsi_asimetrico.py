@@ -32,7 +32,7 @@ Z06 = 0.2533471031357997  # Φ^-1(0.6)
 @pytest.fixture(autouse=True)
 def _mock_llm(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "mock")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
 

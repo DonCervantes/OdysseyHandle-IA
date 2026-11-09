@@ -1,6 +1,6 @@
 # Evaluación con LLM real (T-28)
 
-Script CLI para medir, **con llave Anthropic**, la precisión de extracción documental y el recall de daños sobre muestras **SIMULADAS**. No forma parte de `pytest` (la suite nunca llama a la red).
+Script CLI para medir, **con llave de OpenAI**, la precisión de extracción documental y el recall de daños sobre muestras **SIMULADAS**. No forma parte de `pytest` (la suite nunca llama a la red).
 
 ## Metas
 
@@ -32,13 +32,13 @@ python scripts/eval_llm.py --generate
 python scripts/eval_llm.py
 ```
 
-Sale con código **2** y un mensaje claro pidiendo `ANTHROPIC_API_KEY` (vía `.env` o el entorno). No inventa métricas en mock.
+Sale con código **2** y un mensaje claro pidiendo `OPENAI_API_KEY` (vía `.env` o el entorno). No inventa métricas en mock.
 
 ### Con llave
 
 ```bash
 # .env en la raíz del repo (gitignored), o:
-# export ANTHROPIC_API_KEY=...
+# export OPENAI_API_KEY=...
 python scripts/eval_llm.py
 ```
 
@@ -60,10 +60,10 @@ python scripts/eval_llm.py --json
 
 - Si la API devuelve `usage`, se usan `input_tokens` / `output_tokens` reales.
 - Si no, se estima (~4 chars/token de texto + ~1600 tok/imagen).
-- Precio de referencia (USD / millón de tokens): `LLM_PRICE_IN` (default 5) y `LLM_PRICE_OUT` (default 25). Es una estimación de laboratorio, no una factura.
+- Precio de referencia (USD / millón de tokens): `LLM_PRICE_IN` (default 2) y `LLM_PRICE_OUT` (default 10), tarifas publicadas de `gpt-6.1-sol` al 2026-11-09. Es una estimación de laboratorio, no una factura.
 
 ## Tests y red
 
-- `tests/conftest.py` fuerza `LLM_PROVIDER=mock`, limpia `ANTHROPIC_API_KEY` y pone `AUTOGUARD_NO_DOTENV=1`.
+- `tests/conftest.py` fuerza `LLM_PROVIDER=mock`, limpia `OPENAI_API_KEY` y pone `AUTOGUARD_NO_DOTENV=1`.
 - Este script **no** se importa desde tests; es solo CLI manual/demo.
 - Los agentes documental/visual ya tienen `--eval` en mock (100 %); este script es el chequeo con LLM real + set ampliado.

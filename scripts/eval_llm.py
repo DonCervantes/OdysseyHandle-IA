@@ -3,7 +3,7 @@
 
 Mide precisión de extracción documental (meta ≥90%) y recall de daños (meta ≥80%)
 sobre `data/samples/` + `data/eval/` (casos SIMULADOS extra). Requiere
-`ANTHROPIC_API_KEY`; fuerza `LLM_CACHE=1` y reporta costo estimado en tokens.
+`OPENAI_API_KEY`; fuerza `LLM_CACHE=1` y reporta costo estimado en tokens.
 
 Sin llave sale con mensaje claro (código 2). No forma parte de la suite pytest
 (los tests nunca llaman a la red).
@@ -42,15 +42,15 @@ META_RECALL = 0.80
 
 # Precios de referencia USD / millón de tokens (estimación; no factura real).
 # Ajusta con LLM_PRICE_IN / LLM_PRICE_OUT si el modelo cambia.
-_DEFAULT_PRICE_IN = 5.0
-_DEFAULT_PRICE_OUT = 25.0
+_DEFAULT_PRICE_IN = 2.0   # gpt-6.1-sol (developers.openai.com, 2026-11-09)
+_DEFAULT_PRICE_OUT = 10.0
 # Heurística si la API no reporta usage: ~4 chars/token texto; imagen típica ~1600 tok.
 _CHARS_PER_TOKEN = 4
 _IMAGE_TOKENS = 1600
 
 
 MSG_NO_KEY = (
-    "ANTHROPIC_API_KEY no está configurada. "
+    "OPENAI_API_KEY no está configurada. "
     "Este script mide precisión/recall con el LLM real y no corre en modo mock. "
     "Copia `.env.example` a `.env`, pon tu llave, y vuelve a ejecutar "
     "`python scripts/eval_llm.py` (activa LLM_CACHE=1 automáticamente)."
@@ -74,17 +74,7 @@ class UsageStats:
         stats = self
 
         def tracked_call(client: Any, model: str, system: str, content: list[dict], max_tokens: int) -> str:
-            kwargs: dict[str, Any] = {
-                "model": model,
-                "max_tokens": max_tokens,
-                "system": system,
-                "messages": [{"role": "user", "content": content}],
-                "output_config": {"effort": os.getenv("LLM_EFFORT", llm.DEFAULT_EFFORT)},
-            }
-            if model in llm._FALLBACK_MODELS:
-                kwargs["betas"] = [llm._FALLBACK_BETA]
-                kwargs["fallbacks"] = "default"
-            resp = client.beta.messages.create(**kwargs)
+            resp = client.responses.create(**llm.build_request(model, system, content, max_tokens))
             stats.api_calls += 1
             usage = getattr(resp, "usage", None)
             if usage is not None and getattr(usage, "input_tokens", None) is not None:
@@ -92,8 +82,8 @@ class UsageStats:
                 stats.output_tokens += int(getattr(usage, "output_tokens", 0) or 0)
             else:
                 stats.estimated = True
-                text_in = len(system) + sum(len(b.get("text", "")) for b in content if b.get("type") == "text")
-                n_img = sum(1 for b in content if b.get("type") in ("image", "document"))
+                text_in = len(system) + sum(len(b.get("text", "")) for b in content if b.get("type") == "input_text")
+                n_img = sum(1 for b in content if b.get("type") in ("input_image", "input_file"))
                 stats.input_tokens += text_in // _CHARS_PER_TOKEN + n_img * _IMAGE_TOKENS
                 stats.output_tokens += max(1, len(llm._response_text(resp)) // _CHARS_PER_TOKEN)
             return llm._response_text(resp)
@@ -305,7 +295,7 @@ def run_eval() -> dict[str, Any]:
         os.environ["LLM_PROVIDER"] = "auto"
 
     if llm.is_mock():
-        raise RuntimeError("modo mock activo; se requiere ANTHROPIC_API_KEY")
+        raise RuntimeError("modo mock activo; se requiere OPENAI_API_KEY")
 
     stats = UsageStats()
     stats.install()
@@ -385,7 +375,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
         return 0
 
-    if not os.getenv("ANTHROPIC_API_KEY"):
+    if not os.getenv("OPENAI_API_KEY"):
         print(MSG_NO_KEY, file=sys.stderr)
         return 2
 

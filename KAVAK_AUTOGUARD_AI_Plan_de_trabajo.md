@@ -261,7 +261,7 @@ El núcleo es Python con LangGraph y Streamlit para los datos. De los beneficios
 | --- | --- | --- |
 | API | Python 3.11 + FastAPI + Pydantic | Endpoints, validación de contratos JSON |
 | Orquestación de agentes | LangGraph | Grafo operativo y grafo RSI |
-| Modelo | LLM multimodal vía API (el que patrocine el hackathon) | Extracción de documentos, daños en fotos, hipótesis y parches |
+| Modelo | OpenAI vía Responses API (`gpt-6.1-sol` por defecto, configurable con `LLM_MODEL`) | Extracción de documentos, daños en fotos, hipótesis y parches |
 | Cálculo | pandas + numpy + scipy | Simulador, errores por segmento, significancia |
 | Datos y tablero | Streamlit (gráficas nativas o Plotly) | Tablero de datos: curvas de error, área de regret, comparación de las 3 versiones, linaje y bitácora de parches; lee directo de Supabase |
 | Base de datos | PostgreSQL en Supabase | Registro de predicciones, outcomes, linaje |

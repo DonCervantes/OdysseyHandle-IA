@@ -8,7 +8,7 @@ y URLs exportadas, de modo que los tests corren en modo mock y nunca llaman a la
 import os
 
 os.environ["AUTOGUARD_NO_DOTENV"] = "1"
-for _var in ("ANTHROPIC_API_KEY", "TAVILY_API_KEY", "FIRECRAWL_API_KEY", "AUTOGUARD_API_KEY",
+for _var in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "TAVILY_API_KEY", "FIRECRAWL_API_KEY", "AUTOGUARD_API_KEY",
              "DATABASE_URL", "LLM_CACHE"):
     os.environ.pop(_var, None)
 os.environ["LLM_PROVIDER"] = "mock"

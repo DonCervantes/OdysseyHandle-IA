@@ -13,7 +13,7 @@ from autoguard.rsi.meta import MetaImprover, patch_gain, patch_reward
 @pytest.fixture(autouse=True)
 def _mock_llm(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "mock")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
 
 def mk_patch(i: int, gen: int, tipo: str, ganancia: float, veredicto=None) -> Patch:
