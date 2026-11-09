@@ -95,7 +95,7 @@ class UsageStats:
                 text_in = len(system) + sum(len(b.get("text", "")) for b in content if b.get("type") == "text")
                 n_img = sum(1 for b in content if b.get("type") in ("image", "document"))
                 stats.input_tokens += text_in // _CHARS_PER_TOKEN + n_img * _IMAGE_TOKENS
-                # output se estima tras parsear; aquí solo marcamos la llamada
+                stats.output_tokens += max(1, len(llm._response_text(resp)) // _CHARS_PER_TOKEN)
             return llm._response_text(resp)
 
         def tracked_cache_get(key: str) -> Optional[dict[str, Any]]:
@@ -383,8 +383,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             f"Generados {len(out['docs']['documentos'])} docs y "
             f"{len(out['fotos']['fotos'])} fotos SIMULADAS en {EVAL_DIR}"
         )
-        if not os.getenv("ANTHROPIC_API_KEY"):
-            return 0
+        return 0
 
     if not os.getenv("ANTHROPIC_API_KEY"):
         print(MSG_NO_KEY, file=sys.stderr)
