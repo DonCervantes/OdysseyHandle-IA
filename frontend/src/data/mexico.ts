@@ -1,6 +1,6 @@
 // Cifras públicas de México usadas en la narrativa. CADA cifra lleva su fuente (url) y fecha.
-// No agregar cifras sin fuente verificable. Las de abajo vienen del plan del proyecto
-// (KAVAK_AUTOGUARD_AI_Plan_de_trabajo.md), ya revisadas por el equipo.
+// No agregar cifras sin fuente verificable. Todas se revisaron abriendo la URL citada (nov 2026):
+// el número aparece en la página. Orden: del problema a la oportunidad.
 
 export interface Dato {
   id: string;
@@ -9,7 +9,8 @@ export interface Dato {
   detalle: string;      // contexto en una o dos frases
   fuente: string;       // nombre del medio u organismo
   url: string;
-  fecha: string;        // "jul 2026"
+  fecha: string;        // fecha de publicación de la fuente, "jul 2026"
+  origen?: string;      // organismo que generó el dato, si la fuente es un medio (p.ej. "AMIS")
 }
 
 export const DATOS_MEXICO: Dato[] = [
@@ -21,6 +22,17 @@ export const DATOS_MEXICO: Dato[] = [
     fuente: "Animal Político",
     url: "https://grupoanimal.mx/hablemos-de/mexico-mas-vehiculos-pocos-seguros-qualitas-record",
     fecha: "jul 2026",
+    origen: "INEGI y AMIS",
+  },
+  {
+    id: "informalidad",
+    valor: "90%",
+    titulo: "de la compraventa de usados es informal",
+    detalle: "El mercado formal es apenas 10% de las operaciones; el resto ocurre sobre todo entre particulares y por canales informales.",
+    fuente: "Expansión",
+    url: "https://expansion.mx/empresas/2026/10/28/autos-chinos-mercado-seminuevos-mexico-kavak",
+    fecha: "oct 2026",
+    origen: "Estimaciones de The CIU y Kavak",
   },
   {
     id: "robos",
@@ -30,6 +42,27 @@ export const DATOS_MEXICO: Dato[] = [
     fuente: "Animal Político",
     url: "https://grupoanimal.mx/hablemos-de/mexico-mas-vehiculos-pocos-seguros-qualitas-record",
     fecha: "jul 2026",
+    origen: "AMIS",
+  },
+  {
+    id: "robo-violencia",
+    valor: "53%",
+    titulo: "de los robos de autos asegurados fue con violencia",
+    detalle: "Promedio nacional de julio de 2025 a junio de 2026 (53.04%), frente a 57.9% un año antes.",
+    fuente: "La Razón",
+    url: "https://www.razon.com.mx/negocios/2026/07/16/robo-de-vehiculos-baja-162-en-el-ultimo-ano/",
+    fecha: "jul 2026",
+    origen: "AMIS",
+  },
+  {
+    id: "recuperacion",
+    valor: "45%",
+    titulo: "de los autos asegurados robados se recupera",
+    detalle: "Tasa nacional de febrero de 2025 a enero de 2026: unos 24,143 vehículos. Más de la mitad no aparece.",
+    fuente: "Expansión",
+    url: "https://expansion.mx/empresas/2026/07/13/autos-mas-robados-en-mexico-2026",
+    fecha: "jul 2026",
+    origen: "AMIS",
   },
   {
     id: "colisiones",
@@ -39,14 +72,45 @@ export const DATOS_MEXICO: Dato[] = [
     fuente: "Animal Político",
     url: "https://grupoanimal.mx/hablemos-de/mexico-mas-vehiculos-pocos-seguros-qualitas-record",
     fecha: "jul 2026",
+    origen: "AMIS",
   },
   {
     id: "montachoques",
     valor: "+5% a 10%",
     titulo: "más fraudes de “montachoques”",
-    detalle: "Alza reportada por la AMIS en el primer semestre de 2026; los delincuentes buscan autos sin seguro.",
+    detalle: "Alza estimada por la AMIS en el primer semestre de 2026; los delincuentes buscan autos sin seguro.",
     fuente: "Expansión",
     url: "https://expansion.mx/economia/2026/07/15/suben-10-los-montachoques-en-2026-y-aseguradoras-piden-tipificar-el-delito-en-todo-el-pais",
     fecha: "jul 2026",
+    origen: "AMIS",
+  },
+  {
+    id: "poliza-basica",
+    valor: "$3,000 a $7,000",
+    titulo: "al año cuesta una póliza básica de daños a terceros",
+    detalle: "Según el modelo del vehículo y la zona donde circula.",
+    fuente: "El Imparcial",
+    url: "https://www.elimparcial.com/dinero/2026/06/09/los-accidentes-viales-en-mexico-podrian-aumentar-hasta-20-por-el-mundial-2026-debido-al-alza-en-la-movilidad-un-riesgo-patrimonial-ante-el-dato-de-que-el-73-de-los-autos-circula-sin-seguro/",
+    fecha: "jun 2026",
+    origen: "Condusef",
+  },
+  {
+    id: "mercado-usados",
+    valor: "4.67 millones",
+    titulo: "compraventas de autos usados previstas en 2026",
+    detalle: "Un 66.8% más que los 2.8 millones de 2016; la previsión llega a 5.42 millones en 2030.",
+    fuente: "Expansión",
+    url: "https://expansion.mx/empresas/2026/10/28/autos-chinos-mercado-seminuevos-mexico-kavak",
+    fecha: "oct 2026",
+  },
+  {
+    id: "seminuevos-financiados",
+    valor: "153,009",
+    titulo: "seminuevos vendidos con crédito en 2025",
+    detalle: "Récord anual, 3.4% más que en 2024. Cada crédito necesita una valuación y un seguro confiables.",
+    fuente: "Milenio",
+    url: "https://amp.milenio.com/negocios/cuantos-autos-seminuevos-se-financiaron-en-mexico-en-2025",
+    fecha: "mar 2026",
+    origen: "AMDA",
   },
 ];
