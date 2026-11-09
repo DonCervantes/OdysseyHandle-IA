@@ -51,11 +51,11 @@ def test_red_bloqueada_a_nivel_python():
 
 
 def test_entorno_minimo_y_directorio_temporal(monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-secreta")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-secreta")
     code = "import os\nRESULT = {'env': sorted(os.environ), 'cwd': os.getcwd(), 'home': os.environ['HOME']}"
     r = run_code(code, **SUB)
     assert r.ok
-    assert "ANTHROPIC_API_KEY" not in r.value["env"]
+    assert "OPENAI_API_KEY" not in r.value["env"]
     assert "autoguard_sandbox_" in r.value["cwd"]
     assert os.path.realpath(r.value["home"]) == os.path.realpath(r.value["cwd"])
     assert not os.path.exists(r.value["cwd"])  # se borra al terminar

@@ -49,7 +49,7 @@ def test_suite_en_modo_mock_aunque_haya_dotenv():
     # conftest.py: sin .env, sin llaves, LLM forzado a mock y valuación offline.
     assert os.environ.get("AUTOGUARD_NO_DOTENV") == "1"
     assert os.environ.get("LLM_PROVIDER") == "mock"
-    assert not os.environ.get("ANTHROPIC_API_KEY")
+    assert not os.environ.get("OPENAI_API_KEY")
     assert not os.environ.get("TAVILY_API_KEY")
     assert llm.is_mock()
 
@@ -58,7 +58,7 @@ def test_env_example_lista_todas_las_variables():
     texto = (REPO / ".env.example").read_text(encoding="utf-8")
     declaradas = set(re.findall(r"^([A-Z][A-Z0-9_]*)=", texto, flags=re.M))
     assert declaradas == set(settings.ENV_VARS)
-    assert not re.search(r"^(ANTHROPIC|TAVILY|FIRECRAWL)_API_KEY=.+", texto, flags=re.M)  # sin llaves
+    assert not re.search(r"^(OPENAI|ANTHROPIC|TAVILY|FIRECRAWL)_API_KEY=.+", texto, flags=re.M)  # sin llaves
 
 
 def test_env_vars_cubre_lo_que_lee_el_codigo():

@@ -82,7 +82,7 @@ El sistema cumple los controles de diseño del plan (lista blanca, evaluador/obj
 - `.gitignore` incluye `.env` y `var/`.
 - Trackeado: solo `.env.example` con valores vacíos / defaults seguros y comentarios.
 - `autoguard/settings.py` carga `.env` sin override de variables ya exportadas; `AUTOGUARD_NO_DOTENV=1` en `tests/conftest.py` limpia secretos y fuerza `LLM_PROVIDER=mock` + `VALUACION_OFFLINE=1`.
-- `llm.py`: modo mock sin `ANTHROPIC_API_KEY` o con `LLM_PROVIDER=mock`; logs solo con `type(e).__name__` / mensajes propios — **nunca** la llave.
+- `llm.py`: modo mock sin `OPENAI_API_KEY` o con `LLM_PROVIDER=mock`; logs solo con `type(e).__name__` / mensajes propios — **nunca** la llave.
 - Escaneo de patrones de llave reales en el árbol versionado: negativo. Único match: `FAKE_KEY = "sk-ant-test-NO-REAL-KEY-..."` en `tests/test_llm.py` (marcador explícito de no-real).
 
 ### Hallazgos

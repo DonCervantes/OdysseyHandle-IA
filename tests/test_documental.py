@@ -16,7 +16,7 @@ HOY = date(2026, 11, 9)
 @pytest.fixture(autouse=True)
 def _mock_llm(monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "mock")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
 
 def _gt():

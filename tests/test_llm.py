@@ -8,7 +8,7 @@ import pytest
 
 from autoguard import llm
 
-FAKE_KEY = "sk-ant-test-NO-REAL-KEY-123456"
+FAKE_KEY = "sk-test-NO-REAL-KEY-123456"
 SCHEMA = {
     "type": "object",
     "required": ["vin", "anio"],
@@ -23,22 +23,31 @@ def _fallback():
     return dict(FB)
 
 
-def _msg(text, stop="end_turn", extra_blocks=()):
-    blocks = list(extra_blocks) + [SimpleNamespace(type="text", text=text)]
-    return SimpleNamespace(content=blocks, stop_reason=stop)
+def _msg(text, status="completed", reason=None, refusal=False):
+    """Respuesta falsa con la forma de la Responses API."""
+    parts = [SimpleNamespace(type="refusal", refusal="no")] if refusal else [SimpleNamespace(type="output_text", text=text)]
+    item = SimpleNamespace(type="message", content=parts)
+    reasoning = SimpleNamespace(type="reasoning", content=None)
+    return SimpleNamespace(
+        status=status,
+        incomplete_details=SimpleNamespace(reason=reason) if reason else None,
+        output=[reasoning, item],
+        output_text="" if refusal else text,
+        usage=SimpleNamespace(input_tokens=10, output_tokens=5),
+    )
 
 
 class FakeClient:
-    """Imita `client.beta.messages.create` con respuestas en cola."""
+    """Imita `client.responses.create` con respuestas en cola."""
 
     def __init__(self, *responses):
-        self.responses = list(responses)
+        self.queue = list(responses)
         self.calls: list[dict] = []
-        self.beta = SimpleNamespace(messages=SimpleNamespace(create=self._create))
+        self.responses = SimpleNamespace(create=self._create)
 
     def _create(self, **kw):
         self.calls.append(kw)
-        r = self.responses.pop(0)
+        r = self.queue.pop(0)
         if isinstance(r, Exception):
             raise r
         return r
@@ -46,7 +55,7 @@ class FakeClient:
 
 @pytest.fixture(autouse=True)
 def _env(monkeypatch, tmp_path):
-    for v in ("LLM_PROVIDER", "ANTHROPIC_API_KEY", "LLM_MODEL", "LLM_EFFORT", "LLM_CACHE"):
+    for v in ("LLM_PROVIDER", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "LLM_MODEL", "LLM_EFFORT", "LLM_CACHE"):
         monkeypatch.delenv(v, raising=False)
     monkeypatch.setenv("LLM_CACHE_DIR", str(tmp_path / "cache"))
     llm.set_client(None)
@@ -55,7 +64,7 @@ def _env(monkeypatch, tmp_path):
 
 
 def _inject(monkeypatch, *responses):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", FAKE_KEY)
+    monkeypatch.setenv("OPENAI_API_KEY", FAKE_KEY)
     fake = FakeClient(*responses)
     llm.set_client(fake)
     return fake
@@ -67,7 +76,7 @@ def test_is_mock_without_key():
 
 
 def test_is_mock_provider_flag(monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", FAKE_KEY)
+    monkeypatch.setenv("OPENAI_API_KEY", FAKE_KEY)
     assert not llm.is_mock()
     monkeypatch.setenv("LLM_PROVIDER", "mock")
     assert llm.is_mock()
@@ -92,7 +101,7 @@ def test_retained_client_not_used_after_key_removed(monkeypatch):
     """Regresión: con un cliente retenido y sin llave, NO se llama al cliente (modo mock)."""
     fake = _inject(monkeypatch, _msg(GOOD), _msg(GOOD))
     assert llm.complete_json("s", "u", fallback=_fallback) != FB  # con llave: usa el cliente
-    monkeypatch.delenv("ANTHROPIC_API_KEY")
+    monkeypatch.delenv("OPENAI_API_KEY")
     assert llm.is_mock()
     assert llm.complete_json("s", "u", fallback=_fallback) == FB
     assert len(fake.calls) == 1
@@ -107,40 +116,45 @@ def test_injected_client_without_key_is_mock(monkeypatch):
 
 # ---------------------------------------------------------------- cliente falso
 def test_success_with_schema_and_request_shape(monkeypatch):
-    thinking = SimpleNamespace(type="thinking", thinking="")
-    fake = _inject(monkeypatch, _msg("Claro:\n```json\n" + GOOD + "\n```", extra_blocks=[thinking]))
+    fake = _inject(monkeypatch, _msg("Claro:\n```json\n" + GOOD + "\n```"))
     out = llm.complete_json("sistema", "extrae", schema=SCHEMA, fallback=_fallback, max_tokens=1234)
     assert out == {"vin": "3VWFE21C04M000001", "anio": 2004}
     kw = fake.calls[0]
-    assert kw["model"] == "claude-opus-5-5"
-    assert kw["max_tokens"] == 1234 and kw["system"] == "sistema"
-    assert kw["fallbacks"] == "default" and kw["betas"] == ["server-side-fallback-2026-07-01"]
-    assert "thinking" not in kw and "temperature" not in kw
-    assert "JSON Schema" in kw["messages"][0]["content"][-1]["text"]
+    assert kw["model"] == "gpt-6.1-sol"
+    assert kw["instructions"] == "sistema"
+    assert kw["max_output_tokens"] == 1234 + llm.REASONING_HEADROOM
+    assert kw["reasoning"] == {"effort": "low"}
+    assert kw["text"] == {"format": {"type": "json_object"}}
+    assert kw["input"][0]["role"] == "user"
+    assert "JSON Schema" in kw["input"][0]["content"][-1]["text"]
+    assert kw["input"][0]["content"][-1]["type"] == "input_text"
 
 
-def test_model_from_env_without_server_fallback(monkeypatch):
+def test_model_and_effort_from_env(monkeypatch):
     fake = _inject(monkeypatch, _msg(GOOD))
-    monkeypatch.setenv("LLM_MODEL", "claude-haiku-5-5")
+    monkeypatch.setenv("LLM_MODEL", "gpt-6-luna")
+    monkeypatch.setenv("LLM_EFFORT", "medium")
     llm.complete_json("s", "u", fallback=_fallback)
-    assert fake.calls[0]["model"] == "claude-haiku-5-5"
-    assert "fallbacks" not in fake.calls[0] and "betas" not in fake.calls[0]
+    assert fake.calls[0]["model"] == "gpt-6-luna"
+    assert fake.calls[0]["reasoning"] == {"effort": "medium"}
 
 
-def test_images_as_base64_blocks(monkeypatch):
+def test_images_and_pdf_as_data_urls(monkeypatch):
+    import base64
+
     fake = _inject(monkeypatch, _msg(GOOD))
     png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 10
     jpg = b"\xff\xd8\xff\xe0" + b"\x00" * 10
     pdf = b"%PDF-1.4 ..."
     llm.complete_json("s", "u", images=[png, jpg, pdf], fallback=_fallback)
-    content = fake.calls[0]["messages"][0]["content"]
-    assert [b["type"] for b in content] == ["image", "image", "document", "text"]
-    assert content[0]["source"]["media_type"] == "image/png"
-    assert content[1]["source"]["media_type"] == "image/jpeg"
-    assert content[2]["source"]["media_type"] == "application/pdf"
-    import base64
-
-    assert base64.standard_b64decode(content[0]["source"]["data"]) == png
+    content = fake.calls[0]["input"][0]["content"]
+    assert [b["type"] for b in content] == ["input_image", "input_image", "input_file", "input_text"]
+    assert content[0]["image_url"].startswith("data:image/png;base64,")
+    assert content[1]["image_url"].startswith("data:image/jpeg;base64,")
+    assert content[2]["file_data"].startswith("data:application/pdf;base64,")
+    assert content[2]["filename"].endswith(".pdf")
+    assert base64.standard_b64decode(content[0]["image_url"].split(",", 1)[1]) == png
+    assert base64.standard_b64decode(content[2]["file_data"].split(",", 1)[1]) == pdf
 
 
 def test_unsupported_image_falls_back(monkeypatch):
@@ -169,24 +183,36 @@ def test_network_error_returns_fallback(monkeypatch):
 
 
 def test_non_retryable_api_error_no_retry(monkeypatch):
-    import anthropic
-    import httpx2 as httpx
+    import httpx
+    import openai
 
-    req = httpx.Request("POST", "https://example.invalid/v1/messages")
-    err = anthropic.AuthenticationError("bad key", response=httpx.Response(401, request=req), body=None)
+    req = httpx.Request("POST", "https://example.invalid/v1/responses")
+    err = openai.AuthenticationError("bad key", response=httpx.Response(401, request=req), body=None)
     fake = _inject(monkeypatch, err, _msg(GOOD))
     assert llm.complete_json("s", "u", fallback=_fallback) == FB
     assert len(fake.calls) == 1
 
 
-@pytest.mark.parametrize("stop", ["refusal", "max_tokens"])
-def test_refusal_or_truncation_falls_back(monkeypatch, stop):
-    _inject(monkeypatch, _msg(GOOD, stop=stop), _msg(GOOD, stop=stop))
+@pytest.mark.parametrize("resp", [
+    _msg(GOOD, status="incomplete", reason="max_output_tokens"),
+    _msg(GOOD, status="incomplete", reason="content_filter"),
+    _msg("", refusal=True),
+])
+def test_refusal_or_incomplete_falls_back(monkeypatch, resp):
+    fake = _inject(monkeypatch, resp, resp)
     assert llm.complete_json("s", "u", fallback=_fallback) == FB
+    assert len(fake.calls) == 2
+
+
+def test_output_text_from_parts_when_property_missing(monkeypatch):
+    r = _msg(GOOD)
+    r.output_text = None
+    _inject(monkeypatch, r)
+    assert llm.complete_json("s", "u", fallback=_fallback)["anio"] == 2004
 
 
 def test_never_logs_key(monkeypatch, caplog):
-    _inject(monkeypatch, RuntimeError(f"auth header x-api-key: {FAKE_KEY}"), _msg("nada"))
+    _inject(monkeypatch, RuntimeError(f"Authorization: Bearer {FAKE_KEY}"), _msg("nada"))
     with caplog.at_level(logging.DEBUG, logger="autoguard.llm"):
         assert llm.complete_json("s", "u", fallback=_fallback) == FB
     assert caplog.records  # sí registró los fallos...

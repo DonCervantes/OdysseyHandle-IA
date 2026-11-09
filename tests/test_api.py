@@ -38,7 +38,7 @@ class FakeRunner:
 @pytest.fixture
 def ctx(tmp_path, monkeypatch):
     monkeypatch.setenv("LLM_PROVIDER", "mock")
-    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     settings = Settings(
         api_key=KEY,
         database_url=f"sqlite:///{tmp_path / 'api.db'}",

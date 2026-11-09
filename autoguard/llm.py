@@ -1,19 +1,24 @@
-"""Cliente LLM único del proyecto (T-01).
+"""Cliente LLM único del proyecto (T-01; proveedor OpenAI desde T-31).
 
-Contrato: si no hay ANTHROPIC_API_KEY o LLM_PROVIDER=mock, NO se llama a la red y se devuelve
+Contrato: si no hay OPENAI_API_KEY o LLM_PROVIDER=mock, NO se llama a la red y se devuelve
 `fallback()`; así todo el sistema (y los tests) corre sin llaves y de forma reproducible.
+
+Proveedor: OpenAI Responses API (`client.responses.create`). Modelo por defecto `gpt-6.1-sol`
+(recomendado por OpenAI como balance calidad/costo; entrada de texto e imagen, salidas estructuradas y
+esfuerzo de razonamiento). Los PDF se envían como `input_file` en base64 (modelos con visión).
+Fuente: https://developers.openai.com/api/docs/models y /api/docs/quickstart (consultadas 2026-11-09).
 
 Variables de entorno:
 - `LLM_PROVIDER`: "auto" (default) | "mock".
-- `ANTHROPIC_API_KEY`: llave (solo en `.env`; NUNCA se loguea).
-- `LLM_MODEL`: modelo (default `claude-opus-5-5`).
-- `LLM_EFFORT`: low | medium | high | xhigh | max (default `low`: tareas cortas de extracción/redacción).
+- `OPENAI_API_KEY`: llave (solo en `.env`; NUNCA se loguea).
+- `LLM_MODEL`: modelo (default `gpt-6.1-sol`).
+- `LLM_EFFORT`: esfuerzo de razonamiento low | medium | high (default `low`: extracción/redacción corta).
 - `LLM_CACHE`: "1" activa caché en disco por hash de la petición.
 - `LLM_CACHE_DIR`: directorio de caché (default `var/llm_cache/`).
 
-Tests: `set_client(fake)` inyecta un cliente falso (cualquier objeto con `.beta.messages.create(**kw)`)
+Tests: `set_client(fake)` inyecta un cliente falso (cualquier objeto con `.responses.create(**kw)`)
 y evita la red; `set_client(None)` lo quita. El modo mock (sin llave o LLM_PROVIDER=mock) manda siempre:
-ni un cliente inyectado se usa sin ANTHROPIC_API_KEY.
+ni un cliente inyectado se usa sin OPENAI_API_KEY.
 """
 from __future__ import annotations
 
@@ -28,14 +33,13 @@ from typing import Any, Callable, Optional
 
 log = logging.getLogger(__name__)
 
-DEFAULT_MODEL = "claude-opus-5-5"
+DEFAULT_MODEL = "gpt-6.1-sol"
 DEFAULT_EFFORT = "low"
 DEFAULT_CACHE_DIR = "var/llm_cache"
 MAX_ATTEMPTS = 2  # 1 intento + 1 reintento
-
-# Modelos que aceptan el fallback del lado del servidor ante `refusal`.
-_FALLBACK_BETA = "server-side-fallback-2026-07-01"
-_FALLBACK_MODELS = {"claude-fable-5-2", "claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5"}
+# Los tokens de razonamiento cuentan contra `max_output_tokens`: se suma holgura para que el JSON no se trunque.
+REASONING_HEADROOM = 2000
+KEY_ENV = "OPENAI_API_KEY"
 
 _client: Any = None  # cliente inyectado (tests) o creado perezosamente
 
@@ -46,7 +50,7 @@ class LLMError(RuntimeError):
 
 def is_mock() -> bool:
     """True si el LLM está en modo mock (sin llave o LLM_PROVIDER=mock)."""
-    return os.getenv("LLM_PROVIDER", "auto") == "mock" or not os.getenv("ANTHROPIC_API_KEY")
+    return os.getenv("LLM_PROVIDER", "auto") == "mock" or not os.getenv(KEY_ENV)
 
 
 def set_client(client: Any) -> None:
@@ -58,9 +62,9 @@ def set_client(client: Any) -> None:
 def _get_client() -> Any:
     global _client
     if _client is None:
-        import anthropic
+        import openai
 
-        _client = anthropic.Anthropic(max_retries=2, timeout=120.0)
+        _client = openai.OpenAI(max_retries=2, timeout=120.0)
     return _client
 
 
@@ -80,11 +84,16 @@ def _media_type(data: bytes) -> str:
 
 
 def _content_blocks(user: str, images: Optional[list[bytes]], schema: Optional[dict[str, Any]]) -> list[dict]:
+    """Contenido del mensaje de usuario en formato Responses API: imágenes como `input_image` (data URL),
+    PDF como `input_file` (data URL) y al final el texto con la instrucción de responder en JSON."""
     blocks: list[dict] = []
-    for img in images or []:
+    for i, img in enumerate(images or []):
         mt = _media_type(img)
-        src = {"type": "base64", "media_type": mt, "data": base64.standard_b64encode(img).decode("ascii")}
-        blocks.append({"type": "document" if mt == "application/pdf" else "image", "source": src})
+        url = f"data:{mt};base64," + base64.standard_b64encode(img).decode("ascii")
+        if mt == "application/pdf":
+            blocks.append({"type": "input_file", "filename": f"documento_{i + 1}.pdf", "file_data": url})
+        else:
+            blocks.append({"type": "input_image", "image_url": url})
     text = user
     if schema:
         text += (
@@ -93,7 +102,7 @@ def _content_blocks(user: str, images: Optional[list[bytes]], schema: Optional[d
         )
     else:
         text += "\n\nResponde SOLO con un objeto JSON válido, sin texto adicional."
-    blocks.append({"type": "text", "text": text})
+    blocks.append({"type": "input_text", "text": text})
     return blocks
 
 
@@ -190,7 +199,8 @@ def _cache_key(model: str, system: str, user: str, images: Optional[list[bytes]]
                schema: Optional[dict[str, Any]], max_tokens: int) -> str:
     h = hashlib.sha256()
     payload = {
-        "model": model, "system": system, "user": user, "schema": schema, "max_tokens": max_tokens,
+        "provider": "openai", "model": model, "system": system, "user": user, "schema": schema,
+        "max_tokens": max_tokens,
         "effort": os.getenv("LLM_EFFORT", DEFAULT_EFFORT),
         "images": [hashlib.sha256(i).hexdigest() for i in images or []],
     }
@@ -221,39 +231,48 @@ def _cache_put(key: str, value: dict[str, Any]) -> None:
 
 # ---------------------------------------------------------------- llamada
 def _response_text(resp: Any) -> str:
-    stop = getattr(resp, "stop_reason", None)
-    if stop == "refusal":
-        raise LLMError("el modelo rechazó la petición (refusal)")
-    if stop == "max_tokens":
-        raise LLMError("respuesta truncada (max_tokens)")
-    parts = [getattr(b, "text", "") for b in getattr(resp, "content", []) or [] if getattr(b, "type", None) == "text"]
-    text = "".join(parts).strip()
+    """Texto de una respuesta de la Responses API; error si está incompleta, rechazada o vacía."""
+    if getattr(resp, "status", None) == "incomplete":
+        reason = getattr(getattr(resp, "incomplete_details", None), "reason", None)
+        raise LLMError(f"respuesta incompleta ({reason or 'sin motivo'})")
+    parts: list[str] = []
+    for item in getattr(resp, "output", None) or []:
+        for c in getattr(item, "content", None) or []:
+            ctype = getattr(c, "type", None)
+            if ctype == "refusal":
+                raise LLMError("el modelo rechazó la petición (refusal)")
+            if ctype == "output_text":
+                parts.append(getattr(c, "text", "") or "")
+    text = (getattr(resp, "output_text", None) or "".join(parts)).strip()
     if not text:
         raise LLMError("respuesta sin texto")
     return text
 
 
-def _call(client: Any, model: str, system: str, content: list[dict], max_tokens: int) -> str:
-    kwargs: dict[str, Any] = {
+def build_request(model: str, system: str, content: list[dict], max_tokens: int) -> dict[str, Any]:
+    """Argumentos de `client.responses.create`. JSON mode (`json_object`) y validación local contra el
+    schema: los schemas del proyecto no siempre cumplen el modo `strict` de Structured Outputs."""
+    return {
         "model": model,
-        "max_tokens": max_tokens,
-        "system": system,
-        "messages": [{"role": "user", "content": content}],
-        "output_config": {"effort": os.getenv("LLM_EFFORT", DEFAULT_EFFORT)},
+        "instructions": system,
+        "input": [{"role": "user", "content": content}],
+        "max_output_tokens": max_tokens + REASONING_HEADROOM,
+        "reasoning": {"effort": os.getenv("LLM_EFFORT", DEFAULT_EFFORT)},
+        "text": {"format": {"type": "json_object"}},
     }
-    if model in _FALLBACK_MODELS:
-        kwargs["betas"] = [_FALLBACK_BETA]
-        kwargs["fallbacks"] = "default"
-    return _response_text(client.beta.messages.create(**kwargs))
+
+
+def _call(client: Any, model: str, system: str, content: list[dict], max_tokens: int) -> str:
+    return _response_text(client.responses.create(**build_request(model, system, content, max_tokens)))
 
 
 def _non_retryable(exc: Exception) -> bool:
     try:
-        import anthropic
+        import openai
     except ImportError:  # pragma: no cover
         return False
-    return isinstance(exc, (anthropic.AuthenticationError, anthropic.PermissionDeniedError,
-                            anthropic.NotFoundError, anthropic.BadRequestError))
+    return isinstance(exc, (openai.AuthenticationError, openai.PermissionDeniedError,
+                            openai.NotFoundError, openai.BadRequestError))
 
 
 def complete_json(

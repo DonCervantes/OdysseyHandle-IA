@@ -84,7 +84,7 @@ shell gana sobre `.env`. Variables relevantes (todas documentadas en [`.env.exam
 
 | Variable | Default | Para qué |
 | --- | --- | --- |
-| `ANTHROPIC_API_KEY` | vacía | Vacía ⇒ LLM mock. |
+| `OPENAI_API_KEY` | vacía | Vacía ⇒ LLM mock. Con llave usa OpenAI (`LLM_MODEL`, default `gpt-6.1-sol`). |
 | `LLM_PROVIDER` | `auto` | `mock` fuerza respuestas determinísticas aunque haya llave (recomendado para la demo). |
 | `LLM_CACHE` | `0` | `1` guarda respuestas reales en disco (demos reproducibles con llave). |
 | `DATABASE_URL` | `sqlite:///var/autoguard.db` | SQLite local; Postgres/Supabase opcional (`db/migrations/001_init.sql`). |
@@ -187,7 +187,7 @@ al remoto). Ver [`tools/progreso/README.md`](tools/progreso/README.md).
 ```bash
 python -m autoguard.agents.documental --eval    # precisión de extracción en mock
 python -m autoguard.agents.visual --eval        # recall de daños en mock
-python scripts/eval_llm.py                      # medición con LLM real (requiere ANTHROPIC_API_KEY)
+python scripts/eval_llm.py                      # medición con LLM real (requiere OPENAI_API_KEY)
 ```
 
 ---
