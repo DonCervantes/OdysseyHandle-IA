@@ -87,15 +87,24 @@ def plateau_polizas(rows, window=CONV_WINDOW, tol=CONV_TOL, min_drop=0.10):
 
 
 def acceptance_by_generation(path, variant):
-    """Tasa de aceptación por generación de una variante (desde patches.jsonl)."""
+    """Tasa de aceptación por generación de una variante (desde patches.jsonl): sobre todos los parches, y
+    `evaluados` = solo los que llegaron al holdout con un cambio de prima posible (sin `invalido` ni el
+    control `cambio_prompt`, cuya ganancia es 0 por diseño)."""
     rows = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines() if line.strip()]
     rows = [r for r in rows if r.get('variant') == variant]
     if not rows:
-        return dict(primera=None, ultima=None, por_generacion={})
+        return dict(primera=None, ultima=None, por_generacion={}, evaluados={})
     frame = pd.DataFrame(rows)
-    rate = frame.groupby('generation')['veredicto'].apply(lambda v: float((v == 'aceptado').mean()))
-    return dict(primera=float(rate.iloc[0]), ultima=float(rate.iloc[-1]),
-                por_generacion={int(g): r for g, r in rate.items()})
+
+    def rates(f):
+        rate = f.groupby('generation')['veredicto'].apply(lambda v: float((v == 'aceptado').mean()))
+        return dict(primera=float(rate.iloc[0]) if len(rate) else None,
+                    ultima=float(rate.iloc[-1]) if len(rate) else None,
+                    por_generacion={int(g): r for g, r in rate.items()})
+
+    out = rates(frame)
+    out['evaluados'] = rates(frame[(frame['veredicto'] != 'invalido') & (frame['tipo'] != 'cambio_prompt')])
+    return out
 
 
 def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
@@ -158,7 +167,10 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
                 s['hypotheses'] = analyze(s['train'], top_k=12)
                 evitar = {t for t, until in s['tabu'].items() if until >= s['generation']}
                 evitar |= {patch_target(p) for p in all_patches if patch_target(p)}
-                arms = s['_arms'] if s['variant'] == 'parametros' else s['meta'].plan_arms(3)[0]
+                # El control no cambia la prima: a lo más 1 por GENERACIÓN (no por ronda).
+                controles = sum(p.tipo == 'cambio_prompt' for p in all_patches)
+                arms = s['_arms'] if s['variant'] == 'parametros' else \
+                    s['meta'].plan_arms(3, max_control=max(0, 1 - controles))[0]
                 s['patches'] = propose(s['cfg'], s['hypotheses'], arms, s['generation'],
                                        lecciones=s['meta'].lecciones, train=s['train'], evitar=evitar,
                                        sustitutos=s['_subs'])
@@ -179,6 +191,7 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
         #    composición antes de commitear. Así dos parches que corrigen lo mismo no se suman.
         accepted = sorted((r for r in results if r[1].aceptado), key=lambda r: -r[1].ganancia)
         s['accepted'] = []
+        composicion = set()
         cfg = champion
         for patch, verdict, challenger in accepted:
             if s['accepted']:
@@ -189,14 +202,20 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
                     patch.veredicto = 'rechazado'
                     patch.razon = (f'aceptado contra el campeón ({verdict.ganancia:+.2%}) pero no mejora sobre '
                                    f'la composición de la generación: {"; ".join(v2.razones)}')
+                    composicion.add(patch.patch_id)
                     continue
+                # Métricas MARGINALES (sobre la composición): las que ven la bitácora y el meta-mejorador.
+                patch.metrics_before = dict(probe.metrics_before)
+                patch.metrics_after = {**probe.metrics_after, 'ganancia_vs_campeon': verdict.ganancia}
+                patch.razon = f'{probe.razon} (marginal sobre la composición; contra el campeón {verdict.ganancia:+.2%})'
             cfg = challenger
             s['accepted'].append((patch, cfg))
         s['cfg'] = cfg
         # 3) Tabú: lo rechazado no se re-propone durante TABU_GENS generaciones (con más datos se reintenta).
+        #    Un parche que era bueno contra el campeón y solo sobró en la composición no entra al tabú.
         for patch in s['patches']:
             target = patch_target(patch)
-            if not target:
+            if not target or patch.patch_id in composicion:
                 continue
             if patch.veredicto == 'rechazado':
                 s['tabu'][target] = s['generation'] + TABU_GENS
