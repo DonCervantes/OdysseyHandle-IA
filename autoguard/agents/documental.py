@@ -136,7 +136,8 @@ _SCHEMA: dict[str, Any] = {
 
 def extract(content: bytes, tipo: TipoDocumento, documento_id: str, mime: str = "application/pdf") -> DocExtraction:
     """LLM multimodal extrae VIN, placas, marca, modelo, año y vigencia (con fallback mock)."""
-    fallback = lambda: _mock_extraction(tipo, documento_id).model_dump(mode="json")  # noqa: E731
+    # Con LLM real, un fallo NO debe devolver el ground truth (inflaría --eval): extracción vacía, confianza 0.
+    fallback = lambda: DocExtraction(documento_id=documento_id, tipo=tipo, confianza=0.0).model_dump(mode="json")  # noqa: E731
     if llm.is_mock():
         return _mock_extraction(tipo, documento_id)
     es_imagen = mime.startswith("image/")
@@ -162,7 +163,7 @@ def extract(content: bytes, tipo: TipoDocumento, documento_id: str, mime: str = 
             confianza=min(max(conf, 0.0), 1.0),
         )
     except Exception:
-        return _mock_extraction(tipo, documento_id)
+        return DocExtraction(documento_id=documento_id, tipo=tipo, confianza=0.0)
 
 
 # ---------------------------------------------------------------- verificación cruzada

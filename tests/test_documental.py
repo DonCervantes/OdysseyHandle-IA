@@ -120,7 +120,7 @@ def test_extract_llm_basura_usa_fallback(monkeypatch):
     monkeypatch.setattr(llm, "is_mock", lambda: False)
     monkeypatch.setattr(llm, "complete_json", lambda *a, **k: {"anio": "abc", "confianza": "x"})
     ex = doc.extract(b"", "factura", "EXP-001-FAC", mime="image/png")
-    assert ex.vin == _gt()["documentos"]["EXP-001-FAC"]["vin"]
+    assert ex.vin is None and ex.confianza == 0.0  # con LLM real nunca se filtra el ground truth
 
 
 # ---------------------------------------------------------------- perfil
