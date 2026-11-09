@@ -10,12 +10,14 @@ const VARIANTES = [
 
 const MAX = Math.max(...CORRIDAS.map((c) => c.estatico));
 const prom = (k: "estatico" | "parametros" | "rsi") => CORRIDAS.reduce((s, c) => s + c[k], 0) / CORRIDAS.length;
+// Cuántas veces la mejora promedio del RSI supera la de ajustar solo parámetros (≈1.75 con las 4 semillas).
+const VECES = (delta(prom("rsi"), prom("estatico")) / delta(prom("parametros"), prom("estatico"))).toFixed(1);
 
 export default function Results() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.25fr_1fr]">
       {/* barras promedio */}
-      <div className="card p-5 sm:p-7">
+      <div className="card min-w-0 p-5 sm:p-7">
         <div className="eyebrow">Pérdida acumulada promedio · 4 semillas</div>
         <p className="mt-1 text-[14px] text-muted">60 lotes × 200 pólizas simuladas. Menos es mejor.</p>
         <div className="mt-6 space-y-5">
@@ -39,7 +41,7 @@ export default function Results() {
         </div>
 
         <div className="mt-7 overflow-x-auto">
-          <table className="w-full min-w-[320px] text-[13px]">
+          <table className="w-full min-w-[280px] text-[13px]">
             <caption className="sr-only">Regret por semilla y variante, en millones de pesos simulados</caption>
             <thead>
               <tr className="border-b border-line text-left text-faint">
@@ -68,7 +70,7 @@ export default function Results() {
       </div>
 
       {/* bloque honesto */}
-      <div className="flex flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-4">
         <div className="card-cream p-5 sm:p-7">
           <div className="eyebrow">Lo que logramos</div>
           <div className="num mt-3 text-[34px] font-semibold leading-none tracking-tight sm:text-[48px]">
@@ -76,7 +78,7 @@ export default function Results() {
           </div>
           <p className="mt-3 text-[15px] leading-relaxed text-muted">
             de pérdida frente a reglas fijas con el ciclo de auto-mejora completo. Ajustar solo parámetros se queda en{" "}
-            {fmtSignedPct(RANGO_PARAM.peor)} a {fmtSignedPct(RANGO_PARAM.mejor)}: la estructura que agrega el RSI vale casi el doble.
+            {fmtSignedPct(RANGO_PARAM.peor)} a {fmtSignedPct(RANGO_PARAM.mejor)}: en promedio, el ciclo completo logra ~{VECES}× la mejora de ajustar solo parámetros.
           </p>
         </div>
         <div className="card p-5 sm:p-7">

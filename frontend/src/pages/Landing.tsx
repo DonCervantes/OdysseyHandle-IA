@@ -81,7 +81,10 @@ function Hero() {
         style={{ background: "radial-gradient(closest-side, rgb(var(--cream)), transparent)" }}
       />
       <div className="wrap text-center">
-        <span className="chip"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sand" />Hecho para <span className="hidden sm:inline">seminuevos en </span>México · datos simulados</span>
+        <span className="chip">
+          <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 rounded-full bg-sand" />
+          <span>Hecho para <span className="hidden sm:inline">seminuevos en </span>México · datos simulados</span>
+        </span>
         <h1 className="mx-auto mt-8 max-w-5xl text-[44px] font-bold leading-[1.02] tracking-[-0.035em] sm:text-[68px] lg:text-[88px]">
           Asegurar un seminuevo, <span className="text-gradient">sin adivinar.</span>
         </h1>
@@ -117,7 +120,7 @@ function Problema() {
             <h3 className="mt-3 text-[18px] font-medium text-ink">{d.titulo}</h3>
             <p className="mt-2 flex-1 text-[15px] leading-relaxed text-muted">{d.detalle}</p>
             <div className="mt-5">
-              <Source href={d.url}>Fuente: {d.fuente} · {d.fecha}</Source>
+              <Source href={d.url}>Fuente: {d.fuente}{d.origen ? ` con datos de ${d.origen}` : ""} · {d.fecha}</Source>
             </div>
           </article>
         ))}
@@ -129,7 +132,7 @@ function Problema() {
 const AGENTES = [
   { n: "01", nombre: "Documental", hace: "Lee factura, tarjeta de circulación y póliza. Cruza VIN, placas, marca y año entre documentos.", ej: "VIN de factura ≠ VIN de tarjeta → alerta alta" },
   { n: "02", nombre: "Visual", hace: "Revisa las fotos, ubica daños y estima el costo de reacondicionamiento.", ej: `Espejo estrellado ${fmtMXN(900)} + rayón en puerta ${fmtMXN(1900)}` },
-  { n: "03", nombre: "Valuación", hace: "Compara contra autos similares y ajusta por kilometraje y daños.", ej: `Jetta 2017: ${fmtMXN(126722)} con 8 comparables` },
+  { n: "03", nombre: "Valuación", hace: "Compara contra autos similares y ajusta por kilometraje y daños.", ej: `Jetta 2017 con 60,000 km declarados: ${fmtMXN(127876)} con 8 comparables` },
   { n: "04", nombre: "Cotizador", hace: "Calcula la prima con factores explicables, uno por uno.", ej: `${fmtMXN(9000)} base × zona CDMX 1.10 = ${fmtMXN(9900)}` },
 ];
 
@@ -148,7 +151,7 @@ function ComoFunciona() {
       id="como-funciona"
       eyebrow="Cómo funciona"
       title="Cuatro agentes por expediente. Un ciclo que mejora al cotizador."
-      intro="Subes documentos y fotos; en ~1.6 s tienes el perfil del auto, sus alertas, su valor y una prima explicada."
+      intro="Subes documentos y fotos; en unos segundos (de 1 a 6 s en nuestras pruebas) tienes el perfil del auto, sus alertas, su valor y una prima explicada."
       className="border-t border-line"
     >
       <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -259,7 +262,7 @@ const FAQ: { q: string; a: ReactNode }[] = [
   },
   { q: "¿El RSI puede hacer trampa?", a: "No puede modificar al evaluador ni sus umbrales: ese código está fuera de su alcance y se valida contra un holdout que no ve. Un parche entra solo si mejora ≥1% y ningún segmento empeora más de 5%." },
   { q: "¿Usa datos personales?", a: "No. El cotizador solo puede usar variables de una lista blanca sobre el auto y su uso. Género, edad y datos personales están fuera por diseño." },
-  { q: "¿Qué falta para producción?", a: "Datos reales de siniestralidad, validación actuarial y regulatoria, integración con registros oficiales de vehículos, autenticación y monitoreo. Y cerrar la brecha entre el −29% medido y la meta del −40%." },
+  { q: "¿Qué falta para producción?", a: "Datos reales de siniestralidad, validación actuarial y regulatoria, integración con registros oficiales de vehículos, autenticación y monitoreo. Y cerrar la brecha entre el −26% a −29% medido y la meta del −40%." },
 ];
 
 function Faq() {
@@ -310,12 +313,12 @@ function Footer() {
 
 export default function Landing() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-paper">
-      <a href="#producto" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-4 focus:py-2 focus:text-paper">
+    <div className="min-h-screen overflow-x-clip bg-paper">
+      <a href="#contenido"className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-4 focus:py-2 focus:text-paper">
         Saltar al contenido
       </a>
       <Header />
-      <main>
+      <main id="contenido" tabIndex={-1} className="focus:outline-none">
         <Hero />
         <Problema />
         <ComoFunciona />

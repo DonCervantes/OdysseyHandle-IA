@@ -5,9 +5,9 @@ import { fmtMXN } from "../lib/format";
 const NAV = ["Resumen", "Expedientes", "Siniestros", "Laboratorio RSI", "Parches", "Versiones"];
 
 const KPIS = [
-  { label: "Expedientes hoy", value: "24", sub: "~1.6 s cada uno" },
-  { label: "Alertas altas", value: "3", sub: "VIN no coincide", tone: "text-alta" },
-  { label: "Prima media", value: fmtMXN(9900), sub: "zona CDMX ×1.10" },
+  { label: "Expediente", value: "EXP-002", sub: "Jetta 2017" },
+  { label: "Alertas altas", value: "1", sub: "VIN no coincide", tone: "text-alta" },
+  { label: "Prima", value: fmtMXN(9900), sub: "zona CDMX ×1.10" },
   { label: "Regret vs reglas fijas", value: "−28.4%", sub: "semilla 42", tone: "text-ok" },
 ];
 
@@ -15,7 +15,7 @@ type Tone = "ok" | "warn" | "alta";
 const ACTIVIDAD: { tone: Tone; agente: string; accion: string; hora: string }[] = [
   { tone: "alta", agente: "Documental", accion: "Detectó un VIN que no coincide entre factura y tarjeta en EXP-002", hora: "09:42" },
   { tone: "ok", agente: "Visual", accion: `Estimó ${fmtMXN(2800)} de reacondicionamiento (espejo y rayón en puerta)`, hora: "09:42" },
-  { tone: "ok", agente: "Valuación", accion: `Valuó el Jetta 2017 en ${fmtMXN(126722)} con 8 comparables`, hora: "09:43" },
+  { tone: "ok", agente: "Valuación", accion: `Valuó el Jetta 2017 (60,000 km) en ${fmtMXN(127876)} con 8 comparables`, hora: "09:43" },
   { tone: "ok", agente: "Cotizador", accion: `Prima de ${fmtMXN(9900)}: base ${fmtMXN(9000)} × factor zona CDMX 1.10`, hora: "09:43" },
   { tone: "ok", agente: "RSI", accion: "El evaluador congelado aceptó un parche que bajó la pérdida en el holdout", hora: "08:15" },
   { tone: "warn", agente: "RSI", accion: "Evaluando un nuevo parche por segmento — esperando veredicto", hora: "En proceso" },
