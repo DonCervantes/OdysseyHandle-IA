@@ -1,0 +1,428 @@
+{
+  "name": "AutoGuard · 4 Aprobación del actuario",
+  "nodes": [
+    {
+      "id": "43f18d8c-e9de-5f09-b6fc-477681703214",
+      "name": "Cada día 09:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "8f3bb3c8-6908-556f-a4a3-a3ed726af256",
+      "name": "GET /patches pendientes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.AUTOGUARD_API_URL }}/patches",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "veredicto",
+              "value": "pendiente"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "autoguardApiKey",
+          "name": "AutoGuard API Key"
+        }
+      }
+    },
+    {
+      "id": "2fddc1ed-43bd-51e7-b4c3-3d0439c5a026",
+      "name": "¿Hay parche pendiente?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "741d7e34-60d8-575c-874c-37b818f6ca80",
+              "leftValue": "={{ $json.patches.length }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              },
+              "rightValue": 0
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2293bf92-ad94-5667-8eb5-7d95d04ac51c",
+      "name": "Tomar parche",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        280
+      ],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "af65b08a-723b-5da6-883e-1c1225cb142a",
+              "name": "patch_id",
+              "value": "={{ $json.patches[0].patch_id }}",
+              "type": "string"
+            },
+            {
+              "id": "da35d534-4900-5b27-8917-63c0e90874ab",
+              "name": "generation",
+              "value": "={{ $json.patches[0].generation }}",
+              "type": "number"
+            },
+            {
+              "id": "f032eef2-1f13-5759-9fe1-685b34e6e3cf",
+              "name": "tipo",
+              "value": "={{ $json.patches[0].tipo }}",
+              "type": "string"
+            },
+            {
+              "id": "69706cee-9ede-51f3-b2c8-4502a032ca5d",
+              "name": "hipotesis",
+              "value": "={{ $json.patches[0].hipotesis }}",
+              "type": "string"
+            },
+            {
+              "id": "f7a376d3-7caa-54b5-930a-7d56e663e211",
+              "name": "diff",
+              "value": "={{ $json.patches[0].diff }}",
+              "type": "string"
+            },
+            {
+              "id": "0e4a123e-8b3d-5432-afb2-21cc64e8b585",
+              "name": "metrics_before",
+              "value": "={{ JSON.stringify($json.patches[0].metrics_before) }}",
+              "type": "string"
+            },
+            {
+              "id": "7b9c35e0-1d01-57b1-a7f9-6c268a69048b",
+              "name": "metrics_after",
+              "value": "={{ JSON.stringify($json.patches[0].metrics_after) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a027a5c3-3a46-588c-8e49-03a42f6fec3c",
+      "name": "Correo al actuario",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        880,
+        280
+      ],
+      "parameters": {
+        "fromEmail": "={{ $env.AUTOGUARD_MAIL_FROM }}",
+        "toEmail": "={{ $env.AUTOGUARD_ACTUARIO_EMAIL }}",
+        "subject": "=[AutoGuard] Aprobar parche {{ $json.patch_id }}",
+        "emailFormat": "html",
+        "html": "=<p><b>KAVAK AUTOGUARD AI</b> — parche pendiente de aprobación (datos SIMULADOS).</p><ul><li><b>Parche:</b> {{ $json.patch_id }} (generación {{ $json.generation }}, {{ $json.tipo }})</li><li><b>Hipótesis:</b> {{ $json.hipotesis }}</li><li><b>Cambio:</b> <code>{{ $json.diff }}</code></li><li><b>Métricas antes / después:</b> {{ $json.metrics_before }} / {{ $json.metrics_after }}</li></ul><p><a href=\"{{ $execution.resumeUrl }}?decision=aprobar\">APROBAR</a> &nbsp;|&nbsp; <a href=\"{{ $execution.resumeUrl }}?decision=rechazar\">RECHAZAR</a></p><p>Si no hay respuesta en 48 h el parche queda pendiente.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "autoguardSmtp",
+          "name": "AutoGuard SMTP"
+        }
+      }
+    },
+    {
+      "id": "0d129edb-c8df-5a16-9e3a-c6f76dd6fd2c",
+      "name": "Esperar decisión",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        280
+      ],
+      "parameters": {
+        "resume": "webhook",
+        "httpMethod": "GET",
+        "responseMode": "onReceived",
+        "limitWaitTime": true,
+        "limitType": "afterTimeInterval",
+        "resumeAmount": 48,
+        "resumeUnit": "hours",
+        "options": {}
+      },
+      "webhookId": "d26107d0-eb9d-5aae-a76c-651763d3fdc7"
+    },
+    {
+      "id": "2687326f-a102-5746-a218-674f2bcb3446",
+      "name": "¿Aprobado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "f1da9120-2454-5ae2-a73e-03ee67d08018",
+              "leftValue": "={{ $json.query?.decision }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "aprobar"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ede5533f-31df-5f88-bb0d-3674268250f1",
+      "name": "POST /patches/{id}/approve",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        180
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUTOGUARD_API_URL }}/patches/{{ $('Tomar parche').item.json.patch_id }}/approve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ razon: \"aprobado por actuario vía n8n (correo)\" }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "autoguardApiKey",
+          "name": "AutoGuard API Key"
+        }
+      }
+    },
+    {
+      "id": "4ecc01af-5bba-51e8-b4fd-8243fcd7eaf6",
+      "name": "¿Rechazado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1560,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "feb0090e-5902-5092-8fb4-3c5564f9fe23",
+              "leftValue": "={{ $json.query?.decision }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "rechazar"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "004ed6ff-5d9c-5ebb-9f27-4c6b23ec1a47",
+      "name": "POST /patches/{id}/reject",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1800,
+        380
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUTOGUARD_API_URL }}/patches/{{ $('Tomar parche').item.json.patch_id }}/reject",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ razon: \"rechazado por actuario vía n8n (correo)\" }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "autoguardApiKey",
+          "name": "AutoGuard API Key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada día 09:00": {
+      "main": [
+        [
+          {
+            "node": "GET /patches pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET /patches pendientes": {
+      "main": [
+        [
+          {
+            "node": "¿Hay parche pendiente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay parche pendiente?": {
+      "main": [
+        [
+          {
+            "node": "Tomar parche",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Tomar parche": {
+      "main": [
+        [
+          {
+            "node": "Correo al actuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Correo al actuario": {
+      "main": [
+        [
+          {
+            "node": "Esperar decisión",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar decisión": {
+      "main": [
+        [
+          {
+            "node": "¿Aprobado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Aprobado?": {
+      "main": [
+        [
+          {
+            "node": "POST /patches/{id}/approve",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Rechazado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Rechazado?": {
+      "main": [
+        [
+          {
+            "node": "POST /patches/{id}/reject",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "autoguard"
+    }
+  ]
+}

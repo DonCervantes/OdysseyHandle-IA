@@ -1,0 +1,77 @@
+{
+  "name": "AutoGuard · 3 Ciclo RSI programado",
+  "nodes": [
+    {
+      "id": "cff24f84-a245-5025-a837-27501d6c1480",
+      "name": "Cada noche 02:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "c5e8380b-b854-5c8f-b824-0f5718c9afbe",
+      "name": "POST /rsi/run",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUTOGUARD_API_URL }}/rsi/run",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"seed\": 42,\n  \"batches\": 60,\n  \"batch_size\": 200,\n  \"k\": 3\n}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "autoguardApiKey",
+          "name": "AutoGuard API Key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada noche 02:00": {
+      "main": [
+        [
+          {
+            "node": "POST /rsi/run",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "autoguard"
+    }
+  ]
+}

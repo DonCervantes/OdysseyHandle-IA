@@ -1,0 +1,128 @@
+{
+  "name": "AutoGuard · 1 Carga de expediente",
+  "nodes": [
+    {
+      "id": "55cc9643-ea80-533c-8ff6-c5d63e6c13a3",
+      "name": "Webhook expediente",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "autoguard/expediente",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "36825081-66a7-545f-ae65-baddbf0d4e47"
+    },
+    {
+      "id": "974fd7bc-d3a1-5c9a-b15c-508fee35434b",
+      "name": "POST /expedientes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUTOGUARD_API_URL }}/expedientes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "docs",
+              "inputDataFieldName": "factura"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "docs",
+              "inputDataFieldName": "tarjeta"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "docs",
+              "inputDataFieldName": "poliza"
+            },
+            {
+              "name": "tipos",
+              "value": "factura,tarjeta_circulacion,poliza_anterior"
+            },
+            {
+              "name": "datos",
+              "value": "={{ $json.body.datos || '{}' }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "autoguardApiKey",
+          "name": "AutoGuard API Key"
+        }
+      }
+    },
+    {
+      "id": "66df6ccb-ea38-51f2-bb47-5224b4861de9",
+      "name": "Responder expediente",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook expediente": {
+      "main": [
+        [
+          {
+            "node": "POST /expedientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /expedientes": {
+      "main": [
+        [
+          {
+            "node": "Responder expediente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "autoguard"
+    }
+  ]
+}

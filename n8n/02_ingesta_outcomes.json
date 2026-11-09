@@ -1,0 +1,100 @@
+{
+  "name": "AutoGuard · 2 Ingesta de resultados",
+  "nodes": [
+    {
+      "id": "bb6405f0-1134-5665-85a0-0e061de915b2",
+      "name": "Webhook outcomes",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "autoguard/outcomes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "de2cf527-5329-5ca1-8127-af633d08f497"
+    },
+    {
+      "id": "20ea7567-831b-59cd-a270-fb55696317bc",
+      "name": "POST /outcomes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        260,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.AUTOGUARD_API_URL }}/outcomes",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "autoguardApiKey",
+          "name": "AutoGuard API Key"
+        }
+      }
+    },
+    {
+      "id": "6abf5bd6-22e1-5d60-aeea-58503fc5ef5e",
+      "name": "Responder outcomes",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        300
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook outcomes": {
+      "main": [
+        [
+          {
+            "node": "POST /outcomes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST /outcomes": {
+      "main": [
+        [
+          {
+            "node": "Responder outcomes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "name": "autoguard"
+    }
+  ]
+}
