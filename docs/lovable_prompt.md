@@ -163,3 +163,14 @@ Cada una es un mensaje corto. Antes de mandarla, revisar si se arregla más bara
    daños, valuación y prima con `st.metric`/`st.dataframe`) y una página "Parches/Versiones" con botones de
    aprobar, rechazar y revertir. La API ya cubre todo; no hay que tocar backend.
 4. **Último recurso para el pitch**: demo con `curl` / Swagger (`/docs` de FastAPI) y el video de respaldo (T-96).
+
+
+## Alineación visual con el laboratorio RSI (T-30)
+
+Usar una sola familia sans serif, fondo #f8faf9, paneles #eef2f1, texto #172b35 y acento #007f73.
+Sin gradientes decorativos, emojis en títulos ni transparencias. Titular con el resultado real de la corrida;
+mostrar «No alcanzada» cuando convergencia sea null. Etiqueta permanente «Datos simulados».
+Variantes: Reglas fijas #64748b, Solo parámetros #b7791f, RSI completo #007f73.
+Mantener estos nombres y colores en todas las gráficas. MXN con separador de miles, porcentajes con un decimal.
+Orden: resultado RSI → curvas y parches aceptados → ciclo → historia de cambios → aprendizaje del bandido
+→ garantías y versiones. Reversión exige confirmar versión y variante. Diseñar para proyector 1280×720.
