@@ -184,6 +184,7 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 
 ### T-15 · Tablero Streamlit
 - **tipo:** claude
+- **asignada:** gpt-dylan
 - **deps:** T-13
 - **rutas:** `dashboard/`, `.streamlit/`
 - **qué:** lee `var/runs/<run_id>/` (y BD si existe). Curvas de error vs pólizas de las 3 variantes, área
@@ -297,3 +298,16 @@ Reglas comunes de aceptación para TODA tarea `claude`:
   pólizas que `parametros`, tasa de aceptación de la última generación ≥ que la primera o explicado.
   Reportar también semillas 1, 7 y 123 (robustez, sin cherry-picking). Si no se logra honestamente,
   documentar números y causas; no se vale maquillar el simulador ni el evaluador.
+
+### T-24 · Dashboard de progreso de las sesiones
+- **tipo:** claude
+- **asignada:** gpt-dylan
+- **deps:** —
+- **rutas:** `tools/progreso/`, `tests/test_progreso.py`
+- **qué:** página sencilla (Streamlit, puerto 8502 para no chocar con el tablero RSI) que lee
+  `scripts/tasks.sh tsv` cada 30 s y muestra: % de tareas `claude` hechas, conteo por estado, tabla de
+  tareas con estado/dueño/revisor/último evento, tareas bloqueadas por dependencias, actividad por sesión
+  (claude-dylan, claude-elias, gpt-dylan, cursor-elias: hechas, en curso, revisadas) y tareas humanas
+  pendientes. Solo lectura: nunca llama a comandos que cambien estado. Comando de arranque documentado
+  en `tools/progreso/README.md` (`.venv/bin/streamlit run tools/progreso/app.py --server.port 8502`).
+- **aceptación:** test que parsea una salida TSV de ejemplo y calcula los agregados; la página arranca.
