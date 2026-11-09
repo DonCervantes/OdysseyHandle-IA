@@ -233,7 +233,7 @@ def test_correction_bounds():
 
 
 def test_mejorador_does_not_import_evaluator():
-    tree = ast.parse(Path(mejorador.__file__).read_text())
+    tree = ast.parse(Path(mejorador.__file__).read_text(encoding="utf-8"))
     mods = [n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)] + \
            [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
     assert not any(m and m.startswith("autoguard.evaluator") for m in mods)
