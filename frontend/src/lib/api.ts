@@ -20,7 +20,16 @@ function detailMessage(body: unknown): string | null {
   if (!body || typeof body !== "object" || !("detail" in body)) return null;
   const d = (body as { detail: unknown }).detail;
   if (typeof d === "string") return d;
-  if (Array.isArray(d)) return d.map((x) => (x && typeof x === "object" && "msg" in x ? String((x as { msg: unknown }).msg) : String(x))).join("; ");
+  if (Array.isArray(d))
+    return d
+      .map((x) => {
+        if (!x || typeof x !== "object" || !("msg" in x)) return String(x);
+        const loc = Array.isArray((x as { loc?: unknown }).loc)
+          ? ((x as { loc: unknown[] }).loc.filter((l) => l !== "body").join("."))
+          : "";
+        return loc ? `${loc}: ${String((x as { msg: unknown }).msg)}` : String((x as { msg: unknown }).msg);
+      })
+      .join("; ");
   return null;
 }
 

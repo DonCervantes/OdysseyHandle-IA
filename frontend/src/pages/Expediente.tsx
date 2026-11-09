@@ -275,9 +275,9 @@ function ValuacionCard({ valuacion, omitidos }: { valuacion: Valuacion | null | 
           <div className="num text-[34px] font-semibold leading-none tracking-tight">{fmtMXN(v.precio_estimado)}</div>
           <div className="num mt-2 text-[14px] text-muted">Rango {fmtMXN(v.rango[0])} – {fmtMXN(v.rango[1])}</div>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Stat label="Mercado" value={<span className="text-[17px]">{fmtMXN(v.precio_mercado)}</span>} />
-          <Stat label="Desc. por daños" value={<span className="text-[17px]">{v.descuento_danos ? `−${fmtMXN(v.descuento_danos)}` : fmtMXN(0)}</span>} tone={v.descuento_danos ? "alta" : undefined} />
+          <Stat label="Desc. por daños" value={<span className="whitespace-nowrap text-[17px]">{v.descuento_danos ? `−${fmtMXN(v.descuento_danos)}` : fmtMXN(0)}</span>} sub={v.descuento_danos ? "por daños detectados" : undefined} tone={v.descuento_danos ? "alta" : undefined} />
           <Stat label="Comparables" value={<span className="text-[17px]">{fmtNum(v.n_comparables)}</span>} />
         </div>
       </div>

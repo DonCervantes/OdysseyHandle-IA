@@ -42,6 +42,7 @@ export function formDictamen(fotos: File[], vehicleId: string, zonas: string[], 
   fotos.forEach((f) => fd.append("fotos", f));
   fd.append("vehicle_id", vehicleId.trim());
   fd.append("relato_zonas", JSON.stringify(zonas)); // la API espera una lista JSON en un solo campo
-  if (monto.trim() !== "") fd.append("monto_declarado", String(Number(monto)));
+  const m = Number(monto.replace(/,/g, "").trim());
+  if (monto.trim() !== "" && Number.isFinite(m)) fd.append("monto_declarado", String(m));
   return fd;
 }

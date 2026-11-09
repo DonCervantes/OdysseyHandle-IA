@@ -1,5 +1,5 @@
 // Nuevo expediente: documentos + fotos + datos declarados → POST /expedientes.
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ErrorState, PageHeader, SimBadge } from "../components/ui";
 import { api, guardarExpediente } from "../lib/api";
@@ -34,10 +34,14 @@ export default function NuevoExpediente() {
 
   const kmOk = entero(datos.kilometraje);
   const sinOk = entero(datos.siniestros_previos);
-  const valido = docs.length > 0 && kmOk && sinOk;
+  // ID opcional: letras, números, guion y guion bajo; "nuevo" está reservado por la ruta del formulario.
+  const vid = vehicleId.trim();
+  const vidOk = vid === "" || (/^[A-Za-z0-9_-]{1,64}$/.test(vid) && vid.toLowerCase() !== "nuevo");
+  const valido = docs.length > 0 && kmOk && sinOk && vidOk;
+  const enVuelo = useRef(false); // guard síncrono contra dobles envíos
 
   const rechazo = (r: string[], tipos: string) => {
-    if (r.length) setAviso(`Se ignoraron ${r.length} archivo(s) que no son ${tipos}: ${r.join(", ")}`);
+    setAviso(r.length ? `Se ignoraron ${r.length} archivo(s) que no son ${tipos}: ${r.join(", ")}` : null);
   };
 
   function enviar(e: FormEvent) {
@@ -47,7 +51,8 @@ export default function NuevoExpediente() {
 
   async function analizar() {
     setIntentado(true);
-    if (!valido || enviando) return;
+    if (!valido || enviando || enVuelo.current) return;
+    enVuelo.current = true;
     setEnviando(true);
     setError(null);
     try {
@@ -58,6 +63,8 @@ export default function NuevoExpediente() {
     } catch (err) {
       setError(err);
       setEnviando(false);
+    } finally {
+      enVuelo.current = false;
     }
   }
 
@@ -160,7 +167,8 @@ export default function NuevoExpediente() {
               </div>
               <div className="sm:col-span-2">
                 <label className="label" htmlFor="vid">ID de vehículo (opcional)</label>
-                <input id="vid" className="input num" placeholder="Se genera solo si lo dejas vacío" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} />
+                <input id="vid" className="input num" placeholder="Se genera solo si lo dejas vacío" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} aria-invalid={!vidOk} />
+                {!vidOk && <p className="mt-1 text-[13px] text-alta">Usa solo letras, números, guion o guion bajo (máx. 64); “nuevo” está reservado.</p>}
               </div>
             </div>
           </Section>

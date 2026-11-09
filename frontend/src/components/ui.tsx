@@ -11,7 +11,7 @@ export function Logo({ className = "" }: { className?: string }) {
         <path d="M16 6.5 9 9.3v5.2c0 4.4 3 7.7 7 9 4-1.3 7-4.6 7-9V9.3l-7-2.8Z" fill="rgb(var(--sand))" />
         <path d="m12.6 15.6 2.4 2.4 4.4-4.8" fill="none" stroke="rgb(var(--ink))" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      autoguard
+      <span>AutoGuard <span className="font-normal text-muted">AI</span></span>
     </Link>
   );
 }
@@ -68,7 +68,7 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   return (
     <div className="card flex flex-wrap items-center justify-between gap-3 border-alta/30 bg-alta/5 px-5 py-4" role="alert">
       <div className="min-w-0 text-[15px] text-alta">{msg}</div>
-      {onRetry && <button className="btn-ghost btn-sm" onClick={onRetry}>Reintentar</button>}
+      {onRetry && <button type="button" className="btn-ghost btn-sm" onClick={onRetry}>Reintentar</button>}
     </div>
   );
 }
@@ -89,12 +89,14 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
   const [error, setError] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const alive = useRef(true);
+  const reqId = useRef(0); // solo aplica la respuesta de la petición más reciente
   const run = useCallback(() => {
+    const id = ++reqId.current;
     setLoading(true);
     setError(null);
     fn().then(
-      (d) => { if (alive.current) { setData(d); setLoading(false); } },
-      (e) => { if (alive.current) { setError(e); setLoading(false); } },
+      (d) => { if (alive.current && id === reqId.current) { setData(d); setLoading(false); } },
+      (e) => { if (alive.current && id === reqId.current) { setError(e); setLoading(false); } },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
@@ -130,22 +132,32 @@ export function ConfirmDialog({
   onConfirm: (razon: string) => void; onCancel: () => void; busy?: boolean;
 }) {
   const [razon, setRazon] = useState("");
-  useEffect(() => { if (open) setRazon(""); }, [open]);
+  const prevFocus = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    setRazon("");
+    prevFocus.current = document.activeElement as HTMLElement | null;
+    return () => { prevFocus.current?.focus?.(); };
+  }, [open]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-ink/30 p-4" role="dialog" aria-modal="true" aria-label={title}>
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-ink/30 p-4"
+      role="dialog" aria-modal="true" aria-label={title}
+      onKeyDown={(e) => { if (e.key === "Escape" && !busy) onCancel(); }}
+    >
       <div className="card w-full max-w-md space-y-4 p-6 shadow-frame">
         <h2 className="text-[19px] font-semibold">{title}</h2>
         {children && <div className="text-[15px] text-muted">{children}</div>}
         {withReason && (
           <div>
             <label className="label" htmlFor="razon">Razón (opcional)</label>
-            <textarea id="razon" className="input min-h-[84px]" value={razon} onChange={(e) => setRazon(e.target.value)} />
+            <textarea id="razon" autoFocus className="input min-h-[84px]" value={razon} onChange={(e) => setRazon(e.target.value)} />
           </div>
         )}
         <div className="flex justify-end gap-2">
-          <button className="btn-ghost btn-sm" onClick={onCancel} disabled={busy}>Cancelar</button>
-          <button className="btn-primary btn-sm" onClick={() => onConfirm(razon)} disabled={busy}>{busy ? "Enviando…" : confirmLabel}</button>
+          <button type="button" autoFocus={!withReason} className="btn-ghost btn-sm" onClick={onCancel} disabled={busy}>Cancelar</button>
+          <button type="button" className="btn-primary btn-sm" onClick={() => onConfirm(razon)} disabled={busy}>{busy ? "Enviando…" : confirmLabel}</button>
         </div>
       </div>
     </div>

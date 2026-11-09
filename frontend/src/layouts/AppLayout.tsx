@@ -19,7 +19,7 @@ function ApiStatus() {
   return (
     <span className="inline-flex items-center gap-2 text-[13px] text-muted" title={API_URL}>
       <Dot tone={tone} />
-      {text}
+      <span className="sr-only sm:not-sr-only">{text}</span>
     </span>
   );
 }
@@ -27,8 +27,9 @@ function ApiStatus() {
 export default function AppLayout() {
   return (
     <div className="min-h-screen bg-paper">
-      <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
-        <div className="flex items-center gap-4 px-5 py-3">
+      <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-3 focus:py-2 focus:text-paper">Saltar al contenido</a>
+      <header className="sticky top-0 z-30 h-14 border-b border-line bg-paper/90 backdrop-blur">
+        <div className="flex h-full items-center gap-4 px-5">
           <Logo />
           <span className="hidden text-faint sm:inline">/</span>
           <span className="hidden text-[14px] text-muted sm:inline">app</span>
@@ -39,7 +40,7 @@ export default function AppLayout() {
         </div>
       </header>
       <div className="flex">
-        <aside className="sticky top-[53px] hidden h-[calc(100vh-53px)] w-60 shrink-0 border-r border-line px-3 py-5 md:block">
+        <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 border-r border-line px-3 py-5 md:block">
           <nav className="flex flex-col gap-1" aria-label="Secciones de la app">
             {NAV.map((n) => (
               <NavLink
@@ -67,7 +68,7 @@ export default function AppLayout() {
               </NavLink>
             ))}
           </nav>
-          <main className="mx-auto w-full max-w-[1100px] px-5 py-8 md:px-8">
+          <main id="contenido" tabIndex={-1} className="mx-auto w-full max-w-[1100px] px-5 py-8 outline-none md:px-8">
             <Outlet />
           </main>
         </div>

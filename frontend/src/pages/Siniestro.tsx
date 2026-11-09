@@ -44,7 +44,8 @@ export default function Siniestro() {
   const [aviso, setAviso] = useState<string | null>(null);
   const resRef = useRef<HTMLDivElement>(null);
 
-  const montoOk = monto.trim() === "" || (!Number.isNaN(Number(monto)) && Number(monto) >= 0);
+  const montoNum = Number(monto.replace(/,/g, "").trim());
+  const montoOk = monto.trim() === "" || (Number.isFinite(montoNum) && montoNum >= 0);
   const valido = fotos.length > 0 && vehicleId.trim() !== "" && montoOk;
 
   async function dictaminar() {

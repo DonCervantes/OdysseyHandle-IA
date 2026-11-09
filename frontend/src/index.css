@@ -12,13 +12,13 @@
   --line: 233 227 215;       /* bordes */
   --ink: 28 26 23;        /* texto principal / botones primarios */
   --muted: 111 103 89;      /* texto secundario */
-  --faint: 165 155 138;      /* etiquetas tenues */
+  --faint: 120 111 96;      /* etiquetas tenues */
   --taupe: 140 122 95;      /* acento oscuro del degradado */
   --sand: 203 185 156;       /* acento claro del degradado */
   --ok: 47 125 82;         /* estado bueno / aceptado */
-  --warn: 181 134 44;       /* en proceso / media */
+  --warn: 140 100 22;       /* en proceso / media */
   --alta: 179 65 47;       /* severidad alta / rechazado */
-  --info: 108 127 138;       /* severidad info */
+  --info: 88 106 116;       /* severidad info */
   color-scheme: light;
 }
 

@@ -183,7 +183,7 @@ export function Dropzone({ id, label, hint, accept, exts, onFiles, multiple = tr
       onDragOver={(e) => { e.preventDefault(); setOver(true); }}
       onDragLeave={() => setOver(false)}
       onDrop={(e) => { e.preventDefault(); setOver(false); handle(e.dataTransfer.files); }}
-      className={`relative flex flex-col items-center justify-center gap-2 rounded-xl2 border-2 border-dashed px-5 py-8 text-center transition ${over ? "border-taupe bg-cream" : "border-line bg-paper hover:border-sand"}`}
+      className={`relative flex flex-col items-center justify-center gap-2 rounded-xl2 border-2 border-dashed px-5 py-8 text-center transition focus-within:border-taupe focus-within:ring-2 focus-within:ring-sand/50 ${over ? "border-taupe bg-cream" : "border-line bg-paper hover:border-sand"}`}
     >
       <svg viewBox="0 0 24 24" className="h-8 w-8 text-taupe" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
         <path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeLinecap="round" strokeLinejoin="round" />
@@ -238,7 +238,10 @@ export function useFotos() {
   useEffect(() => () => { ref.current.forEach((f) => f.url && URL.revokeObjectURL(f.url)); }, []);
   return {
     fotos,
-    agregar: (files: File[]) => setFotos((p) => [...p, ...files.map((file) => ({ id: nuevoId(), file, url: URL.createObjectURL(file) }))]),
+    agregar: (files: File[]) => {
+      const nuevas = files.map((file) => ({ id: nuevoId(), file, url: URL.createObjectURL(file) })); // fuera del updater (StrictMode lo llama 2 veces)
+      setFotos((p) => [...p, ...nuevas]);
+    },
     quitar: (id: string) => setFotos((p) => {
       const f = p.find((x) => x.id === id);
       if (f?.url) URL.revokeObjectURL(f.url);
