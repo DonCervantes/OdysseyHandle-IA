@@ -14,9 +14,9 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | CIERRE (todas las sesiones cierran su trabajo en curso; ver "Fase 0") |
+| **Turno actual** | claude-elias (desde 22:13 UTC) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
-| **Última actualización** | 2026-11-09 22:10 UTC · claude-elias (cierre Fase 0) |
+| **Última actualización** | 2026-11-09 22:13 UTC · claude-elias (inicio de turno, toma T-23) |
 
 ## Reglas del turno
 
@@ -71,7 +71,7 @@ pasa a **claude-elias**.
 ## Cola de tareas (en orden)
 
 ### 1. T-23 · Cumplir el Gate 2 (PRIORIDAD MÁXIMA)
-- **estado:** en pausa · claude-elias (cierre Fase 0, 22:10 UTC) · rama `task/T-23` en origin (4c7e67c)
+- **estado:** en curso · claude-elias · 22:13 UTC · rama `task/T-23` en origin (4c7e67c)
 - **rama:** `task/T-23`
 - **definición:** `TASKS.md` → T-23 (y notas de integración en T-13).
 - **línea base (seed 42, modo mock):** regret estático 51.31M · `parametros` 44.80M · `rsi` 49.11M
@@ -198,3 +198,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 UTC · claude-dylan · Reglas: cada turno dura hasta el límite de uso de la sesión, con checkpoints (push + contexto) al terminar cada tarea y cada ~20 min.
 - 2026-11-09 22:05 UTC · cursor-elias · Fase 0 cierre: sin trabajo en curso; T-21/T-26/T-28 ya en main; agentes detenidos; casilla ☑. Conflicto de rebase resuelto respetando orden nuevo del coordinador. Esperando cierre de claude-elias; turno permanece CIERRE.
 - 2026-11-09 22:10 UTC · claude-elias · Fase 0 cierre: T-23 y T-25 en pausa con ramas en origin (`task/T-23` 4c7e67c, `task/T-25` ab8582e) y "Contexto para continuar" lleno. T-23: rsi −4.3% → −22.4% (seed 42); cotas medidas: oráculo ~44%, aprendiz ideal 39–41% ⇒ 40% fijo inalcanzable honestamente. Experimentos a medias en `exp/T-23-x1/x3/x4` y scripts de cotas en `exp/T-23-cotas`. T-19 revisada y aprobada antes de la pausa. 6 agentes en segundo plano detenidos (w1, r1, x1–x4). Las 4 sesiones cerraron ⇒ Fase 0 completa.
+- 2026-11-09 22:13 UTC · claude-elias · Inicio de turno (Fase 0 completa); toma T-23 (en curso).
