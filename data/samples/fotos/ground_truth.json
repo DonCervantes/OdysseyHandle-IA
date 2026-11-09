@@ -1,0 +1,68 @@
+{
+  "nota": "Fotos esquemáticas SIMULADAS para la demo de KAVAK AUTOGUARD AI.",
+  "fotos": {
+    "FOTO-001.png": {
+      "danos": [
+        {
+          "zona": "defensa_trasera",
+          "tipo": "abolladura"
+        }
+      ]
+    },
+    "FOTO-002.png": {
+      "danos": [
+        {
+          "zona": "puerta_delantera_izq",
+          "tipo": "rayon"
+        },
+        {
+          "zona": "espejo_izq",
+          "tipo": "estrellado"
+        }
+      ]
+    },
+    "FOTO-003.png": {
+      "danos": [
+        {
+          "zona": "cofre",
+          "tipo": "reparacion"
+        },
+        {
+          "zona": "faro_der",
+          "tipo": "estrellado"
+        },
+        {
+          "zona": "defensa_delantera",
+          "tipo": "reemplazo"
+        }
+      ]
+    },
+    "FOTO-004.png": {
+      "danos": [
+        {
+          "zona": "parabrisas",
+          "tipo": "estrellado"
+        }
+      ]
+    },
+    "FOTO-005.png": {
+      "danos": [
+        {
+          "zona": "salpicadera_der",
+          "tipo": "abolladura"
+        },
+        {
+          "zona": "puerta_trasera_der",
+          "tipo": "rayon"
+        },
+        {
+          "zona": "calavera_der",
+          "tipo": "reemplazo"
+        }
+      ]
+    },
+    "FOTO-006.png": {
+      "danos": []
+    }
+  }
+}
