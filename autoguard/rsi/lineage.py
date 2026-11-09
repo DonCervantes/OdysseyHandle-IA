@@ -93,7 +93,10 @@ class ConfigRepo:
             try:
                 payload = json.loads(c.message)
                 if isinstance(payload, dict):
-                    metrics = payload.get("metrics", payload.get("metrics_after", {}))
+                    raw = payload.get("metrics", payload.get("metrics_after", {}))
+                    if isinstance(raw, dict):  # solo numéricas: AgentVersion.metrics es dict[str, float]
+                        metrics = {k: float(v) for k, v in raw.items()
+                                   if isinstance(v, (int, float)) and not isinstance(v, bool)}
             except (ValueError, TypeError):
                 pass
             versions.append(AgentVersion(
