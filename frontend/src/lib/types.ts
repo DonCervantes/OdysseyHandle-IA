@@ -75,7 +75,7 @@ export interface RunLatest { run_id: string; summary: RunSummary; archivos: stri
 
 export interface RsiJob {
   job_id: string; estado: "corriendo" | "terminado" | "fallido" | string; params?: Record<string, number>;
-  inicio?: string; log?: string; returncode?: number | null; [k: string]: unknown;
+  inicio?: number; log?: string;  // inicio: epoch en segundos (time.time()) returncode?: number | null; [k: string]: unknown;
 }
 
 export interface Health { ok: boolean; auth: boolean; llm: "mock" | "real" }
