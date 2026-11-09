@@ -256,9 +256,14 @@ pasa a **claude-elias**.
 - **Contexto para continuar:** —
 
 ### 6. Tareas humanas (las hace una persona; la sesión de turno solo puede preparar instrucciones)
-- **T-92** Crear proyecto Supabase y aplicar `db/migrations/001_init.sql`; poner `DATABASE_URL` en `.env`.
-- **T-93** Pegar `docs/lovable_prompt.md` en Lovable, conectar GitHub primero.
-- **T-95** Desplegar backend (Railway/Render) y tablero (Streamlit Cloud).
+- ~~**T-92** Supabase~~ — **descartada**: todo corre en local con SQLite (`sqlite:///var/autoguard.db`).
+- **T-93** _(probablemente reemplazada por T-33, el frontend local que construye claude-elias; si T-33 se completa, no hace falta Lovable)_ Pegar `docs/lovable_prompt.md` en Lovable (conectar GitHub primero) y **correr el frontend en local**:
+  `git clone` del repo que crea Lovable, `npm install`, `.env.local` con `VITE_API_URL=http://localhost:8000`,
+  `npm run dev`. La preview en la nube de Lovable NO alcanza la API local. Opcional: sin Lovable, la demo usa
+  Swagger (`http://localhost:8000/docs`) + el tablero Streamlit.
+- ~~**T-95** Despliegue~~ — **descartada**: sin despliegue. Arranque local: `bash scripts/demo.sh --start`
+  (API :8000, tablero :8501), `bash scripts/demo.sh --stop` para apagar. Verificado el 2026-11-09 (health,
+  tablero y `POST /expedientes` responden 200).
 - **T-96** Grabar video de respaldo (requiere T-27) y ensayar el pitch 3 veces.
 - **T-97** Cancelar Lovable Pro antes de la renovación.
 
@@ -352,3 +357,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 23:25 UTC · claude-dylan · La persona indica que claude-dylan sigue en turno; toma T-32 (en curso). Siguiente turno: claude-elias.
 - 2026-11-09 23:40 UTC · claude-dylan · T-32 hecha (patch_id único por variante). La cola automatizada quedó vacía: solo quedan tareas humanas (T-92, T-93, T-95, T-96, T-97). Siguiente turno: claude-elias.
 - 2026-11-09 23:12 UTC · claude-elias · Inicio de turno por indicación de la persona; agrega y toma T-33 (frontend completo local, rama `task/T-33`, solo `frontend/`).
+- 2026-11-09 23:50 UTC · claude-dylan · Decisión de la persona: todo local y sin despliegue. T-92 y T-95 descartadas; T-93 ajustada a correr el frontend de Lovable en local. Smoke test local de `scripts/demo.sh --start` OK.

@@ -85,7 +85,7 @@ El producto entrega, por cada auto, un expediente con valuación, cotización de
 
 - Tarifas reales o emisión de pólizas.
 - Integraciones con aseguradoras o bases privadas.
-- Despliegue en producción.
+- Cualquier despliegue: el MVP y la demo corren en local.
 
 ### Métricas de éxito del MVP
 
@@ -263,12 +263,12 @@ El núcleo es Python con LangGraph y Streamlit para los datos. De los beneficios
 | Orquestación de agentes | LangGraph | Grafo operativo y grafo RSI |
 | Modelo | OpenAI vía Responses API (`gpt-6.1-sol` por defecto, configurable con `LLM_MODEL`) | Extracción de documentos, daños en fotos, hipótesis y parches |
 | Cálculo | pandas + numpy + scipy | Simulador, errores por segmento, significancia |
-| Datos y tablero | Streamlit (gráficas nativas o Plotly) | Tablero de datos: curvas de error, área de regret, comparación de las 3 versiones, linaje y bitácora de parches; lee directo de Supabase |
-| Base de datos | PostgreSQL en Supabase | Registro de predicciones, outcomes, linaje |
-| Archivos | Supabase Storage con URLs firmadas | Fotos y documentos |
+| Datos y tablero | Streamlit (gráficas nativas o Plotly) | Tablero de datos: curvas de error, área de regret, comparación de las 3 versiones, linaje y bitácora de parches; lee las corridas de `var/runs/` |
+| Base de datos | SQLite local (Postgres opcional) | Registro de predicciones, outcomes, linaje |
+| Archivos | Disco local (solo se guardan las extracciones) | Fotos y documentos |
 | Versionado de agentes | Git (GitPython) + archivos YAML | Cada parche es un commit revertible |
 | Sandbox | Docker sin red | Ejecutar código de parches de nivel 3 |
-| Despliegue | Contenedor en Railway o Render; Streamlit Community Cloud para el tablero | Backend y tablero accesibles para la demo |
+| Ejecución | Todo en local con `scripts/demo.sh` (API :8000, tablero :8501, frontend Lovable con `npm run dev`); sin despliegue | Demo reproducible sin depender de red |
 
 ### Beneficios Hacktoberfest: qué usamos y para qué
 
