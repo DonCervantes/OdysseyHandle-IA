@@ -1,5 +1,8 @@
 # AGENTS.md — Protocolo de trabajo multi-sesión
 
+> **⚠ METODOLOGÍA PARALELA EN PAUSA (2026-11-09 21:45 UTC).** Se trabaja por turnos siguiendo `RELEVO.md`.
+> No uses `claim-next`/`review-next`. Las reglas técnicas de abajo siguen vigentes.
+
 Este repo lo construyen **4 sesiones de IA en paralelo**, en 2 máquinas y 3 herramientas:
 
 | Sesión | Persona | Herramienta |

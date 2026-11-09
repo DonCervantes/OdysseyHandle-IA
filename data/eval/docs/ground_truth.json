@@ -1,0 +1,120 @@
+{
+  "nota": "Documentos SIMULADOS extra para eval LLM (T-28). No corresponden a personas ni autos reales.",
+  "fecha_referencia": "2026-11-09",
+  "documentos": {
+    "EXP-004-FAC": {
+      "tipo": "factura",
+      "vin": "3VWLL7AJ7EM012345",
+      "placas": null,
+      "marca": "Volkswagen",
+      "modelo": "Golf",
+      "anio": 2014,
+      "vigencia": null,
+      "campos_extra": {
+        "folio": "SIM-F004",
+        "emisor": "Agencia SIMULADA SA de CV",
+        "valor_factura": 300000,
+        "nota": "SIMULADO"
+      },
+      "archivo": "EXP-004-FAC.png",
+      "expediente": "EXP-004"
+    },
+    "EXP-004-TC": {
+      "tipo": "tarjeta_circulacion",
+      "vin": "3VWLL7AJ7EM012345",
+      "placas": "JAL-321-D",
+      "marca": "Volkswagen",
+      "modelo": "Golf",
+      "anio": 2014,
+      "vigencia": "2027-11-30",
+      "campos_extra": {
+        "propietario": "PERSONA SIMULADA"
+      },
+      "archivo": "EXP-004-TC.png",
+      "expediente": "EXP-004"
+    },
+    "EXP-004-POL": {
+      "tipo": "poliza_anterior",
+      "vin": "3VWLL7AJ7EM012345",
+      "placas": "JAL-321-D",
+      "marca": "Volkswagen",
+      "modelo": "Golf",
+      "anio": 2014,
+      "vigencia": "2025-12-01",
+      "campos_extra": {
+        "aseguradora": "Aseguradora SIMULADA",
+        "numero_poliza": "SIM-P004"
+      },
+      "archivo": "EXP-004-POL.png",
+      "expediente": "EXP-004"
+    },
+    "EXP-005-FAC": {
+      "tipo": "factura",
+      "vin": "MAJERDE25JC045678",
+      "placas": null,
+      "marca": "Honda",
+      "modelo": "City",
+      "anio": 2018,
+      "vigencia": null,
+      "campos_extra": {
+        "folio": "SIM-F005",
+        "emisor": "Agencia SIMULADA SA de CV",
+        "valor_factura": 305000,
+        "nota": "SIMULADO"
+      },
+      "archivo": "EXP-005-FAC.png",
+      "expediente": "EXP-005"
+    },
+    "EXP-005-TC": {
+      "tipo": "tarjeta_circulacion",
+      "vin": "MAJERDE29JC099999",
+      "placas": "GTO-654-E",
+      "marca": "Honda",
+      "modelo": "City",
+      "anio": 2018,
+      "vigencia": "2029-01-15",
+      "campos_extra": {
+        "propietario": "PERSONA SIMULADA"
+      },
+      "archivo": "EXP-005-TC.png",
+      "expediente": "EXP-005"
+    },
+    "EXP-005-POL": {
+      "tipo": "poliza_anterior",
+      "vin": "MAJERDE25JC045678",
+      "placas": "GTO-654-E",
+      "marca": "Honda",
+      "modelo": "City",
+      "anio": 2018,
+      "vigencia": "2025-12-01",
+      "campos_extra": {
+        "aseguradora": "Aseguradora SIMULADA",
+        "numero_poliza": "SIM-P005"
+      },
+      "archivo": "EXP-005-POL.png",
+      "expediente": "EXP-005"
+    }
+  },
+  "expedientes": {
+    "EXP-004": {
+      "documentos": [
+        "EXP-004-FAC",
+        "EXP-004-TC",
+        "EXP-004-POL"
+      ],
+      "alertas_esperadas": [
+        "DOCUMENTO_VENCIDO:poliza_anterior"
+      ]
+    },
+    "EXP-005": {
+      "documentos": [
+        "EXP-005-FAC",
+        "EXP-005-TC",
+        "EXP-005-POL"
+      ],
+      "alertas_esperadas": [
+        "VIN_NO_COINCIDE"
+      ]
+    }
+  }
+}

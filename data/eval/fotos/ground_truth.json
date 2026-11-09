@@ -1,0 +1,37 @@
+{
+  "nota": "Fotos esquemáticas SIMULADAS extra para eval LLM (T-28).",
+  "fotos": {
+    "FOTO-007.png": {
+      "danos": [
+        {
+          "zona": "toldo",
+          "tipo": "rayon"
+        },
+        {
+          "zona": "puerta_delantera_der",
+          "tipo": "abolladura"
+        }
+      ]
+    },
+    "FOTO-008.png": {
+      "danos": [
+        {
+          "zona": "cajuela",
+          "tipo": "reparacion"
+        },
+        {
+          "zona": "calavera_izq",
+          "tipo": "estrellado"
+        }
+      ]
+    },
+    "FOTO-009.png": {
+      "danos": [
+        {
+          "zona": "espejo_der",
+          "tipo": "reemplazo"
+        }
+      ]
+    }
+  }
+}
