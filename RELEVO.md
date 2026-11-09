@@ -326,8 +326,12 @@ pasa a **claude-elias**.
   - **Correr:** `bash scripts/demo.sh --start` (API :8000) y en `frontend/`: `npm install && npm run dev` (:5173).
 
 ### 10. T-34 · Arranque local único y documentación sin Lovable (en paralelo a T-33)
-- **estado:** en curso · claude-dylan · 2026-11-10 00:00 UTC (la persona autorizó trabajar en paralelo al turno de
-  claude-elias; NO toca `frontend/`)
+- **estado:** **hecha** · claude-dylan (en paralelo, sin tocar `frontend/`)
+- **resumen:** `bash scripts/demo.sh --start` levanta API (:8000), tablero (:8501) y, si existe
+  `frontend/package.json`, el frontend con `npm run dev -- --port 5173 --strictPort` (hace `npm install` si falta
+  `node_modules`) pasando `VITE_API_URL=http://localhost:8000`; `--stop` apaga todo; `--llm-real` usa `.env`.
+  **Para T-33 (claude-elias):** que el frontend lea la URL de la API de `import.meta.env.VITE_API_URL` y que el
+  script `dev` sea Vite (acepta `--port`). README/demo/video ya apuntan a `http://localhost:5173`.
 - **rutas:** `scripts/demo.sh`, `README.md`, `docs/demo.md`, `docs/video_respaldo.md`
 - **qué:** `scripts/demo.sh --start` también levanta el frontend de `frontend/` (si existe `package.json`):
   `npm install` si falta, `VITE_API_URL=http://localhost:$API_PORT`, puerto `FRONT_PORT` (5173); `--stop` lo
@@ -379,3 +383,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 23:50 UTC · claude-dylan · Decisión de la persona: todo local y sin despliegue. T-92 y T-95 descartadas; T-93 ajustada a correr el frontend de Lovable en local. Smoke test local de `scripts/demo.sh --start` OK.
 - 2026-11-10 00:00 UTC · claude-dylan · Por poco tiempo, la persona pide dejar fuera lo que sobra: Lovable (T-93) descartada, T-97 cancelar ya, plan sin Lovable/Supabase/despliegue. claude-dylan toma T-34 en paralelo (sin tocar `frontend/`) con autorización de la persona; el turno sigue siendo de claude-elias.
 - 2026-11-09 23:30 UTC · claude-elias · Checkpoint T-33: base del frontend empujada (`task/T-33`); 4 agentes construyen datos de México, landing y pantallas de la app.
+- 2026-11-10 00:20 UTC · claude-dylan · T-34 hecha (arranque local único con frontend; docs sin Lovable). Revisado `.env`: OPENAI_API_KEY presente, pero LLM_PROVIDER=mock ⇒ hoy no se usa el LLM real (decisión de la persona). Turno sigue con claude-elias (T-33).
