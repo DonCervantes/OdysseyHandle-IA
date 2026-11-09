@@ -1,0 +1,26 @@
+# Configuración inicial (campeón v0) del cotizador. [T-04 puede recalibrar valores]
+# Deliberadamente IMPERFECTA respecto al riesgo oculto del simulador: el RSI debe descubrir los sesgos.
+agent: cotizador
+base: 9000.0
+intervalo_rel: 0.12
+factores:
+  antiguedad:
+    variable: antiguedad
+    bins: [0, 5, 10, 20, 30]
+    valores: [0.95, 1.0, 1.08, 1.15, 1.2]
+  kilometraje:
+    variable: kilometraje
+    bins: [0, 50000, 100000, 200000]
+    valores: [0.95, 1.0, 1.08, 1.15]
+  siniestros_previos:
+    variable: siniestros_previos
+    bins: [0, 1, 2]
+    valores: [1.0, 1.12, 1.3]
+  uso:
+    variable: uso
+    categorias: {particular: 1.0, app_transporte: 1.15, comercial: 1.2}
+  zona:
+    variable: zona
+    categorias: {CDMX: 1.1, EDOMEX: 1.1, JAL: 1.0, NL: 1.0, PUE: 0.95, OTRA: 0.95}
+reglas: []
+prompt_estrategia: ""
