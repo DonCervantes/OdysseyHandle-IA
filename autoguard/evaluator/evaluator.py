@@ -145,7 +145,9 @@ def evaluate(champion: CotizadorConfig, patch: Patch, holdout: pd.DataFrame) -> 
     evaluó, metrics_before={"loss"} y metrics_after={"loss","ganancia","peor_delta"} (loss = media
     de objective.loss en el holdout). Un parche con veredicto="invalido" o sin cambios se rechaza sin
     leer el holdout."""
-    challenger, err = _validate(champion, patch)  # incluye: marcado "invalido" / sin cambios
+    challenger, err = _validate(champion, patch)
+    if patch.veredicto == "invalido" or not patch.cambios:  # el mejorador ya lo marcó / no cambia nada
+        challenger, err = None, patch.razon or "parche sin cambios"
     if challenger is None:
         # inválido: NO se toca el holdout
         verdict = _reject(patch, f"invalido: {err}")
