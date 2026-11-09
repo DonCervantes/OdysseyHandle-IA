@@ -1,0 +1,28 @@
+{
+  "nota": "Set de evaluación LLM (T-28). Todos los datos son SIMULADOS.",
+  "metas": {
+    "precision_documental": 0.9,
+    "recall_danos": 0.8
+  },
+  "fuentes": {
+    "samples_docs": "data/samples/docs",
+    "samples_fotos": "data/samples/fotos",
+    "eval_docs": "data/eval/docs",
+    "eval_fotos": "data/eval/fotos"
+  },
+  "extras": {
+    "documentos": [
+      "EXP-004-FAC",
+      "EXP-004-TC",
+      "EXP-004-POL",
+      "EXP-005-FAC",
+      "EXP-005-TC",
+      "EXP-005-POL"
+    ],
+    "fotos": [
+      "FOTO-007.png",
+      "FOTO-008.png",
+      "FOTO-009.png"
+    ]
+  }
+}
