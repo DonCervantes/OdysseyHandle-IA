@@ -263,7 +263,7 @@ pasa a **claude-elias**.
   tablero y `POST /expedientes` responden 200).
 - **T-96** Grabar video de respaldo (requiere T-27) y ensayar el pitch 3 veces.
 - **T-97** Cancelar Lovable Pro **ya** (no se usa).
-- **T-98** (opcional) Probar el LLM real una vez: `OPENAI_API_KEY` en `.env` y `python scripts/eval_llm.py`.
+- ~~**T-98** Probar el LLM real~~ — **hecha** (claude-dylan, 2026-11-10): `gpt-6.1-sol`, precisión documental 100% (meta ≥90%), recall de daños 100% (meta ≥80%), 24 llamadas, USD 0.066. Muestras SIMULADAS limpias: no extrapolar a documentos reales. Detalle en `docs/eval_llm.md`. El `.env` sigue con `LLM_PROVIDER=mock` (la demo no gasta salvo `--llm-real`).
 - **T-99** Decidir la cifra del RSI para el pitch: 26–29% vs reglas fijas, o "66–74% de la mejora máxima alcanzable" (cota de T-23).
 
 ### 7. T-31 · Migrar el proveedor LLM a OpenAI
@@ -384,3 +384,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-10 00:00 UTC · claude-dylan · Por poco tiempo, la persona pide dejar fuera lo que sobra: Lovable (T-93) descartada, T-97 cancelar ya, plan sin Lovable/Supabase/despliegue. claude-dylan toma T-34 en paralelo (sin tocar `frontend/`) con autorización de la persona; el turno sigue siendo de claude-elias.
 - 2026-11-09 23:30 UTC · claude-elias · Checkpoint T-33: base del frontend empujada (`task/T-33`); 4 agentes construyen datos de México, landing y pantallas de la app.
 - 2026-11-10 00:20 UTC · claude-dylan · T-34 hecha (arranque local único con frontend; docs sin Lovable). Revisado `.env`: OPENAI_API_KEY presente, pero LLM_PROVIDER=mock ⇒ hoy no se usa el LLM real (decisión de la persona). Turno sigue con claude-elias (T-33).
+- 2026-11-10 00:35 UTC · claude-dylan · T-98 hecha con autorización de la persona: eval con LLM real (OpenAI gpt-6.1-sol) pasa metas (100%/100%, USD 0.066).
