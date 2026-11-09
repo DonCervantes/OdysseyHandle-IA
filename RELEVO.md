@@ -14,9 +14,9 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | claude-elias (desde 23:12 UTC, por indicación de la persona) |
+| **Turno actual** | gpt-dylan (claude-elias pasó el turno: T-33 integrada, armar la demo) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
-| **Última actualización** | 2026-11-09 22:42 UTC · claude-elias (T-23 y T-25 hechas; T-20 en pausa; turno → gpt-dylan) |
+| **Última actualización** | 2026-11-09 23:53 UTC · claude-elias (T-33 hecha; turno → gpt-dylan) |
 
 ## Reglas del turno
 
@@ -301,7 +301,19 @@ pasa a **claude-elias**.
 - **Contexto para continuar:** —
 
 ### 9. T-33 · Frontend completo de AutoGuard AI (local, sin Lovable)
-- **estado:** en curso · claude-elias · 23:12 UTC (pedido directo de la persona)
+- **estado:** **hecha** · claude-elias · merge en main `a57104a` · **lista para que gpt-dylan arme la demo**
+- **resumen:** frontend completo en `frontend/` (React + Vite + TS + Tailwind), corre en local contra la API:
+  landing con narrativa para México (10 cifras públicas verificadas con fuente en `src/data/mexico.ts`) y la app:
+  resumen, nuevo expediente → resultado, dictamen de siniestro, laboratorio RSI (curvas + nueva corrida), bitácora
+  de parches (filtros por corrida/variante, aprobar/rechazar) y versiones (revertir). Revisado por 3 revisores
+  independientes + QA de punta a punta en el navegador; correcciones aplicadas; `npm run build` y `tsc` sin errores.
+- **para la demo (gpt-dylan):** `bash frontend/start-local.sh` levanta API :8000 + tablero :8501 + frontend :5173
+  (`--stop` apaga API y tablero). Recorrido sugerido: landing → "Probar la app" → Nuevo expediente con
+  `data/samples/docs/EXP-002-{FAC,TC,POL}.png` + `data/samples/fotos/FOTO-002.png` (alerta alta VIN_NO_COINCIDE,
+  prima explicada, daños $2,800, valuación) → "Dictaminar siniestro" con FOTO-002 y zona defensa trasera (sale
+  *sospechoso*: el daño ya estaba registrado) → Laboratorio RSI (−28.4% seed 42, Gate 2 honesto) → Parches →
+  Versiones. Arrancar con BD local limpia (`var/autoguard.db`, `var/lineage/`) para que la bitácora muestre una sola
+  corrida y el linaje empiece en v0; correr una vez `bash scripts/demo.sh --force` antes. Detalles en `frontend/README.md`.
 - **rama:** `task/T-33`
 - **rutas:** `frontend/` (nueva). No toca backend ni otras rutas.
 - **qué:** frontend end to end en React + Vite + TypeScript que corre en local contra la API (`http://localhost:8000`):
@@ -353,6 +365,29 @@ pasa a **claude-elias**.
   juntos. Agregar filtro `run_id` (o `corrida=latest`) y exponerlo para el frontend. Hallazgo de T-33.
 - **Contexto para continuar:** —
 
+### 12. T-36 · `save_document` pisa documentos entre vehículos con el mismo nombre de archivo
+- **estado:** pendiente
+- **rutas:** `autoguard/db/repo.py`, `autoguard/db/models.py` (si cambia la llave), tests.
+- **qué:** `repo.save_document` hace `merge` con `id = documento_id` (el nombre del archivo, p.ej. `EXP-002-FAC`): un
+  expediente nuevo con los mismos nombres le quita los documentos al vehículo anterior (`GET /vehicles/{id}` queda con 0
+  documentos). Usar llave compuesta (vehicle_id, documento_id) o prefijar el id. Hallazgo de T-33 (r3).
+- **Contexto para continuar:** —
+
+### 13. T-37 · `valuacion.simulado` es `false` cuando la fuente es `cache` con comparables simulados
+- **estado:** pendiente
+- **rutas:** `autoguard/agents/valuacion.py`, `tests/test_valuacion.py`
+- **qué:** `simulado = fuente == "mock"` (`valuacion.py:250`), pero la caché trae comparables SIMULADOS; marcar
+  `simulado` según el origen real de los comparables. Hallazgo de T-33 (r2).
+- **Contexto para continuar:** —
+
+### 14. T-38 · Texto de hipótesis del analista contradice el multiplicador
+- **estado:** pendiente
+- **rutas:** `autoguard/rsi/analista.py`, tests.
+- **qué:** el texto usa el signo del sesgo MEDIO ("sobrecotiza 3.0%") y el multiplicador óptimo asimétrico (≈1.066, que
+  sube la prima): se lee contradictorio. Redactar el texto según el multiplicador (p.ej. "la pérdida asimétrica pide subir
+  la prima ×1.066 aunque el sesgo medio sea +3%"). Hallazgo de T-33 (QA).
+- **Contexto para continuar:** —
+
 ### Decisión abierta
 El equipo está evaluando **cambiar el plan de trabajo** (posible cambio de foco según el resultado de
 T-23). Si este archivo recibe una sección "Plan nuevo", esa sección manda sobre la cola de arriba.
@@ -402,3 +437,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-10 00:35 UTC · claude-dylan · T-98 hecha con autorización de la persona: eval con LLM real (OpenAI gpt-6.1-sol) pasa metas (100%/100%, USD 0.066).
 - 2026-11-10 00:50 UTC · claude-dylan · LLM real activado en `.env` (LLM_PROVIDER=auto, LLM_CACHE=1) por indicación de la persona; prueba real de `POST /expedientes` OK. Narración del video generada con ElevenLabs (voz de Dylan).
 - 2026-11-09 23:55 UTC · claude-elias · T-33: todas las pantallas implementadas y probadas contra la API (`task/T-33` 4c54833); en revisión independiente y QA. Agregadas T-34 y T-35 (hallazgos de backend).
+- 2026-11-09 23:53 UTC · claude-elias · T-33 hecha (merge `a57104a`): frontend completo en `frontend/`, revisado y probado de punta a punta. Agregadas T-36, T-37 y T-38 (hallazgos de backend). **@gpt-dylan: el frontend ya está integrado en main; te toca armar la demo** (instrucciones en T-33 y `frontend/README.md`). Turno → gpt-dylan.
