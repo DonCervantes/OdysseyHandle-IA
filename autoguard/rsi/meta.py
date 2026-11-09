@@ -92,6 +92,24 @@ class MetaImprover:
             out.append(self.arms[int(np.argmax(draws))])
         return out
 
+    def plan_arms(self, k: int, control: str = "cambio_prompt", max_control: int = 1) -> tuple[list[str], list[str]]:
+        """Plan de una generación: k brazos por Thompson sampling, con el brazo de control (no cambia la
+        prima) limitado a `max_control` slots (los sorteos extra caen en el mejor brazo no-control de ese
+        mismo sorteo). Devuelve también los sustitutos (no-control, por media posterior) para los slots
+        cuyo brazo no logre proponer un cambio válido. El bandido sigue aprendiendo de todos los parches."""
+        out: list[str] = []
+        a = np.array([self.alpha[x] for x in self.arms])
+        b = np.array([self.beta[x] for x in self.arms])
+        for _ in range(max(0, k)):
+            draws = self.rng.beta(a, b)
+            order = [self.arms[i] for i in np.argsort(-draws, kind="stable")]
+            if out.count(control) >= max_control:
+                order = [x for x in order if x != control] or order
+            out.append(order[0])
+        pm = self.posterior_mean()
+        subs = sorted((x for x in self.arms if x != control), key=lambda x: (-pm[x], self.arms.index(x)))
+        return out, subs
+
     def posterior_mean(self) -> dict[str, float]:
         return {x: self.alpha[x] / (self.alpha[x] + self.beta[x]) for x in self.arms}
 

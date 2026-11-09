@@ -14,15 +14,17 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | claude-elias (desde 22:13 UTC) |
+| **Turno actual** | gpt-dylan (claude-elias pasó el turno a las 22:42 UTC) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
-| **Última actualización** | 2026-11-09 22:13 UTC · claude-elias (inicio de turno, toma T-23) |
+| **Última actualización** | 2026-11-09 22:42 UTC · claude-elias (T-23 y T-25 hechas; T-20 en pausa; turno → gpt-dylan) |
 
 ## Reglas del turno
 
 1. Al empezar: `git checkout main && git pull origin main` y lee este archivo completo.
 2. Si el "Turno actual" no es tu sesión, **no trabajes**: espera. (Excepción: Fase 0.)
-3. Toma la **primera** tarea de la cola con estado `pendiente` o `en pausa`. Escribe en ella
+3. Si en la cola hay una tarea **asignada a tu sesión** (`asignada: <sesion>`) en estado `pendiente` o
+   `en pausa`, tómala primero. Si no, toma la **primera** tarea de la cola con estado `pendiente` o `en pausa`
+   que no esté asignada a otra sesión. Escribe en ella
    `estado: en curso · <tu-sesion> · <hora UTC>` y haz commit + push a main de inmediato
    (así nadie más la toma).
 4. Trabaja en la rama `task/T-XX` (si ya existe en origin, continúa desde ella:
@@ -71,7 +73,28 @@ pasa a **claude-elias**.
 ## Cola de tareas (en orden)
 
 ### 1. T-23 · Cumplir el Gate 2 (PRIORIDAD MÁXIMA)
-- **estado:** en curso · claude-elias · 22:13 UTC · rama `task/T-23` en origin (4c7e67c)
+- **estado:** **hecha** · claude-elias · 22:42 UTC · merge en main `6cbae83` (Gate 2 NO cumplido; documentado)
+- **resumen:** RSI de −4.3% a −25.9…−29.2% de regret vs estático (el doble que `parametros`); el 40% no se
+  alcanza y se documenta por qué: incluso un aprendiz ideal que ya conoce la estructura verdadera logra
+  39.3–40.6% y el oráculo 43.7–44.8% ⇒ el RSI captura 66–74% de la mejora del aprendiz ideal. **Propuesta para
+  el equipo: Gate relativo a esas cotas.** Revisada por agente independiente (aprobada con cambios menores,
+  aplicados). Tabla (MXN, modo mock, mejora vs estático):
+
+  | seed | estático | parametros | rsi | % del oráculo | % del aprendiz ideal |
+  | --- | --- | --- | --- | --- | --- |
+  | 42 | 51.31M | 44.01M (−14.2%) | **36.73M (−28.4%)** | 64% | 70% |
+  | 1 | 51.18M | 42.61M (−16.7%) | **37.93M (−25.9%)** | 59% | 66% |
+  | 7 | 50.98M | 43.50M (−14.7%) | **37.00M (−27.4%)** | 61% | 68% |
+  | 123 | 51.05M | 42.05M (−17.6%) | **36.16M (−29.2%)** | 66% | 74% |
+
+  Convergencia estricta (≤1.10× oráculo hasta el final): ninguna variante. A la meseta (secundaria): rsi/parametros
+  8600/8200 (42), 4600/4600 (1), 3000/1000 (7), 10800/3000 (123) — parametros se estanca antes pero en +35–58% sobre
+  el oráculo vs rsi +12–25%. Seed 42 tarda ~106 s. Detalle completo en el mensaje del merge `6cbae83`; scripts de
+  las cotas en la rama `exp/T-23-cotas` (`tools/t23_cotas/`, sin mergear). Decisiones que afectan a otras tareas:
+  `summary.json` agrega `referencia_oraculo`, `exceso_final_vs_oraculo`, `convergencia_meseta_polizas`,
+  `tasa_aceptacion_rsi` (con `evaluados`); `curve.csv` agrega `loss_oraculo`/`ratio_oraculo`; `convergencia_polizas`
+  puede ser `null`. Hallazgo para otra tarea: `patch_id` se repite entre variantes en `patches.jsonl` y
+  `api/main.py:_buscar_parche` toma el primero (puede ser el de `parametros`).
 - **rama:** `task/T-23`
 - **definición:** `TASKS.md` → T-23 (y notas de integración en T-13).
 - **línea base (seed 42, modo mock):** regret estático 51.31M · `parametros` 44.80M · `rsi` 49.11M
@@ -87,7 +110,7 @@ pasa a **claude-elias**.
 - **verificación:** `LLM_PROVIDER=mock PYTHONPATH=. .venv/bin/python -m autoguard.rsi.loop --seed S` para
   S = 42, 1, 7, 123; reportar tabla de regret por semilla. Si no se logra el 40% honestamente,
   documentar números y causas (no maquillar el simulador).
-- **Contexto para continuar:** (claude-elias, 22:10 UTC)
+- **Contexto (histórico, del cierre de Fase 0; ya integrado):** (claude-elias, 22:10 UTC)
   - **Hecho en `task/T-23` (commit 4c7e67c, tests de rsi/evaluador/meta en verde):**
     - `analista.py`: `optimal_multiplier` = argmin EXACTO de `objective.loss` (cuantil ponderado nivel
       α/(α+β)=0.6 de costo/prima, pesos = prima; verificado contra malla de 30k puntos). `best_multiplier`
@@ -133,7 +156,12 @@ pasa a **claude-elias**.
     `python -m pytest tests/test_mejorador.py tests/test_analista.py tests/test_loop.py tests/test_evaluator.py tests/test_meta.py`.
 
 ### 2. T-25 · Prueba de punta a punta vía API
-- **estado:** en pausa · claude-elias (cierre Fase 0, 22:10 UTC) · rama `task/T-25` en origin (ab8582e)
+- **estado:** **hecha** · claude-elias · 22:32 UTC · merge en main `e0a1092`
+- **resumen:** `tests/test_e2e.py` recorre todo el flujo vía API con TestClient, SQLite y directorios temporales,
+  modo mock y semilla 42: expediente EXP-001 → perfil + cotización (coincide con `/quote` y el linaje) →
+  `POST /outcomes` idempotente → `POST /rsi/run` en proceso + `/runs/latest` + `/patches` → aprobar un parche
+  cambia la prima y la `agent_version` → revertir devuelve la prima original (linaje con 3 versiones). Tarda
+  ~37 s (aceptación < 60 s). Pytest completo: sin fallos nuevos (solo los preexistentes de Windows).
 - **rama:** `task/T-25`
 - **definición:** `TASKS.md` → T-25. Ruta: `tests/test_e2e.py`. No depende de T-23.
 - **Contexto para continuar:** (claude-elias, 22:10 UTC)
@@ -150,22 +178,80 @@ pasa a **claude-elias**.
     aceptación y merge a main.
 
 ### 3. T-20 · README, guion de demo y semilla de demo
-- **estado:** pendiente (requiere T-23 hecha: usa sus números reales)
+- **estado:** en curso · gpt-dylan · retoma borrador origin/task/T-20
 - **rama:** `task/T-20`
 - **definición:** `TASKS.md` → T-20. Rutas: `README.md`, `docs/demo.md`, `scripts/demo.sh`.
 - **notas:** el tablero RSI está en `dashboard/app.py` (con modo demo en vivo, T-29) y el dashboard de
   progreso en `tools/progreso/`. n8n, Linear y Miro quedaron fuera del plan. Variables en `.env.example`
   (se carga solo, T-22). Mencionar limitaciones honestas: datos simulados, sandbox sin Docker, LLM sin medir
   con llave real (`docs/eval_llm.md`).
-- **Contexto para continuar:** —
-
-### 4. T-27 · Guion y narración del video de respaldo
+- **Contexto para continuar:** (claude-elias, 22:42 UTC)
+  - **Hecho (borrador, agente claude-elias:w3):** `README.md` (qué es, diagrama, instalación sin llaves,
+    cómo correr tests/experimento/API/tablero/progreso/evals, tabla de resultados, Gate 2 honesto,
+    limitaciones), `docs/demo.md` (semilla 42, guion de 40 s segundo a segundo con EXP-002 + FOTO-002 porque da
+    `VIN_NO_COINCIDE` alta y 2 daños, plan B, preguntas del jurado) y `scripts/demo.sh` (`--start/--stop/--force/
+    --help`, puertos `API_PORT`/`DASH_PORT`; probado en Git Bash: corrida seed 42, `/health`, tablero 200,
+    `/expedientes` con EXP-001/2/3).
+  - **Falta:** (1) `git fetch && git checkout -B task/T-20 origin/task/T-20 && git merge origin/main`
+    (main ya tiene T-23); (2) reemplazar los marcadores — listarlos con
+    `grep -no "{{T23_[A-Z0-9_]*}}" README.md docs/demo.md` — usando la tabla de T-23 de arriba (mejora media rsi
+    27.7%; convergencia: usar la de meseta y explicar que la estricta no la alcanza nadie; `RESUMEN_GATE2` =
+    resumen de T-23); quitar el texto "−27.4 % en seed 42 y −25.6 % en seed 1" (preliminar) y las notas
+    "BORRADOR"; (3) regenerar la corrida de seed 42 con el código de main para `TIEMPO_CORRIDA`,
+    `PARCHES_ACEPTADOS_42` y `PARCHE_REVERSION_42` (`bash scripts/demo.sh --force`); (4) `data/demo_run/` no
+    existe: decidir si se versiona la corrida de respaldo (marcador `DEMO_RUN_RESPALDO`); (5) `docs/demo.md`
+    cita `docs/video_respaldo.md` (T-27, aún no existe); (6) el tablero no deja revertir con el modo demo
+    activo: el guion apaga "Activar reproducción" en los segundos 34–40, ensayarlo; (7) pytest, revisar contra
+    la aceptación y merge a main. · Guion y narración del video de respaldo
 - **estado:** pendiente (requiere T-20)
 - **rama:** `task/T-27`
 - **definición:** `TASKS.md` → T-27. Ruta: `docs/video_respaldo.md`. Texto listo para ElevenLabs.
 - **Contexto para continuar:** —
 
-### 5. Tareas humanas (las hace una persona; la sesión de turno solo puede preparar instrucciones)
+### 5. T-30 · Pulir el frontend con el RSI como protagonista (sin look "vibecodeado")
+- **asignada:** gpt-dylan (es lo primero que hace en su turno)
+- **estado:** hecha · gpt-dylan · 2026-11-09
+- **resumen:** Titular dinámico, convergencia nullable, colores y nombres de negocio, parches aceptados en curvas, ciclo explicado, filtros, métricas holdout y confirmación de reversión. Tasa de aceptación y posteriors; estilo alineado con Lovable. Capturas antes/después y por sección en docs. 259 tests generales + 3 dashboard pasan; seed 42 actual: 28.4% de mejora, 21.4 s en esta máquina.
+- **rama:** `task/T-30`
+- **rutas:** `dashboard/` (tablero RSI en Streamlit, incluido el modo demo de T-29), `.streamlit/config.toml`,
+  `docs/lovable_prompt.md` (alinear el estilo del frontend de Lovable con el del tablero), capturas en `docs/`.
+  No tocar `autoguard/` salvo lectura; si el tablero necesita un dato que el loop no escribe, agrégalo como
+  tarea nueva al final de la cola.
+- **objetivo:** que los jueces entiendan en 40 s que el sistema **se mejora solo y aprende a mejorarse**, y
+  que el producto se vea diseñado por un equipo, no generado.
+- **el RSI al frente (en este orden en la página principal):**
+  1. Titular con la cifra clave de la corrida (regret RSI vs estático, % de reducción, pólizas a
+     convergencia) leída de `var/runs/<run_id>/summary.json`, nunca escrita a mano.
+  2. Curvas de pérdida vs pólizas de las 3 variantes con el **área de regret sombreada** y anotaciones en
+     los puntos donde se aceptó un parche.
+  3. El ciclo RSI como diagrama con el estado de la generación actual: recolector → analista → mejorador →
+     evaluador congelado → linaje → meta-mejorador.
+  4. Bitácora de parches como historia: hipótesis → cambio (diff legible) → métricas en holdout antes/después
+     → veredicto y motivo; filtros por veredicto y tipo; botón de reversión con confirmación.
+  5. "Aprende a mejorar": evolución de los posteriors del bandido por tipo de parche y tasa de aceptación
+     por generación, con las lecciones del meta-mejorador.
+  6. Garantías: evaluador inmutable, holdout que el mejorador nunca ve, lista blanca de variables, todo
+     revertible. Linaje de versiones navegable.
+- **criterios anti-"vibecodeado" (el revisor los verifica uno por uno):**
+  - Sistema visual propio y sobrio: 1 familia tipográfica, escala de tamaños consistente, paleta corta
+    (neutros + 1 color de acento + colores semánticos para las 3 variantes, iguales en todas las gráficas),
+    tema en `.streamlit/config.toml`. Sin gradientes decorativos, sin emojis en títulos, sin "glassmorphism".
+  - Textos escritos por una persona: títulos que afirman algo ("El RSI reduce el regret 47%") en vez de
+    genéricos ("Dashboard", "Métricas"); sin relleno tipo "potenciado por IA"; español consistente.
+  - Números formateados (MXN con separador de miles, % con 1 decimal, pólizas enteras) y unidades en
+    cada eje y tarjeta; leyendas con nombres de negocio ("Reglas fijas", "Solo parámetros", "RSI completo").
+  - Jerarquía clara: una idea por sección, espacio en blanco, nada de 12 tarjetas iguales en fila.
+  - Estados vacíos, de carga y de error útiles (p.ej. "Aún no hay corridas: ejecuta `python -m
+    autoguard.rsi.loop --seed 42`"). Nada de texto placeholder ni datos inventados.
+  - Etiqueta discreta y permanente "Datos simulados".
+  - Funciona en pantalla de proyector (1280×720) y se lee a distancia.
+- **aceptación:** `streamlit run dashboard/app.py` arranca con una corrida mock y con la corrida pre-grabada
+  del modo demo; los tests existentes de `dashboard/` siguen en verde; capturas antes/después en
+  `docs/tablero-rsi.png` (y una nueva por sección clave); el resumen en esta tarea lista qué cambió.
+  Si T-23 cambia los números, el tablero los refleja sin tocar código.
+- **Contexto para continuar:** —
+
+### 6. Tareas humanas (las hace una persona; la sesión de turno solo puede preparar instrucciones)
 - **T-92** Crear proyecto Supabase y aplicar `db/migrations/001_init.sql`; poner `DATABASE_URL` en `.env`.
 - **T-93** Pegar `docs/lovable_prompt.md` en Lovable, conectar GitHub primero.
 - **T-95** Desplegar backend (Railway/Render) y tablero (Streamlit Cloud).
@@ -198,4 +284,8 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 UTC · claude-dylan · Reglas: cada turno dura hasta el límite de uso de la sesión, con checkpoints (push + contexto) al terminar cada tarea y cada ~20 min.
 - 2026-11-09 22:05 UTC · cursor-elias · Fase 0 cierre: sin trabajo en curso; T-21/T-26/T-28 ya en main; agentes detenidos; casilla ☑. Conflicto de rebase resuelto respetando orden nuevo del coordinador. Esperando cierre de claude-elias; turno permanece CIERRE.
 - 2026-11-09 22:10 UTC · claude-elias · Fase 0 cierre: T-23 y T-25 en pausa con ramas en origin (`task/T-23` 4c7e67c, `task/T-25` ab8582e) y "Contexto para continuar" lleno. T-23: rsi −4.3% → −22.4% (seed 42); cotas medidas: oráculo ~44%, aprendiz ideal 39–41% ⇒ 40% fijo inalcanzable honestamente. Experimentos a medias en `exp/T-23-x1/x3/x4` y scripts de cotas en `exp/T-23-cotas`. T-19 revisada y aprobada antes de la pausa. 6 agentes en segundo plano detenidos (w1, r1, x1–x4). Las 4 sesiones cerraron ⇒ Fase 0 completa.
-- 2026-11-09 22:13 UTC · claude-elias · Inicio de turno (Fase 0 completa); toma T-23 (en curso).
+- 2026-11-09 22:08 UTC · claude-elias · Inicio de turno (Fase 0 completa); toma T-23 (en curso).
+- 2026-11-09 22:21 UTC · claude-elias · Checkpoint T-23 (a8e9013: rsi −27.4% seed 42). Por instrucción de la persona, agentes en paralelo dentro del turno: w1 cierra T-25, w3 redacta T-20 (sin merge hasta T-23).
+- 2026-11-09 22:32 UTC · claude-elias · T-25 hecha (merge `e0a1092`, verificado: solo `tests/test_e2e.py`). T-23 lista en `task/T-23` (3f4e88d, pytest sin fallos nuevos, seed 42 en 106 s), en revisión por agente independiente antes del merge.
+- 2026-11-09 UTC · claude-dylan · Agregada T-30 (pulir frontend con el RSI al frente), asignada a gpt-dylan para su turno; regla 3: las tareas asignadas a tu sesión van primero.
+- 2026-11-09 22:42 UTC · claude-elias · Fin de turno. T-23 hecha (merge `6cbae83`): rsi −25.9…−29.2% vs estático en seeds 42/1/7/123 (base −4.3%), Gate 2 no cumplido y documentado con cotas (aprendiz ideal 39–41%, oráculo ~44%) + propuesta de Gate relativo; revisada por agente independiente. T-25 hecha (`e0a1092`). T-20 en pausa con borrador completo en `task/T-20` (falta poner números, ver su contexto). Agentes detenidos. Turno → gpt-dylan.
