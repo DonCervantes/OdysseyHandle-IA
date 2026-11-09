@@ -68,7 +68,7 @@ El experimento compara **tres cotizadores viendo los mismos autos**:
 Requiere Python ≥ 3.11 (probado con 3.12) y Git.
 
 ```bash
-git clone <url-del-repo> && cd OdysseyHandle-IA
+git clone https://github.com/DonCervantes/OdysseyHandle-IA.git && cd OdysseyHandle-IA
 python -m venv .venv                       # o: uv venv .venv --python 3.12
 source .venv/bin/activate                  # Windows: .venv\Scripts\activate
 pip install -e '.[dev]'                    # o: uv pip install -e '.[dev]'
@@ -169,7 +169,7 @@ streamlit run dashboard/app.py --server.port 8501
 
 Lee las corridas de `var/runs/` (o `AUTOGUARD_RUNS_DIR`) cada vez que se recarga. Muestra pérdida por
 lote y regret acumulado de las 3 variantes, la bitácora de parches con métricas antes/después, el bandido
-del meta-mejorador y la pestaña **Linaje y reversión**. El **modo demo** (barra lateral → *Activar
+del meta-mejorador y la pestaña **Versiones y garantías**. El **modo demo** (barra lateral → *Activar
 reproducción* → ▶ Play) recorre las generaciones en unos 40 s. Si no hay corridas, cae a
 `data/demo_run/` (plan B). Más detalle en [`dashboard/README.md`](dashboard/README.md).
 
@@ -194,20 +194,18 @@ python scripts/eval_llm.py                      # medición con LLM real (requie
 
 ## Resultados del experimento (semillas 42, 1, 7, 123)
 
-> **BORRADOR.** Los números finales los pone T-23. Todo lo marcado `{{T23_...}}` está pendiente.
-
-Regret acumulado (MXN, menor es mejor) con `--batches 60 --batch-size 200 --k 3`:
+Regret acumulado (MXN, menor es mejor; semillas 1/7/123 redondeadas a 10,000 MXN desde el reporte de T-23) con `--batches 60 --batch-size 200 --k 3`:
 
 | Semilla | `estatico` | `parametros` | `rsi` | Mejora RSI vs estático |
 | --- | --- | --- | --- | --- |
-| 42 | {{T23_REGRET_42_ESTATICO}} | {{T23_REGRET_42_PARAMETROS}} | {{T23_REGRET_42_RSI}} | {{T23_MEJORA_42}} |
-| 1 | {{T23_REGRET_1_ESTATICO}} | {{T23_REGRET_1_PARAMETROS}} | {{T23_REGRET_1_RSI}} | {{T23_MEJORA_1}} |
-| 7 | {{T23_REGRET_7_ESTATICO}} | {{T23_REGRET_7_PARAMETROS}} | {{T23_REGRET_7_RSI}} | {{T23_MEJORA_7}} |
-| 123 | {{T23_REGRET_123_ESTATICO}} | {{T23_REGRET_123_PARAMETROS}} | {{T23_REGRET_123_RSI}} | {{T23_MEJORA_123}} |
-| **Media** | | | | **{{T23_MEJORA_MEDIA}}** |
+| 42 | 51,312,336 | 44,014,125 | 36,727,792 | 28.4 % |
+| 1 | 51,180,000 | 42,610,000 | 37,930,000 | 25.9 % |
+| 7 | 50,980,000 | 43,500,000 | 37,000,000 | 27.4 % |
+| 123 | 51,050,000 | 42,050,000 | 36,160,000 | 29.2 % |
+| **Media** | | | | **27.7 %** |
 
-Pólizas hasta convergencia (ventana de 3 lotes dentro del 5 % de la pérdida final): `rsi`
-{{T23_CONVERGENCIA_RSI}} vs `parametros` {{T23_CONVERGENCIA_PARAMETROS}}.
+Pólizas hasta convergencia (pérdida móvil ≤ 1.10× oráculo hasta el final): `rsi`
+no alcanzada vs `parametros` no alcanzada.
 
 ### Gate 2: no alcanzado (contexto honesto)
 
@@ -219,9 +217,9 @@ simulado se encontró que esa meta queda en el límite de lo alcanzable:
   regret (43.7 %–44.8 % según la semilla): el resto es ruido irreducible del costo real.
 - Un **aprendiz ideal** que ya conoce la estructura verdadera y solo estima sus parámetros con los datos
   disponibles logra **39 %–41 %**.
-- La línea base del RSI en T-13 logró **−4.3 %**. Resultados preliminares de T-23:
-  {{T23_PRELIMINAR}} (borrador: −27.4 % en seed 42 y −25.6 % en seed 1).
-- Resultado final de T-23: {{T23_RESUMEN_GATE2}}.
+- La línea base del RSI en T-13 logró **−4.3 %**. Resultados de T-23:
+  25.9–29.2 % de reducción en las cuatro semillas .
+- Resultado final de T-23: RSI mejora 25.9–29.2 %; el Gate 2 de 40 % y convergencia estricta no se cumple.
 
 Es decir, el 40 % fijo exige prácticamente el desempeño de un aprendiz que ya conoce la respuesta. Lo
 reportamos tal cual en lugar de ajustar la meta o el evaluador (que están congelados por diseño).

@@ -90,6 +90,9 @@ fi
 echo "Python: $PY ($("$PY" --version 2>&1))"
 
 # ------------------------------------------------------------------ 2. modo mock
+export AUTOGUARD_NO_DOTENV=1
+export VALUACION_OFFLINE=1
+export DATABASE_URL="sqlite:///$ROOT/var/demo.db"
 export LLM_PROVIDER=mock
 export AUTOGUARD_RUNS_DIR="$RUNS_DIR"
 export PYTHONIOENCODING=utf-8

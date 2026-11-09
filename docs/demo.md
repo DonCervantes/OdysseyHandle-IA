@@ -1,8 +1,5 @@
 # Guion de la demo (40 s) — KAVAK AUTOGUARD AI
 
-> **BORRADOR (T-20).** Los números finales del experimento los pone T-23; todo lo marcado `{{T23_...}}`
-> está pendiente de reemplazo. Todos los datos que se ven en pantalla son **SIMULADOS**.
-
 Corresponde al bloque **5. Demo (40 s)** del pitch de 3 minutos
 ([`KAVAK_AUTOGUARD_AI_Plan_de_trabajo.md`](../KAVAK_AUTOGUARD_AI_Plan_de_trabajo.md) → *Pitch*). Llega
 justo después de "El diferenciador RSI", así que el público ya escuchó *qué* hace el ciclo; aquí lo **ve**.
@@ -13,24 +10,23 @@ justo después de "El diferenciador RSI", así que el público ya escuchó *qué
   (lo hace `bash scripts/demo.sh`). Parámetros por defecto: 60 lotes × 200 autos, una generación cada
   3 lotes ⇒ **12,000 pólizas por variante y 20 generaciones**.
 - Por qué 42: es la semilla de referencia de todo el proyecto (T-13, T-23 y los tests), es determinística
-  en modo mock (misma corrida ⇒ mismos números y mismos parches) y {{T23_SEMILLA_JUSTIFICACION}}.
-- Tiempo de la corrida en una laptop: {{T23_TIEMPO_CORRIDA}} (con el código de main/T-13 tarda ~2.5 min; se prepara ANTES del pitch, nunca en vivo).
+  en modo mock (misma corrida ⇒ mismos números y mismos parches) y permite comparar directamente con la línea base sin elegir la semilla por su resultado.
+- Tiempo de la corrida en una laptop: 21.4 s medidos en Mac; ~106 s en la máquina del turno anterior (depende del equipo) Se prepara antes del pitch, nunca en vivo.
 
 ## Resultados esperados (seed 42)
 
 | Métrica | `estatico` | `parametros` | `rsi` |
 | --- | --- | --- | --- |
-| Regret acumulado (MXN) | {{T23_REGRET_42_ESTATICO}} | {{T23_REGRET_42_PARAMETROS}} | {{T23_REGRET_42_RSI}} |
-| Pólizas hasta convergencia | — | {{T23_CONVERGENCIA_42_PARAMETROS}} | {{T23_CONVERGENCIA_42_RSI}} |
+| Regret acumulado (MXN) | 51,312,336 | 44,014,125 | 36,727,792 |
+| Pólizas hasta convergencia | — | No alcanzada | No alcanzada |
 
-- Mejora del RSI frente al estático: **{{T23_MEJORA_42}}** (preliminar: {{T23_PRELIMINAR}}; borrador
-  −27.4 % en seed 42, frente a −4.3 % de la línea base de T-13).
+- Mejora del RSI frente al estático: **28.4 %**.
 - Gate 2 (≥ 40 %): **no cumple**. El tablero lo muestra como "No cumple" y lo decimos sin rodeos si
   preguntan: incluso un oráculo con conocimiento perfecto solo logra ~44 % (43.7–44.8 % según semilla) y
   un aprendiz ideal que ya conoce la estructura verdadera logra 39–41 %; el 40 % fijo está en el límite
   de lo alcanzable en este simulador.
-- Parches aceptados del RSI en la corrida: {{T23_PARCHES_ACEPTADOS_42}}; el parche que se usará para la
-  reversión: {{T23_PARCHE_REVERSION_42}}.
+- Parches aceptados del RSI en la corrida: 24; el parche que se usará para la
+  reversión: seleccionar el padre del campeón en el historial Git de rsi; el SHA cambia entre ejecuciones.
 
 Comprobación rápida antes de subir al escenario: `bash scripts/demo.sh` imprime el resumen de
 `var/runs/demo-seed42/summary.json`; debe coincidir con la tabla de arriba.
@@ -53,10 +49,10 @@ Comprobación rápida antes de subir al escenario: `bash scripts/demo.sh` imprim
 | --- | --- | --- | --- |
 | 0–8 s | Pestaña A: expediente EXP-002 | Subir factura, tarjeta, póliza y FOTO-002; enviar (~1 s en mock). Aparece la **alerta** `VIN_NO_COINCIDE` (alta), los daños con costo (espejo estrellado, rayón en puerta) y la **prima con sus factores** e intervalo. | *(puente)* "Este es un auto revisado por los agentes: alertas, daños y una prima que se explica sola." |
 | 8–12 s | Pestaña B: tablero en G0 | Cambiar de pestaña. Las tres curvas arrancan juntas. Pulsar **▶ Play**. | "Aquí hay tres cotizadores viendo los mismos autos." |
-| 12–20 s | Curva *Pérdida media por lote* | La gris (estático) se queda plana; la verde (RSI) baja generación a generación. | "El de reglas fijas sigue equivocándose. El nuestro baja su error con cada póliza." |
-| 20–28 s | Curva *Regret acumulado* (área sombreada) | Señalar el área: la gris crece más rápido que la verde. Métrica *Reducción de regret RSI* sube hasta {{T23_MEJORA_42}}. | "Esta área sombreada es el dinero que cuesta aprender, y con RSI es mucho menor." |
-| 28–34 s | Avisos "✓ Parche aceptado" + pestaña **Parches** | Al terminar la reproducción (se pausa sola), abrir un parche aceptado: hipótesis, métricas antes/después y diff. | "Y cada cambio está aquí, explicado…" |
-| 34–40 s | Pestaña **Linaje y reversión** | Apagar *Activar reproducción* (la reversión está deshabilitada durante la demo), variante `rsi`, elegir la versión anterior y pulsar **Revertir configuración de esta variante** → aviso "Nueva versión: …". | "…con un botón para revertirlo." |
+| 12–20 s | Curva *Pérdida media por lote* | La curva de reglas fijas mantiene su nivel con ruido; RSI reduce la pérdida en conjunto, sin descenso monótono. | "El de reglas fijas sigue equivocándose. El nuestro baja su error con cada póliza." |
+| 20–28 s | Curva *Regret acumulado* (área sombreada) | Señalar el área: la gris crece más rápido que la verde. Métrica *Reducción de regret RSI* sube hasta 28.4 %. | "Esta área sombreada es el dinero que cuesta aprender, y con RSI es mucho menor." |
+| 28–34 s | Avisos "✓ Parche aceptado" + pestaña **La historia de los cambios** | Al terminar la reproducción (se pausa sola), abrir un parche aceptado: hipótesis, métricas antes/después y diff. | "Y cada cambio está aquí, explicado…" |
+| 34–40 s | Pestaña **Versiones y garantías** | Apagar *Activar reproducción* (la reversión está deshabilitada durante la demo), variante `rsi`, elegir la versión anterior, marcar la confirmación y pulsar **Revertir configuración de esta variante** → aviso "Nueva versión: …". | "…con un botón para revertirlo." |
 
 Notas de ejecución:
 
@@ -76,7 +72,7 @@ Ordenados de menor a mayor degradación:
    en *Corrida de respaldo (plan B)*. Preparar `data/demo_run/` copiando `curve.csv`, `summary.json`,
    `patches.jsonl`, `versions.jsonl` y `meta.jsonl` de `var/runs/demo-seed42/` (una corrida REAL). Sin los
    repos Git la pestaña de reversión queda informativa: narrar la reversión sobre el historial.
-   *(Hoy `data/demo_run/` no existe en el repo: {{T23_DEMO_RUN_RESPALDO}}.)*
+   *(Hoy `data/demo_run/` no existe en el repo: se prepara localmente con los artefactos de una corrida ejecutada; no se versionan datos de respaldo.)*
 2. **Frontend caído → Swagger o curl.** `http://localhost:8000/docs` → `POST /expedientes` → *Try it
    out*, o desde terminal:
 
@@ -93,7 +89,7 @@ Ordenados de menor a mayor degradación:
    API: `GET /patches`, `GET /versions/cotizador`, `POST /versions/cotizador/revert/{sha}`.
 3. **Todo falla (laptop, red, proyector con la app) → video de respaldo.** Grabación de 3 min con
    narración (guion en `docs/video_respaldo.md`, T-27; grabación T-96). Se reproduce desde el minuto del
-   bloque de demo: {{T23_VIDEO_TIMESTAMP}}. Llevarlo también en USB y en el teléfono.
+   bloque de demo: marcar al grabar el inicio del bloque de demo (guion de T-27). Llevarlo también en USB y en el teléfono.
 
 ## Preguntas probables del jurado
 
@@ -102,7 +98,7 @@ Ordenados de menor a mayor degradación:
 - **¿Qué impide que el RSI haga trampa?** El evaluador, el holdout y la función objetivo están fuera de su
   alcance (`autoguard/evaluator/`, constantes fijas); un parche solo entra si mejora ≥ 1 % en el holdout
   sin empeorar más de 5 % ningún segmento. Ver `docs/auditoria.md`.
-- **¿Llegaron a su meta de 40 %?** No (ver *Resultados esperados*): {{T23_MEJORA_MEDIA}} de media en 4
+- **¿Llegaron a su meta de 40 %?** No (ver *Resultados esperados*): 27.7 % de media en 4
   semillas frente a un techo del ~44 % del oráculo.
 - **¿Y el LLM?** En la demo corre en mock para ser reproducible; la medición con llave real está
   preparada (`scripts/eval_llm.py`, `docs/eval_llm.md`) pero no publicada.
