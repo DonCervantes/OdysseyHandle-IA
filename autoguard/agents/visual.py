@@ -221,7 +221,9 @@ def evaluate(fotos_dir: Path = FOTOS_DIR) -> dict[str, Any]:
     por_foto = {}
     for nombre, d in gt["fotos"].items():
         esperado = {(x["zona"], x["tipo"]) for x in d["danos"]}
-        obtenido = {(x.zona, x.tipo) for x in inspect([(fotos_dir / nombre).read_bytes()], hints=[nombre])}
+        # con LLM real no se pasan hints: un fallo del LLM caería al ground truth e inflaría el recall
+        hints = [nombre] if llm.is_mock() else None
+        obtenido = {(x.zona, x.tipo) for x in inspect([(fotos_dir / nombre).read_bytes()], hints=hints)}
         tp_i, fn_i, fp_i = len(esperado & obtenido), len(esperado - obtenido), len(obtenido - esperado)
         tp, fn, fp = tp + tp_i, fn + fn_i, fp + fp_i
         por_foto[nombre] = {"recall": tp_i / len(esperado) if esperado else 1.0, "falsos_positivos": fp_i}
