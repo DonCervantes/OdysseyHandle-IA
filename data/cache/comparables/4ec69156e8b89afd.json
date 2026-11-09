@@ -1,0 +1,74 @@
+{
+  "nota": "SIMULADO: ejemplo de caché para la demo, no son anuncios reales",
+  "marca": "Volkswagen",
+  "modelo": "Jetta",
+  "anio": 2017,
+  "query": "Volkswagen Jetta 2017 precio venta seminuevo México",
+  "guardado": "2026-11-09T00:00:00+00:00",
+  "comparables": [
+    {
+      "titulo": "SIMULADO Volkswagen Jetta 2018",
+      "url": "https://simulado.local/anuncio/4ec69156e8b89afd-0",
+      "precio": 127100.0,
+      "anio": 2018,
+      "kilometraje": 118503,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Volkswagen Jetta 2016",
+      "url": "https://simulado.local/anuncio/4ec69156e8b89afd-1",
+      "precio": 117600.0,
+      "anio": 2016,
+      "kilometraje": 145821,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Volkswagen Jetta 2016",
+      "url": "https://simulado.local/anuncio/4ec69156e8b89afd-2",
+      "precio": 107500.0,
+      "anio": 2016,
+      "kilometraje": 148037,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Volkswagen Jetta 2017",
+      "url": "https://simulado.local/anuncio/4ec69156e8b89afd-3",
+      "precio": 115700.0,
+      "anio": 2017,
+      "kilometraje": 133055,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Volkswagen Jetta 2016",
+      "url": "https://simulado.local/anuncio/4ec69156e8b89afd-4",
+      "precio": 99800.0,
+      "anio": 2016,
+      "kilometraje": 153338,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Volkswagen Jetta 2017",
+      "url": "https://simulado.local/anuncio/4ec69156e8b89afd-5",
+      "precio": 124600.0,
+      "anio": 2017,
+      "kilometraje": 139295,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Volkswagen Jetta 2016",
+      "url": "https://simulado.local/anuncio/4ec69156e8b89afd-6",
+      "precio": 113400.0,
+      "anio": 2016,
+      "kilometraje": 153703,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Volkswagen Jetta 2018",
+      "url": "https://simulado.local/anuncio/4ec69156e8b89afd-7",
+      "precio": 138700.0,
+      "anio": 2018,
+      "kilometraje": 120458,
+      "origen": "mock"
+    }
+  ]
+}
