@@ -14,9 +14,9 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | claude-elias (desde 22:13 UTC) |
+| **Turno actual** | claude-elias (desde 22:08 UTC) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
-| **Última actualización** | 2026-11-09 22:13 UTC · claude-elias (inicio de turno, toma T-23) |
+| **Última actualización** | 2026-11-09 22:21 UTC · claude-elias (checkpoint T-23; T-25 y T-20 en curso con agentes) |
 
 ## Reglas del turno
 
@@ -71,7 +71,14 @@ pasa a **claude-elias**.
 ## Cola de tareas (en orden)
 
 ### 1. T-23 · Cumplir el Gate 2 (PRIORIDAD MÁXIMA)
-- **estado:** en curso · claude-elias · 22:13 UTC · rama `task/T-23` en origin (4c7e67c)
+- **estado:** en curso · claude-elias · desde 22:08 UTC · rama `task/T-23` en origin (a8e9013, checkpoint 22:21)
+- **checkpoint 22:21 UTC:** integrados en `task/T-23` (a8e9013) el experimento x1 (control `cambio_prompt`
+  limitado a 1 slot + sustitutos para slots sin candidato, `MetaImprover.plan_arms`; y hasta 2 rondas de
+  propuestas por generación sobre el campeón actualizado, `ROUNDS_MAX=2`, para parametros y rsi) y los tests de
+  x4 (`tests/test_rsi_asimetrico.py`, 24 tests). Seed 42: rsi **37.27M (−27.4%)**; seed 1: 38.08M (−25.6%).
+  x3 (rendimiento) NO se integra: sin carga el loop ya tarda ~104 s (< 3 min) y x3 dependía de funciones
+  privadas de `cotizador.py`. Corriendo ahora las 4 semillas para la tabla final; después: merge origin/main,
+  pytest, merge a main y `hecha` con la tabla y la propuesta de Gate relativo.
 - **rama:** `task/T-23`
 - **definición:** `TASKS.md` → T-23 (y notas de integración en T-13).
 - **línea base (seed 42, modo mock):** regret estático 51.31M · `parametros` 44.80M · `rsi` 49.11M
@@ -133,7 +140,7 @@ pasa a **claude-elias**.
     `python -m pytest tests/test_mejorador.py tests/test_analista.py tests/test_loop.py tests/test_evaluator.py tests/test_meta.py`.
 
 ### 2. T-25 · Prueba de punta a punta vía API
-- **estado:** en pausa · claude-elias (cierre Fase 0, 22:10 UTC) · rama `task/T-25` en origin (ab8582e)
+- **estado:** en curso · claude-elias (agente claude-elias:w1, en paralelo a T-23) · 22:20 UTC · rama `task/T-25` en origin (ab8582e)
 - **rama:** `task/T-25`
 - **definición:** `TASKS.md` → T-25. Ruta: `tests/test_e2e.py`. No depende de T-23.
 - **Contexto para continuar:** (claude-elias, 22:10 UTC)
@@ -150,7 +157,8 @@ pasa a **claude-elias**.
     aceptación y merge a main.
 
 ### 3. T-20 · README, guion de demo y semilla de demo
-- **estado:** pendiente (requiere T-23 hecha: usa sus números reales)
+- **estado:** en curso (borrador) · claude-elias (agente claude-elias:w3) · 22:20 UTC · rama `task/T-20`:
+  se redacta con marcadores `{{T23_...}}` para los números; NO se mergea hasta que T-23 esté hecha.
 - **rama:** `task/T-20`
 - **definición:** `TASKS.md` → T-20. Rutas: `README.md`, `docs/demo.md`, `scripts/demo.sh`.
 - **notas:** el tablero RSI está en `dashboard/app.py` (con modo demo en vivo, T-29) y el dashboard de
@@ -198,4 +206,5 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 UTC · claude-dylan · Reglas: cada turno dura hasta el límite de uso de la sesión, con checkpoints (push + contexto) al terminar cada tarea y cada ~20 min.
 - 2026-11-09 22:05 UTC · cursor-elias · Fase 0 cierre: sin trabajo en curso; T-21/T-26/T-28 ya en main; agentes detenidos; casilla ☑. Conflicto de rebase resuelto respetando orden nuevo del coordinador. Esperando cierre de claude-elias; turno permanece CIERRE.
 - 2026-11-09 22:10 UTC · claude-elias · Fase 0 cierre: T-23 y T-25 en pausa con ramas en origin (`task/T-23` 4c7e67c, `task/T-25` ab8582e) y "Contexto para continuar" lleno. T-23: rsi −4.3% → −22.4% (seed 42); cotas medidas: oráculo ~44%, aprendiz ideal 39–41% ⇒ 40% fijo inalcanzable honestamente. Experimentos a medias en `exp/T-23-x1/x3/x4` y scripts de cotas en `exp/T-23-cotas`. T-19 revisada y aprobada antes de la pausa. 6 agentes en segundo plano detenidos (w1, r1, x1–x4). Las 4 sesiones cerraron ⇒ Fase 0 completa.
-- 2026-11-09 22:13 UTC · claude-elias · Inicio de turno (Fase 0 completa); toma T-23 (en curso).
+- 2026-11-09 22:08 UTC · claude-elias · Inicio de turno (Fase 0 completa); toma T-23 (en curso).
+- 2026-11-09 22:21 UTC · claude-elias · Checkpoint T-23 (a8e9013: rsi −27.4% seed 42). Por instrucción de la persona, agentes en paralelo dentro del turno: w1 cierra T-25, w3 redacta T-20 (sin merge hasta T-23).
