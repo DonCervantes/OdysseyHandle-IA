@@ -177,7 +177,7 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 - **deps:** T-02, T-04, T-05
 - **rutas:** `autoguard/api/`, `tests/test_api.py`
 - **qué:** `POST /expedientes` (multipart docs+fotos → perfil + cotización + alertas; usa visual/valuación
-  si existen, si no los omite), `GET /vehicles/{id}`, `POST /quote`, `POST /outcomes` (ingestión n8n),
+  si existen, si no los omite), `GET /vehicles/{id}`, `POST /quote`, `POST /outcomes` (ingestión de resultados),
   `POST /rsi/run`, `GET /patches`, `POST /patches/{id}/approve|reject`, `POST /versions/{agent}/revert/{sha}`,
   `GET /runs/latest`. Auth simple por header `X-API-Key` (env). CORS para el frontend.
 - **aceptación:** tests con TestClient; expediente de muestra responde < 2 min (mock < 2 s).
@@ -193,15 +193,6 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 - **aceptación:** `streamlit run dashboard/app.py` funciona con una corrida mock; capturas en `docs/`.
 
 ## Sprint 3 · Producto y demo
-
-### T-16 · Workflows n8n (JSON en repo)
-- **tipo:** claude
-- **deps:** T-14
-- **rutas:** `n8n/`
-- **qué:** JSON importables: (1) webhook de carga de expediente → API, (2) ingestión de resultados →
-  `POST /outcomes`, (3) disparo programado del ciclo RSI, (4) correo de aprobación al actuario con
-  aprobar/rechazar → API. Sin llaves en texto plano (credenciales de n8n). README de importación.
-- **aceptación:** JSON válidos; el revisor verifica que no haya secretos.
 
 ### T-17 · Valuación con comparables (con caché)
 - **tipo:** claude
@@ -259,10 +250,6 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 ### T-93 · Ejecutar el prompt en Lovable y conectar GitHub
 - **tipo:** humano
 - **deps:** T-19
-
-### T-94 · Importar workflows en n8n Cloud y configurar credenciales
-- **tipo:** humano
-- **deps:** T-16
 
 ### T-95 · Desplegar backend (Railway/Render) y tablero (Streamlit Cloud)
 - **tipo:** humano

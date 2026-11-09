@@ -75,6 +75,6 @@ Un claim abandonado se libera con `scripts/tasks.sh release T-XX` (avisa a su du
 - **Seguridad del RSI:** nada en `autoguard/rsi/` escribe en `autoguard/evaluator/`; α, β, δ, ε son fijos.
 - Todo funciona **sin llaves** (LLM en modo mock vía `autoguard/llm.py`, fallback determinístico) y es
   reproducible con semilla fija. Tests nunca llaman a la red.
-- Llaves solo en `.env` (gitignored). Nunca en código, JSON de n8n, ni logs.
+- Llaves solo en `.env` (gitignored). Nunca en código ni logs.
 - Las tareas `tipo: humano` no se reclaman: las hace una persona y se marcan con `mark-done`.
 - No toques `TASKS.md` salvo para agregar tareas nuevas al final, y hazlo en una rama de tarea.

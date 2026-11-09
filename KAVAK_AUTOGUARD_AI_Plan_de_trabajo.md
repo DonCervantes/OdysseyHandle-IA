@@ -215,7 +215,7 @@ $$
 
 - El código generado en parches de nivel 3 corre en un contenedor sin red, con límite de CPU, memoria y tiempo.
 - Lista blanca de variables para cotizar, validada por el evaluador en cada parche.
-- Llaves de API solo en variables de entorno del backend; nunca en el frontend ni en n8n en texto plano.
+- Llaves de API solo en variables de entorno del backend; nunca en el frontend ni en texto plano.
 - Fotos y documentos en almacenamiento privado con URLs firmadas.
 
 ## Diagrama de backend
@@ -225,8 +225,7 @@ Los resultados reales mejoran a los agentes solo si pasa el evaluador.
 ```mermaid
 flowchart TD
     FE["Lovable + Streamlit<br/>expediente · tablero de datos"] --> API
-    SR["Simulador y resultados<br/>taller, venta, siniestros"] --> N8N["n8n Cloud<br/>ingestión y aprobación humana"]
-    N8N --> API["API FastAPI · contratos Pydantic"]
+    SR["Simulador y resultados<br/>taller, venta, siniestros"] --> API["API FastAPI · contratos Pydantic<br/>ingestión y aprobación humana"]
 
     subgraph OP["Grafo operativo · LangGraph + LLM"]
         CO["Coordinador"] --> VE["Documental · Legal · Historial · Visual"]
@@ -254,7 +253,7 @@ El grafo operativo registra cada predicción en PostgreSQL; el grafo RSI compara
 
 ## Tecnologías a implementar
 
-El núcleo es Python con LangGraph y Streamlit para los datos; de tus beneficios usamos n8n, Lovable, Linear y Miro de forma esencial, Tavily y Firecrawl solo para la valuación, y dejamos fuera ElevenLabs y backboard.io salvo un uso opcional.
+El núcleo es Python con LangGraph y Streamlit para los datos; de tus beneficios usamos Lovable, Linear y Miro de forma esencial, Tavily y Firecrawl solo para la valuación, y dejamos fuera ElevenLabs y backboard.io salvo un uso opcional.
 
 ### Stack núcleo
 
@@ -275,7 +274,7 @@ El núcleo es Python con LangGraph y Streamlit para los datos; de tus beneficios
 
 | Herramienta | Decisión | Uso concreto | Cuidado |
 | --- | --- | --- | --- |
-| n8n Cloud Pro | Usar | Webhook de carga de expediente, ingestión de resultados (taller, venta, siniestro), disparo programado del ciclo RSI y correo de aprobación al actuario con botón aprobar o rechazar | Vence a fines de noviembre: exportar los workflows en JSON al repo |
+| n8n Cloud Pro | No usar | Fuera del alcance: la ingestión de resultados, el disparo del ciclo RSI y la aprobación de parches se hacen directo con la API (`POST /outcomes`, `POST /rsi/run`, `POST /patches/{id}/approve`) desde el frontend y el tablero | Ninguno |
 | Lovable Pro | Usar con presupuesto | Frontend de usuario: carga de documentos y expediente; el tablero de datos va en Streamlit | 100 créditos: un prompt inicial muy detallado, máximo unas 10 iteraciones grandes, conectar GitHub desde el inicio y hacer ajustes menores en código. Cancelar antes de la renovación |
 | Linear Business | Usar | Backlog, 3 ciclos de una semana, issues por historia de usuario | Ninguno: dura hasta abril de 2027 |
 | Miro Enterprise | Usar | Event storming, arquitectura, storyboard del pitch | Ninguno: dura hasta enero de 2027 |
@@ -284,9 +283,9 @@ El núcleo es Python con LangGraph y Streamlit para los datos; de tus beneficios
 | ElevenLabs Creator | Opcional | Narración de un video de respaldo del pitch por si falla la demo en vivo | No es parte del producto |
 | backboard.io | No usar | La memoria del sistema ya vive en PostgreSQL | Reservar los USD 5 |
 
-### Por qué LangGraph y no solo n8n
+### Por qué LangGraph y sin n8n
 
-El ciclo RSI necesita estado tipado, reintentos, ramas condicionales y ejecución rápida de cientos de lotes en la demo. Eso es más simple y barato en Python. n8n queda como capa de integración y automatización alrededor del backend, que es donde brilla.
+El ciclo RSI necesita estado tipado, reintentos, ramas condicionales y ejecución rápida de cientos de lotes en la demo. Eso es más simple y barato en Python. Las integraciones (ingestión de resultados, disparo del ciclo y aprobación humana) las expone la API FastAPI y se operan desde el frontend y el tablero, sin una capa extra de automatización.
 
 ## Plan de trabajo
 
@@ -298,8 +297,8 @@ flowchart LR
     G1{{"Gate 1: base corriendo<br/>simulador y cotizador registran"}}
     S2["Sprint 2 · Ciclo RSI (Semana 2)<br/>Recolector y analista<br/>Mejorador y evaluador fijo<br/>Meta-mejorador (bandido)<br/>Inspección visual de daños"]
     G2{{"Gate 2: RSI supera al estático<br/>regret al menos 40% menor"}}
-    S3["Sprint 3 · Producto y demo (Semana 3)<br/>Frontend en Lovable<br/>Flujos n8n y aprobación<br/>Tablero de datos en Streamlit<br/>Ensayo del pitch"]
-    H{{"Hackathon<br/>demo ensayada 3 veces<br/>vencen n8n y Lovable"}}
+    S3["Sprint 3 · Producto y demo (Semana 3)<br/>Frontend en Lovable<br/>Aprobación de parches en frontend y tablero<br/>Tablero de datos en Streamlit<br/>Ensayo del pitch"]
+    H{{"Hackathon<br/>demo ensayada 3 veces<br/>vence Lovable"}}
     S1 --> G1 --> S2 --> G2 --> S3 --> H
 ```
 
@@ -331,10 +330,9 @@ Cada gate se revisa en la retrospectiva del sprint; los sprints se crean como ci
 
 **Sprint 3: producto y demo**
 
-- [ ] Exportar los workflows de n8n a JSON y guardarlos en el repo
 - [ ] Frontend en Lovable: carga y expediente (un prompt inicial detallado)
 - [ ] Tablero de datos en Streamlit: curvas de error, área de regret, bitácora y botón de reversión
-- [ ] Flujo n8n de aprobación por correo para parches
+- [ ] Aprobación de parches desde el frontend y el tablero (vía API)
 - [ ] Valuación con comparables (Tavily y Firecrawl, con caché)
 - [ ] Grabar video de respaldo de la demo
 - [ ] Ensayar el pitch 3 veces con cronómetro
@@ -347,7 +345,7 @@ Cada gate se revisa en la retrospectiva del sprint; los sprints se crean como ci
 | Líder técnico y RSI | Grafo RSI, evaluador congelado, meta-mejorador |
 | Backend y datos | API, Supabase, simulador, registro de predicciones |
 | Agentes de percepción | Documental, inspección visual, valuación |
-| Frontend y automatización | Lovable, tablero en Streamlit, flujos de n8n |
+| Frontend y automatización | Lovable, tablero en Streamlit |
 | Producto y pitch | PRD, modelo de negocio, guion, video de respaldo |
 
 ### Riesgos del plan
@@ -356,7 +354,7 @@ Cada gate se revisa en la retrospectiva del sprint; los sprints se crean como ci
 | --- | --- |
 | El RSI no supera al ajuste simple de parámetros | Empezar por segmentos con sesgo claro en el simulador; mostrar también la mejora del meta-mejorador |
 | Se agotan los créditos de Lovable | Conectar GitHub desde el primer prompt y editar en código |
-| Expiran n8n o Lovable antes del hackathon | Workflows exportados y frontend en GitHub; alternativa: llevar todo el frontend a Streamlit |
+| Expira Lovable antes del hackathon | Frontend en GitHub; alternativa: llevar todo el frontend a Streamlit |
 | El LLM genera parches inválidos | Validar el YAML con Pydantic antes de evaluar; descartar sin consumir el conjunto reservado |
 | La demo en vivo falla | Video de respaldo y semilla fija para resultados reproducibles |
 
