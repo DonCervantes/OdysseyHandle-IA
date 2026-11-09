@@ -14,9 +14,9 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | claude-elias (desde 22:08 UTC) |
+| **Turno actual** | gpt-dylan (claude-elias pasó el turno a las 22:42 UTC) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
-| **Última actualización** | 2026-11-09 22:32 UTC · claude-elias (T-25 hecha; T-23 en revisión) |
+| **Última actualización** | 2026-11-09 22:42 UTC · claude-elias (T-23 y T-25 hechas; T-20 en pausa; turno → gpt-dylan) |
 
 ## Reglas del turno
 
@@ -73,14 +73,28 @@ pasa a **claude-elias**.
 ## Cola de tareas (en orden)
 
 ### 1. T-23 · Cumplir el Gate 2 (PRIORIDAD MÁXIMA)
-- **estado:** en curso · claude-elias · desde 22:08 UTC · rama `task/T-23` en origin (a8e9013, checkpoint 22:21)
-- **checkpoint 22:21 UTC:** integrados en `task/T-23` (a8e9013) el experimento x1 (control `cambio_prompt`
-  limitado a 1 slot + sustitutos para slots sin candidato, `MetaImprover.plan_arms`; y hasta 2 rondas de
-  propuestas por generación sobre el campeón actualizado, `ROUNDS_MAX=2`, para parametros y rsi) y los tests de
-  x4 (`tests/test_rsi_asimetrico.py`, 24 tests). Seed 42: rsi **37.27M (−27.4%)**; seed 1: 38.08M (−25.6%).
-  x3 (rendimiento) NO se integra: sin carga el loop ya tarda ~104 s (< 3 min) y x3 dependía de funciones
-  privadas de `cotizador.py`. Corriendo ahora las 4 semillas para la tabla final; después: merge origin/main,
-  pytest, merge a main y `hecha` con la tabla y la propuesta de Gate relativo.
+- **estado:** **hecha** · claude-elias · 22:42 UTC · merge en main `6cbae83` (Gate 2 NO cumplido; documentado)
+- **resumen:** RSI de −4.3% a −25.9…−29.2% de regret vs estático (el doble que `parametros`); el 40% no se
+  alcanza y se documenta por qué: incluso un aprendiz ideal que ya conoce la estructura verdadera logra
+  39.3–40.6% y el oráculo 43.7–44.8% ⇒ el RSI captura 66–74% de la mejora del aprendiz ideal. **Propuesta para
+  el equipo: Gate relativo a esas cotas.** Revisada por agente independiente (aprobada con cambios menores,
+  aplicados). Tabla (MXN, modo mock, mejora vs estático):
+
+  | seed | estático | parametros | rsi | % del oráculo | % del aprendiz ideal |
+  | --- | --- | --- | --- | --- | --- |
+  | 42 | 51.31M | 44.01M (−14.2%) | **36.73M (−28.4%)** | 64% | 70% |
+  | 1 | 51.18M | 42.61M (−16.7%) | **37.93M (−25.9%)** | 59% | 66% |
+  | 7 | 50.98M | 43.50M (−14.7%) | **37.00M (−27.4%)** | 61% | 68% |
+  | 123 | 51.05M | 42.05M (−17.6%) | **36.16M (−29.2%)** | 66% | 74% |
+
+  Convergencia estricta (≤1.10× oráculo hasta el final): ninguna variante. A la meseta (secundaria): rsi/parametros
+  8600/8200 (42), 4600/4600 (1), 3000/1000 (7), 10800/3000 (123) — parametros se estanca antes pero en +35–58% sobre
+  el oráculo vs rsi +12–25%. Seed 42 tarda ~106 s. Detalle completo en el mensaje del merge `6cbae83`; scripts de
+  las cotas en la rama `exp/T-23-cotas` (`tools/t23_cotas/`, sin mergear). Decisiones que afectan a otras tareas:
+  `summary.json` agrega `referencia_oraculo`, `exceso_final_vs_oraculo`, `convergencia_meseta_polizas`,
+  `tasa_aceptacion_rsi` (con `evaluados`); `curve.csv` agrega `loss_oraculo`/`ratio_oraculo`; `convergencia_polizas`
+  puede ser `null`. Hallazgo para otra tarea: `patch_id` se repite entre variantes en `patches.jsonl` y
+  `api/main.py:_buscar_parche` toma el primero (puede ser el de `parametros`).
 - **rama:** `task/T-23`
 - **definición:** `TASKS.md` → T-23 (y notas de integración en T-13).
 - **línea base (seed 42, modo mock):** regret estático 51.31M · `parametros` 44.80M · `rsi` 49.11M
@@ -96,7 +110,7 @@ pasa a **claude-elias**.
 - **verificación:** `LLM_PROVIDER=mock PYTHONPATH=. .venv/bin/python -m autoguard.rsi.loop --seed S` para
   S = 42, 1, 7, 123; reportar tabla de regret por semilla. Si no se logra el 40% honestamente,
   documentar números y causas (no maquillar el simulador).
-- **Contexto para continuar:** (claude-elias, 22:10 UTC)
+- **Contexto (histórico, del cierre de Fase 0; ya integrado):** (claude-elias, 22:10 UTC)
   - **Hecho en `task/T-23` (commit 4c7e67c, tests de rsi/evaluador/meta en verde):**
     - `analista.py`: `optimal_multiplier` = argmin EXACTO de `objective.loss` (cuantil ponderado nivel
       α/(α+β)=0.6 de costo/prima, pesos = prima; verificado contra malla de 30k puntos). `best_multiplier`
@@ -164,17 +178,31 @@ pasa a **claude-elias**.
     aceptación y merge a main.
 
 ### 3. T-20 · README, guion de demo y semilla de demo
-- **estado:** en curso (borrador) · claude-elias (agente claude-elias:w3) · 22:20 UTC · rama `task/T-20`:
-  se redacta con marcadores `{{T23_...}}` para los números; NO se mergea hasta que T-23 esté hecha.
+- **estado:** en pausa · claude-elias · 22:42 UTC · borrador completo en `task/T-20` (origin, `f9baeaa`), sin mergear
 - **rama:** `task/T-20`
 - **definición:** `TASKS.md` → T-20. Rutas: `README.md`, `docs/demo.md`, `scripts/demo.sh`.
 - **notas:** el tablero RSI está en `dashboard/app.py` (con modo demo en vivo, T-29) y el dashboard de
   progreso en `tools/progreso/`. n8n, Linear y Miro quedaron fuera del plan. Variables en `.env.example`
   (se carga solo, T-22). Mencionar limitaciones honestas: datos simulados, sandbox sin Docker, LLM sin medir
   con llave real (`docs/eval_llm.md`).
-- **Contexto para continuar:** —
-
-### 4. T-27 · Guion y narración del video de respaldo
+- **Contexto para continuar:** (claude-elias, 22:42 UTC)
+  - **Hecho (borrador, agente claude-elias:w3):** `README.md` (qué es, diagrama, instalación sin llaves,
+    cómo correr tests/experimento/API/tablero/progreso/evals, tabla de resultados, Gate 2 honesto,
+    limitaciones), `docs/demo.md` (semilla 42, guion de 40 s segundo a segundo con EXP-002 + FOTO-002 porque da
+    `VIN_NO_COINCIDE` alta y 2 daños, plan B, preguntas del jurado) y `scripts/demo.sh` (`--start/--stop/--force/
+    --help`, puertos `API_PORT`/`DASH_PORT`; probado en Git Bash: corrida seed 42, `/health`, tablero 200,
+    `/expedientes` con EXP-001/2/3).
+  - **Falta:** (1) `git fetch && git checkout -B task/T-20 origin/task/T-20 && git merge origin/main`
+    (main ya tiene T-23); (2) reemplazar los marcadores — listarlos con
+    `grep -no "{{T23_[A-Z0-9_]*}}" README.md docs/demo.md` — usando la tabla de T-23 de arriba (mejora media rsi
+    27.7%; convergencia: usar la de meseta y explicar que la estricta no la alcanza nadie; `RESUMEN_GATE2` =
+    resumen de T-23); quitar el texto "−27.4 % en seed 42 y −25.6 % en seed 1" (preliminar) y las notas
+    "BORRADOR"; (3) regenerar la corrida de seed 42 con el código de main para `TIEMPO_CORRIDA`,
+    `PARCHES_ACEPTADOS_42` y `PARCHE_REVERSION_42` (`bash scripts/demo.sh --force`); (4) `data/demo_run/` no
+    existe: decidir si se versiona la corrida de respaldo (marcador `DEMO_RUN_RESPALDO`); (5) `docs/demo.md`
+    cita `docs/video_respaldo.md` (T-27, aún no existe); (6) el tablero no deja revertir con el modo demo
+    activo: el guion apaga "Activar reproducción" en los segundos 34–40, ensayarlo; (7) pytest, revisar contra
+    la aceptación y merge a main. · Guion y narración del video de respaldo
 - **estado:** pendiente (requiere T-20)
 - **rama:** `task/T-27`
 - **definición:** `TASKS.md` → T-27. Ruta: `docs/video_respaldo.md`. Texto listo para ElevenLabs.
@@ -259,3 +287,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 22:21 UTC · claude-elias · Checkpoint T-23 (a8e9013: rsi −27.4% seed 42). Por instrucción de la persona, agentes en paralelo dentro del turno: w1 cierra T-25, w3 redacta T-20 (sin merge hasta T-23).
 - 2026-11-09 22:32 UTC · claude-elias · T-25 hecha (merge `e0a1092`, verificado: solo `tests/test_e2e.py`). T-23 lista en `task/T-23` (3f4e88d, pytest sin fallos nuevos, seed 42 en 106 s), en revisión por agente independiente antes del merge.
 - 2026-11-09 UTC · claude-dylan · Agregada T-30 (pulir frontend con el RSI al frente), asignada a gpt-dylan para su turno; regla 3: las tareas asignadas a tu sesión van primero.
+- 2026-11-09 22:42 UTC · claude-elias · Fin de turno. T-23 hecha (merge `6cbae83`): rsi −25.9…−29.2% vs estático en seeds 42/1/7/123 (base −4.3%), Gate 2 no cumplido y documentado con cotas (aprendiz ideal 39–41%, oráculo ~44%) + propuesta de Gate relativo; revisada por agente independiente. T-25 hecha (`e0a1092`). T-20 en pausa con borrador completo en `task/T-20` (falta poner números, ver su contexto). Agentes detenidos. Turno → gpt-dylan.
