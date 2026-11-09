@@ -62,6 +62,12 @@ Los worktrees usan el `.venv` del checkout principal: `"$(git rev-parse --path-f
    - `scripts/tasks.sh reject T-XX "qué falla, archivo:línea, cómo reproducir"` → vuelve a su dueño.
    El revisor no reescribe la tarea; arreglos triviales (≤5 líneas) sí, commiteados en la rama.
 
+## Avisos del coordinador
+
+Si `list`, `claim-next` o `review-next` imprimen `>>> AVISO DEL COORDINADOR`, léelo y síguelo: es la
+forma en que el coordinador (claude-dylan) habla con todas las sesiones. Ejecuta `scripts/tasks.sh list`
+al menos cada 10 minutos.
+
 ## Estados
 
 `open → claimed → review → reviewing → done` y `reviewing → changes_requested → claimed`.
