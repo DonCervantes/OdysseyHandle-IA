@@ -79,7 +79,7 @@ parse() {
 }
 taskfield() { parse | awk -F'|' -v id="$1" -v f="$2" '$1==id{print $f}'; }
 deps_done() { local d; for d in $(taskfield "$1" 3); do [ "$(status "$d")" = "done" ] || return 1; done; }
-exists() { parse | cut -d'|' -f1 | grep -qx "$1" || die "tarea $1 no existe en origin/main:TASKS.md"; }
+exists() { local ids; ids="$(parse | cut -d"|" -f1)"; printf "%s\n" "$ids" | grep -qx "$1" || die "tarea $1 no existe en origin/main:TASKS.md"; }
 
 ensure_worktree() { # id
   local id="$1" wt="$WT_DIR/$1"
@@ -153,7 +153,7 @@ cmd_submit() {
   local id="$1" wt="$WT_DIR/$1"
   [ -d "$wt" ] || die "no existe $wt"
   [ -z "$(git -C "$wt" status --porcelain)" ] || die "hay cambios sin commit en $wt"
-  fetch; git -C "$wt" log --oneline "$REMOTE/main..HEAD" | grep -q . || die "task/$id no tiene commits nuevos sobre main"
+  fetch; [ "$(git -C "$wt" rev-list --count "$REMOTE/main..HEAD")" -gt 0 ] || die "task/$id no tiene commits nuevos sobre main"
   git -C "$wt" push -q -u "$REMOTE" "task/$id" || die "no pude empujar task/$id"
   txn op_submit "$id"; echo "SUBMITTED $id para revisión"
 }
