@@ -28,18 +28,27 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 4. Trabaja en la rama `task/T-XX` (si ya existe en origin, continúa desde ella:
    `git fetch origin && git checkout -B task/T-XX origin/task/T-XX`). Tests con
    `.venv/bin/python -m pytest` (scripts con `-m`: `PYTHONPATH=.`). Todo debe seguir corriendo sin llaves.
-5. Al terminar tu turno, **una de dos**:
-   - **Terminada:** `git merge origin/main` en la rama, pytest en verde, revisa tu propio diff contra la
-     "aceptación" de `TASKS.md`, haz merge a main (`git checkout main && git merge --no-ff task/T-XX &&
-     git push origin main`) y marca la tarea `hecha` con un resumen de 2–5 líneas (qué se hizo, números,
-     decisiones que afectan a otras tareas).
-   - **No terminada:** commit y `git push origin task/T-XX` de TODO lo que tengas (aunque esté a medias),
-     y llena la sección **Contexto para continuar** de la tarea: qué está hecho, qué falta (pasos
-     concretos), archivos tocados, cómo correr/verificar, hallazgos, intentos fallidos y por qué. Estado:
-     `en pausa`.
-6. Agrega una línea a la **Bitácora** (abajo), cambia "Turno actual" a la siguiente sesión del orden y
-   haz commit + push a main (`git pull --rebase origin main` si el push es rechazado).
-7. Un turno = una tarea (o un bloque de trabajo de ~45 min). No toques tareas que no son la tuya.
+5. **Tu turno dura hasta que se acabe el límite de uso de tu sesión.** No pares al terminar una tarea:
+   sigue con la siguiente de la cola. Como el límite puede cortarte sin aviso, trabaja con **checkpoints**:
+   - Al **terminar una tarea**: `git merge origin/main` en la rama, pytest en verde, revisa tu propio diff
+     contra la "aceptación" de `TASKS.md`, merge a main (`git checkout main && git merge --no-ff task/T-XX &&
+     git push origin main`) y márcala `hecha` con un resumen de 2–5 líneas (qué se hizo, números,
+     decisiones que afectan a otras tareas). Luego toma la siguiente.
+   - **Cada ~20 minutos de trabajo** (y antes de cualquier operación larga): commit y
+     `git push origin task/T-XX` de TODO lo que tengas aunque esté a medias, y actualiza en main la sección
+     **Contexto para continuar** de la tarea: qué está hecho, qué falta (pasos concretos), archivos tocados,
+     cómo correr/verificar, hallazgos, intentos fallidos y por qué. Así, si el límite te corta, la
+     siguiente sesión continúa sin perder nada.
+   - Si ves un aviso de que tu límite está por acabarse: haz el checkpoint de inmediato, deja la tarea en
+     `en pausa`, escribe tu línea en la Bitácora y pasa el turno (regla 6).
+6. **Paso del turno.** Si alcanzas a cerrar: línea en la Bitácora, "Turno actual" = siguiente sesión del
+   orden, commit + push a main (`git pull --rebase origin main` si el push es rechazado).
+   Si una sesión se quedó sin límite antes de pasar el turno, la persona le dice a la siguiente sesión
+   "es tu turno": esa sesión pone "Turno actual" = ella misma, anota en la Bitácora que la anterior se
+   quedó sin límite, revisa la rama y el "Contexto para continuar" de la tarea que quedó `en curso`, y la
+   retoma desde ahí.
+7. No toques tareas que no están en la cola. Si encuentras un problema fuera de tu tarea, agrégalo como
+   tarea nueva al final de la cola con su contexto.
 
 ---
 
@@ -133,3 +142,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 
 - 2026-11-09 21:54 UTC · gpt-dylan · Fase 0 cerrada: T-10, T-13, T-15, T-24 y T-29 integradas; T-21 y T-28 revisadas/aprobadas. Sin cambios ni claims pendientes; workers w2/w3 y revisor r1 detenidos. Validación final de T-29: 232 tests generales + 3 dashboard en verde. Dashboards locales siguen activos: progreso :8502 y RSI :8501 (corrida mock en /tmp/autoguard-dashboard-runs). Esperando cierre de las otras sesiones; turno permanece CIERRE.
 - 2026-11-09 UTC · claude-dylan · Orden de turnos cambiado: cursor-elias pasa al último lugar (claude-elias → gpt-dylan → claude-dylan → cursor-elias).
+- 2026-11-09 UTC · claude-dylan · Reglas: cada turno dura hasta el límite de uso de la sesión, con checkpoints (push + contexto) al terminar cada tarea y cada ~20 min.
