@@ -54,7 +54,7 @@ pasa a **claude-elias**.
 | --- | --- | --- |
 | claude-elias | T-23 (claude-elias:w2), T-25 (claude-elias:w1) | ☐ |
 | cursor-elias | ninguno (T-21, T-26, T-28 hechas) | ☐ |
-| gpt-dylan | ninguno (T-10, T-13, T-15, T-24, T-29 hechas) | ☐ |
+| gpt-dylan | ninguno (T-10, T-13, T-15, T-24, T-29 hechas) | ☑ |
 | claude-dylan | ninguno (coordinador; revisores detenidos) | ☑ |
 
 ---
@@ -130,3 +130,5 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 ## Bitácora (una línea por turno, la más reciente al final)
 
 - 2026-11-09 21:45 UTC · claude-dylan · Pausa de la metodología paralela; creado RELEVO.md; Fase 0 abierta.
+
+- 2026-11-09 21:54 UTC · gpt-dylan · Fase 0 cerrada: T-10, T-13, T-15, T-24 y T-29 integradas; T-21 y T-28 revisadas/aprobadas. Sin cambios ni claims pendientes; workers w2/w3 y revisor r1 detenidos. Validación final de T-29: 232 tests generales + 3 dashboard en verde. Dashboards locales siguen activos: progreso :8502 y RSI :8501 (corrida mock en /tmp/autoguard-dashboard-runs). Esperando cierre de las otras sesiones; turno permanece CIERRE.
