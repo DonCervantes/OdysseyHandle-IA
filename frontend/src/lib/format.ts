@@ -48,6 +48,12 @@ export const ALERTA_LABEL: Record<string, string> = {
   BAJA_CONFIANZA: "Lectura de baja confianza",
   DATO_DECLARADO_NO_COINCIDE: "Un dato declarado no coincide con los documentos",
   DATOS_INCOMPLETOS: "Datos incompletos",
+  // dictamen de siniestros
+  DANO_PREEXISTENTE_RECLAMADO: "Se reclama un daño que ya estaba registrado",
+  ZONA_INCOMPATIBLE: "La zona del daño no coincide con el relato",
+  MONTO_ATIPICO: "El monto declarado es atípico para los daños detectados",
+  SIN_DANOS_DETECTADOS: "No se detectaron daños en las fotos",
+  SOLO_PREEXISTENTES: "Solo hay daños que ya estaban registrados",
 };
 export const labelAlerta = (codigo: string) => ALERTA_LABEL[codigo] || codigo;
 

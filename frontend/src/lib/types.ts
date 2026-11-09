@@ -77,7 +77,7 @@ export interface RsiJob { job_id: string; estado: string; params?: Record<string
 
 export interface Health { ok: boolean; auth: boolean; llm: "mock" | "real" }
 
-export type SeveridadDictamen = "limpio" | "revisar" | "sospechoso" | string;
+export type SeveridadDictamen = "limpio" | "revision" | "sospechoso";
 export interface DictamenResult {
   vehicle_id: string; danos_reclamados: Dano[]; danos_preexistentes: Dano[]; danos_nuevos: Dano[];
   costo_siniestro_est: number; costo_preexistente_coincidente: number; banderas: Alerta[];
