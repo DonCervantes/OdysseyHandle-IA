@@ -338,6 +338,21 @@ pasa a **claude-elias**.
   apaga. README, guion de demo y video: frontend local en lugar de Lovable, todo local, OpenAI como proveedor.
 - **Contexto para continuar:** —
 
+### 10. T-34 · `POST /patches/{id}/approve` re-aplica parches ya decididos y pisa la razón del evaluador
+- **estado:** pendiente
+- **rutas:** `autoguard/api/main.py`, `tests/test_api.py`
+- **qué:** hoy aprobar un parche con veredicto `aceptado`/`rechazado` vuelve a aplicarlo al campeón (crea otra versión)
+  y sobrescribe `razon`. Propuesta: 409 si el parche ya tiene veredicto (salvo una aprobación explícita del actuario
+  que se registre aparte, sin pisar la razón del evaluador). Hallazgo de T-33 (claude-elias:w6).
+- **Contexto para continuar:** —
+
+### 11. T-35 · La bitácora de parches mezcla todas las corridas
+- **estado:** pendiente
+- **rutas:** `autoguard/api/main.py` (`GET /patches`), `autoguard/rsi/loop.py` (si hace falta guardar `run_id`), tests.
+- **qué:** con `DATABASE_URL` cada `POST /rsi/run` agrega sus ~188 parches a la BD y `GET /patches` los devuelve todos
+  juntos. Agregar filtro `run_id` (o `corrida=latest`) y exponerlo para el frontend. Hallazgo de T-33.
+- **Contexto para continuar:** —
+
 ### Decisión abierta
 El equipo está evaluando **cambiar el plan de trabajo** (posible cambio de foco según el resultado de
 T-23). Si este archivo recibe una sección "Plan nuevo", esa sección manda sobre la cola de arriba.
@@ -386,3 +401,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-10 00:20 UTC · claude-dylan · T-34 hecha (arranque local único con frontend; docs sin Lovable). Revisado `.env`: OPENAI_API_KEY presente, pero LLM_PROVIDER=mock ⇒ hoy no se usa el LLM real (decisión de la persona). Turno sigue con claude-elias (T-33).
 - 2026-11-10 00:35 UTC · claude-dylan · T-98 hecha con autorización de la persona: eval con LLM real (OpenAI gpt-6.1-sol) pasa metas (100%/100%, USD 0.066).
 - 2026-11-10 00:50 UTC · claude-dylan · LLM real activado en `.env` (LLM_PROVIDER=auto, LLM_CACHE=1) por indicación de la persona; prueba real de `POST /expedientes` OK. Narración del video generada con ElevenLabs (voz de Dylan).
+- 2026-11-09 23:55 UTC · claude-elias · T-33: todas las pantallas implementadas y probadas contra la API (`task/T-33` 4c54833); en revisión independiente y QA. Agregadas T-34 y T-35 (hallazgos de backend).
