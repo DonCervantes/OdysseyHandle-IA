@@ -276,9 +276,15 @@ def run_patches(runs_dir: Path) -> list[Patch]:
     out = []
     for rec in read_jsonl(d / "patches.jsonl"):
         try:
-            out.append(Patch.model_validate(rec.get("patch", rec)))
+            p = Patch.model_validate(rec.get("patch", rec))
         except Exception:  # noqa: BLE001
             continue
+        # T-32: en corridas viejas el mismo patch_id aparece en `parametros` y `rsi`; se hace único con
+        # el prefijo de variante (idempotente con las corridas nuevas, que ya lo traen).
+        variant = rec.get("variant")
+        if variant and not p.patch_id.startswith(f"{variant}-"):
+            p = p.model_copy(update={"patch_id": f"{variant}-{p.patch_id}"})
+        out.append(p)
     return out
 
 

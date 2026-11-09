@@ -39,3 +39,11 @@ def test_database_optional(tmp_path, monkeypatch):
 def test_invalid_parameters(tmp_path):
     with pytest.raises(ValueError):
         run_experiment(k=0, output_dir=tmp_path / 'run')
+
+
+def test_unique_patch_id_por_variante():
+    from autoguard.rsi.loop import unique_patch_id
+
+    assert unique_patch_id("rsi", "g1-0-ajuste_factor") == "rsi-g1-0-ajuste_factor"
+    assert unique_patch_id("rsi", "rsi-g1-0-ajuste_factor") == "rsi-g1-0-ajuste_factor"
+    assert unique_patch_id("parametros", "g1-0-ajuste_factor") != unique_patch_id("rsi", "g1-0-ajuste_factor")
