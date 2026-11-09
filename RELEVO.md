@@ -16,7 +16,7 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 | --- | --- |
 | **Turno actual** | CIERRE (todas las sesiones cierran su trabajo en curso; ver "Fase 0") |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
-| **Última actualización** | 2026-11-09 22:05 UTC · cursor-elias (cierre Fase 0 + rebase) |
+| **Última actualización** | 2026-11-09 22:10 UTC · claude-elias (cierre Fase 0) |
 
 ## Reglas del turno
 
@@ -61,7 +61,7 @@ pasa a **claude-elias**.
 
 | Sesión | Trabajo en curso al pausar | Cierre registrado |
 | --- | --- | --- |
-| claude-elias | T-23 (claude-elias:w2), T-25 (claude-elias:w1) | ☐ |
+| claude-elias | T-23 (claude-elias:w2), T-25 (claude-elias:w1) | ☑ |
 | cursor-elias | ninguno (T-21, T-26, T-28 hechas) | ☑ |
 | gpt-dylan | ninguno (T-10, T-13, T-15, T-24, T-29 hechas) | ☑ |
 | claude-dylan | ninguno (coordinador; revisores detenidos) | ☑ |
@@ -71,7 +71,7 @@ pasa a **claude-elias**.
 ## Cola de tareas (en orden)
 
 ### 1. T-23 · Cumplir el Gate 2 (PRIORIDAD MÁXIMA)
-- **estado:** en curso · claude-elias:w2 (desde 20:59 UTC; aún sin rama en origin al pausar)
+- **estado:** en pausa · claude-elias (cierre Fase 0, 22:10 UTC) · rama `task/T-23` en origin (4c7e67c)
 - **rama:** `task/T-23`
 - **definición:** `TASKS.md` → T-23 (y notas de integración en T-13).
 - **línea base (seed 42, modo mock):** regret estático 51.31M · `parametros` 44.80M · `rsi` 49.11M
@@ -87,13 +87,67 @@ pasa a **claude-elias**.
 - **verificación:** `LLM_PROVIDER=mock PYTHONPATH=. .venv/bin/python -m autoguard.rsi.loop --seed S` para
   S = 42, 1, 7, 123; reportar tabla de regret por semilla. Si no se logra el 40% honestamente,
   documentar números y causas (no maquillar el simulador).
-- **Contexto para continuar:** _(lo llena claude-elias en el cierre)_
+- **Contexto para continuar:** (claude-elias, 22:10 UTC)
+  - **Hecho en `task/T-23` (commit 4c7e67c, tests de rsi/evaluador/meta en verde):**
+    - `analista.py`: `optimal_multiplier` = argmin EXACTO de `objective.loss` (cuantil ponderado nivel
+      α/(α+β)=0.6 de costo/prima, pesos = prima; verificado contra malla de 30k puntos). `best_multiplier`
+      = lo anterior encogido hacia 1 por n/(n+30), acotado a [0.5, 2]. α y β se LEEN evaluando `loss(0,1)` y
+      `loss(1,0)` (no se importan constantes; pasa el test AST). Impacto = pérdida reducible; p-value =
+      prueba de signo contra P(costo>prima)=0.4. Bins nuevos de `danos_costo` (antes era indescubrible).
+    - `mejorador.py`: `propose(..., train=df, evitar=set)` = modo con datos (`_propose_data`); sin `train`
+      el comportamiento original queda idéntico (tests heredados intactos). `ajuste_factor` = Gauss-Southwell
+      (reajusta COMPLETO el factor que más baja la pérdida train); `nueva_variable` = factor completo de la
+      variable no usada que más baja la pérdida (todas las marcas / bins de daños); `cambio_regla` =
+      hipótesis del analista, 2 variables primero; pre-chequeo `_robustify` (baja pérdida train y ningún
+      segmento de train n≥30 empeora >2.5%; si no, amortigua raíz ×2); una hipótesis/objetivo por generación;
+      `patch_target` para el tabú. Fix Windows en `tests/test_mejorador.py` (encoding utf-8).
+    - `loop.py`: evalúa todos los parches contra el MISMO campeón y compone los aceptados por ganancia
+      re-evaluando cada uno sobre la composición (si no mejora ⇒ `rechazado` con razón); tabú de 2 gens
+      para objetivos rechazados; convergencia = primer N desde el que la media móvil (3 lotes) queda ≤ 1.10×
+      la del oráculo calibrado hasta el final (estático ⇒ null); summary agrega `referencia_oraculo`,
+      `exceso_final_vs_oraculo`, `tasa_aceptacion_rsi`; `curve.csv` agrega `loss_oraculo` y `ratio_oraculo`.
+      CLI y formato de `patches.jsonl` sin cambios.
+  - **Números seed 42** (estático 51.31M): línea base rsi 49.11M (−4.3%) → v1 40.06M (−21.9%) → actual
+    **39.81M (−22.4%)**, parametros 43.90M, exceso final vs oráculo rsi +21% (parametros +46%), aceptación
+    1ª/última gen 0.33/0.33. Ni rsi ni parametros "convergen" con la definición estricta. **Tiempo: 226 s con
+    CPU compartida (~145 s sin carga) ⇒ riesgo con el límite de 3 min.**
+  - **Hallazgo clave (cotas honestas):** oráculo calibrado (conoce el riesgo desde la póliza 1) = mejora
+    máxima 44.3% (42) · 43.7% (1) · 44.8% (7) · 44.1% (123). Aprendiz online IDEAL que YA conoce la estructura
+    verdadera y reajusta todo óptimamente cada K=3 lotes, sin holdout/δ/ε: **40.6% (42) · 39.3% (1) · 40.3% (7)
+    · 39.7% (123)**. La censura por ventas no es el límite (ajustando solo con vendidas se llega a +0.6% del
+    oráculo). ⇒ **el 40% fijo es inalcanzable honestamente** para un RSI que debe descubrir la estructura y
+    pasar el evaluador congelado; propuesta: Gate relativo (p.ej. RSI captura ≥X% de la mejora del aprendiz
+    ideal y converge antes que `parametros`). Scripts para reproducir: rama `exp/T-23-cotas`, `tools/t23_cotas/`.
+  - **Diagnóstico de rechazos (v1):** el ε=5% por segmento sobre un holdout chico (~70 filas al inicio)
+    bloquea los reajustes amplios (marca, zona rechazados una y otra vez por segmentos ruidosos n≈30–60);
+    antiguedad nunca se reajustó; la interacción ≥30 años & 1 siniestro (×0.65) nunca entró; el bandido
+    gasta slots en `cambio_prompt`.
+  - **Experimentos a medias, NO integrados, sin medir** (detenidos en el cierre): `exp/T-23-x1` (presupuesto
+    de slots del bandido / aprendizaje temprano: loop, mejorador, meta + tests), `exp/T-23-x3`
+    (rendimiento; NO verificado que dé resultados idénticos), `exp/T-23-x4` (tests unitarios nuevos
+    `tests/test_rsi_asimetrico.py`, sin correr completo). x2 (aceptación) no dejó cambios.
+  - **Falta:** (1) bajar el tiempo a < 3 min holgado (perfilar `_robustify`/`_check_segments`/analista);
+    (2) revisar/medir x1 e integrar si mejora; (3) tests para la lógica nueva (partir de x4); (4) correr
+    seeds 42/1/7/123 y tabla; (5) merge origin/main, pytest, commit con números + cotas y propuesta de Gate.
+  - **Correr:** `PYTHONPATH=. python -m autoguard.rsi.loop --seed 42 --output-dir /tmp/x`; tests:
+    `python -m pytest tests/test_mejorador.py tests/test_analista.py tests/test_loop.py tests/test_evaluator.py tests/test_meta.py`.
 
 ### 2. T-25 · Prueba de punta a punta vía API
-- **estado:** en curso · claude-elias:w1 (al pausar)
+- **estado:** en pausa · claude-elias (cierre Fase 0, 22:10 UTC) · rama `task/T-25` en origin (ab8582e)
 - **rama:** `task/T-25`
 - **definición:** `TASKS.md` → T-25. Ruta: `tests/test_e2e.py`. No depende de T-23.
-- **Contexto para continuar:** _(lo llena claude-elias en el cierre)_
+- **Contexto para continuar:** (claude-elias, 22:10 UTC)
+  - **Hecho:** `tests/test_e2e.py` (206 líneas, un test) con TestClient, BD y directorios temporales y un
+    `rsi_runner` en proceso: health (mock) → `POST /expedientes` EXP-001 (perfil Nissan Versa 2019, 3 tipos de
+    documento, daños de la foto) → la cotización coincide con `/quote` y con `cotizador.quote` → `POST /outcomes`
+    (idempotente, duplicados) → `POST /rsi/run` pequeño + `GET /rsi/run/{id}` + `/runs/latest` → `GET /patches`
+    (fuente run) → aprobar un parche que cambia la prima del auto → nueva versión campeona y `/quote` registra la
+    nueva `agent_version` y la prima esperada → revertir con `POST /versions/cotizador/revert/{sha}` → la prima
+    vuelve a la original. **Pasa en ~47 s en modo mock** (Windows; aceptación < 60 s).
+  - **Falta (corto):** `git merge origin/main` en la rama, pytest completo (en Windows fallan de origen
+    9 tests de `test_sandbox.py` por `preexec_fn` y el umbral de tiempo de
+    `test_api.py::test_expediente_sample_mock_fast_and_persisted`: no son de T-25), revisar el diff contra la
+    aceptación y merge a main.
 
 ### 3. T-20 · README, guion de demo y semilla de demo
 - **estado:** pendiente (requiere T-23 hecha: usa sus números reales)
@@ -143,3 +197,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 UTC · claude-dylan · Orden de turnos cambiado: cursor-elias pasa al último lugar (claude-elias → gpt-dylan → claude-dylan → cursor-elias).
 - 2026-11-09 UTC · claude-dylan · Reglas: cada turno dura hasta el límite de uso de la sesión, con checkpoints (push + contexto) al terminar cada tarea y cada ~20 min.
 - 2026-11-09 22:05 UTC · cursor-elias · Fase 0 cierre: sin trabajo en curso; T-21/T-26/T-28 ya en main; agentes detenidos; casilla ☑. Conflicto de rebase resuelto respetando orden nuevo del coordinador. Esperando cierre de claude-elias; turno permanece CIERRE.
+- 2026-11-09 22:10 UTC · claude-elias · Fase 0 cierre: T-23 y T-25 en pausa con ramas en origin (`task/T-23` 4c7e67c, `task/T-25` ab8582e) y "Contexto para continuar" lleno. T-23: rsi −4.3% → −22.4% (seed 42); cotas medidas: oráculo ~44%, aprendiz ideal 39–41% ⇒ 40% fijo inalcanzable honestamente. Experimentos a medias en `exp/T-23-x1/x3/x4` y scripts de cotas en `exp/T-23-cotas`. T-19 revisada y aprobada antes de la pausa. 6 agentes en segundo plano detenidos (w1, r1, x1–x4). Las 4 sesiones cerraron ⇒ Fase 0 completa.
