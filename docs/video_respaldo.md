@@ -69,7 +69,8 @@ que parece prometedora puede fallar en el conjunto reservado. Esa evidencia alim
 Probamos cuatro semillas y observamos reducciones de regret entre veinticinco coma nueve y veintinueve
 coma dos por ciento. No alcanzamos la meta original del cuarenta por ciento ni la convergencia estricta.
 El ruido del simulador y los controles del evaluador limitan la mejora. Son resultados de laboratorio,
-no tarifas para clientes. La extracción con modelos reales todavía necesita su evaluación independiente.
+no tarifas para clientes. Con un modelo real, la lectura de documentos y la detección de daños cumplieron
+sus metas en nuestro set de prueba simulado; falta validarlas con documentos reales.
 
 ### 2:35–3:00 · Garantías y siguiente paso
 
