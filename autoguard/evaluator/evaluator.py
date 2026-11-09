@@ -64,6 +64,10 @@ def _patch_variables(patch: Patch) -> set[str]:
 
 
 def _validate(champion: CotizadorConfig, patch: Patch) -> tuple[CotizadorConfig | None, str]:
+    if patch.veredicto == "invalido":
+        return None, f"marcado invalido por el mejorador{': ' + patch.razon if patch.razon else ''}"
+    if not patch.cambios:
+        return None, "parche sin cambios"
     vars_ = _patch_variables(patch)
     prohibidas = sorted(v for v in vars_ if v in VARIABLES_PROHIBIDAS)
     if prohibidas:
@@ -117,6 +121,16 @@ def _regression_segments(holdout: pd.DataFrame, cfgs: list[CotizadorConfig], pat
 
 
 # ---------------------------------------------------------------- evaluación
+def _record(patch: Patch, verdict: Verdict, invalido: bool = False) -> None:
+    """Refleja el veredicto en el Patch (lo consumen meta-mejorador T-11 y el ciclo T-13)."""
+    patch.veredicto = "invalido" if invalido else ("aceptado" if verdict.aceptado else "rechazado")
+    patch.razon = "; ".join(verdict.razones)
+    if not invalido:
+        patch.metrics_before = {"loss": verdict.loss_before}
+        patch.metrics_after = {"loss": verdict.loss_after, "ganancia": verdict.ganancia,
+                               "peor_delta": verdict.peor_delta}
+
+
 def _reject(patch: Patch, razon: str, lb: float = 0.0, la: float = 0.0, g: float = 0.0) -> Verdict:
     return Verdict(patch_id=patch.patch_id, aceptado=False, loss_before=lb, loss_after=la, ganancia=g,
                    razones=[razon])
@@ -125,14 +139,23 @@ def _reject(patch: Patch, razon: str, lb: float = 0.0, la: float = 0.0, g: float
 def evaluate(champion: CotizadorConfig, patch: Patch, holdout: pd.DataFrame) -> tuple[Verdict, CotizadorConfig | None]:
     """Valida el parche (apply_patch + lista blanca; inválido => rechazado sin evaluar), re-cotiza el
     holdout con campeón y retador, acepta si ganancia >= DELTA y ningún segmento (n>=MIN_SEGMENT_N)
-    empeora más de EPSILON. Devuelve (veredicto, config_retador o None)."""
+    empeora más de EPSILON. Devuelve (veredicto, config_retador o None).
+
+    Efecto lateral: rellena en `patch` veredicto ("aceptado"/"rechazado"/"invalido"), razon y, si se
+    evaluó, metrics_before={"loss"} y metrics_after={"loss","ganancia","peor_delta"} (loss = media
+    de objective.loss en el holdout). Un parche con veredicto="invalido" o sin cambios se rechaza sin
+    leer el holdout."""
     challenger, err = _validate(champion, patch)
     if challenger is None:
         # inválido: NO se toca el holdout
-        return _reject(patch, f"invalido: {err}"), None
+        verdict = _reject(patch, f"invalido: {err}")
+        _record(patch, verdict, invalido=True)
+        return verdict, None
 
     if len(holdout) == 0:
-        return _reject(patch, "holdout vacío: no se puede evaluar"), None
+        verdict = _reject(patch, "holdout vacío: no se puede evaluar")
+        _record(patch, verdict)
+        return verdict, None
 
     costo = holdout["costo_real"].to_numpy(dtype=float)
     l_before = objective.loss(quote_df(holdout, champion), costo)
@@ -171,4 +194,5 @@ def evaluate(champion: CotizadorConfig, patch: Patch, holdout: pd.DataFrame) -> 
         peor_delta=float(peor_delta) if np.isfinite(peor_delta) else 1e9,
         razones=razones,
     )
+    _record(patch, verdict)
     return verdict, (challenger if aceptado else None)

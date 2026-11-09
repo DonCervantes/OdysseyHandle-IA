@@ -289,3 +289,39 @@ def test_detector_ast_permite_lectura_autorizada():
            "from autoguard.evaluator.evaluator import split_holdout, evaluate\n"
            "x = loss([1], [2])\n")
     assert _violations(src) == []
+
+
+# ---------------------------------------------------------------- integración con T-08 / T-11
+def test_rellena_metricas_y_veredicto_en_patch(cfg, holdout):
+    p = _patch([FIX_APP])
+    verdict, _ = evaluate(cfg, p, holdout)
+    assert p.veredicto == "aceptado"
+    assert p.metrics_before["loss"] == pytest.approx(verdict.loss_before)
+    assert p.metrics_after["loss"] == pytest.approx(verdict.loss_after)
+    assert p.metrics_after["ganancia"] == pytest.approx(verdict.ganancia)
+    assert p.razon
+    malo = _patch([FIX_APP, {"op": "set", "path": "factores.zona.categorias.PUE", "value": 1.3}])
+    evaluate(cfg, malo, holdout)
+    assert malo.veredicto == "rechazado" and "PUE" in malo.razon
+
+
+def test_meta_premia_segun_veredicto(cfg, holdout):
+    from autoguard.rsi.meta import patch_gain
+    p = _patch([FIX_APP])
+    evaluate(cfg, p, holdout)
+    assert patch_gain(p) > 0
+
+
+@pytest.mark.parametrize("patch", [
+    Patch(patch_id="x", generation=1, tipo="nueva_variable", hipotesis="", cambios=[], veredicto="invalido",
+          razon="sin hipótesis aplicable"),
+    Patch(patch_id="y", generation=1, tipo="cambio_regla", hipotesis="", cambios=[]),
+    Patch(patch_id="z", generation=1, tipo="ajuste_factor", hipotesis="", veredicto="invalido",
+          cambios=[ConfigChange(op="set", path="prompt_estrategia", value="ok")]),
+])
+def test_parche_marcado_invalido_no_consume_holdout(cfg, patch):
+    _HoldoutTrampa.accesos = 0
+    verdict, retador = evaluate(cfg, patch, _HoldoutTrampa())
+    assert not verdict.aceptado and retador is None
+    assert patch.veredicto == "invalido"
+    assert _HoldoutTrampa.accesos == 0
