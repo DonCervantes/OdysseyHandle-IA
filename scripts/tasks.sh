@@ -67,11 +67,12 @@ txn() {
   done
 }
 
-# ---------- definición de tareas desde origin/main:TASKS.md  -> id|tipo|deps|titulo
+# ---------- definición de tareas desde origin/main:TASKS.md  -> id|tipo|deps|titulo|asignada
 parse() {
   g show "$REMOTE/main:TASKS.md" | awk '
-    function flush() { if (id) print id "|" tipo "|" deps "|" title }
-    /^### T-[0-9]+/ { flush(); id=$2; title=$0; sub(/^### T-[0-9]+ *· */, "", title); tipo="claude"; deps=""; next }
+    function flush() { if (id) print id "|" tipo "|" deps "|" title "|" asig }
+    /^### T-[0-9]+/ { flush(); id=$2; title=$0; sub(/^### T-[0-9]+ *· */, "", title); gsub(/\|/, "/", title); tipo="claude"; deps=""; asig=""; next }
+    /^- \*\*asignada:\*\*/ { t=$0; sub(/.*\*\*asignada:\*\* */, "", t); split(t, a, " "); asig=a[1]; gsub(/`/, "", asig) }
     /^- \*\*tipo:\*\*/ { t=$0; sub(/.*\*\*tipo:\*\* */, "", t); split(t, a, " "); tipo=a[1] }
     /^- \*\*deps:\*\*/ { d=$0; sub(/.*\*\*deps:\*\* */, "", d); out=""; n=split(d, a, /[^T0-9-]+/);
                          for (i=1;i<=n;i++) if (a[i] ~ /^T-[0-9]+$/) out=out (out?" ":"") a[i]; deps=out }
@@ -93,6 +94,8 @@ ensure_worktree() { # id
 
 # ---------- operaciones (dentro de txn)
 op_claim() { # id who
+  local asig; asig="$(taskfield "$1" 5)"
+  if [ -n "$asig" ] && [ "$asig" != "${2%%:*}" ]; then echo "$1 está asignada a la sesión $asig" >&2; return 1; fi
   has "$1" && { echo "$1 ya tomada por $(get "$1" owner) [$(status "$1")]" >&2; return 1; }
   deps_done "$1" || { echo "$1 tiene deps sin terminar" >&2; return 1; }
   put "$1" owner "$2"; setst "$1" claimed "$2"
@@ -103,8 +106,9 @@ op_pick() { # who -> escribe en PICKED la tarea elegida
     st="$(status "$id")"
     if [ "$st" = "changes_requested" ] && [ "$(get "$id" owner)" = "$1" ]; then PICKED="$id"; setst "$id" claimed "$1"; return 0; fi
   done
-  while IFS='|' read -r id tipo deps title; do
+  while IFS='|' read -r id tipo deps title asig; do
     [ "$tipo" = "claude" ] || continue; has "$id" && continue; deps_done "$id" || continue
+    if [ -n "$asig" ] && [ "$asig" != "${1%%:*}" ]; then continue; fi
     PICKED="$id"; put "$id" owner "$1"; setst "$id" claimed "$1"; return 0
   done < <(parse)
   return 3
@@ -130,19 +134,32 @@ op_set() { # id expected_status new_status note [notes_text]
 op_release() { has "$1" || return 3; rmtask "$1"; }
 op_mark_done() { put "$1" owner "${2:-humano}"; setst "$1" done manual; }
 
+# ---------- avisos del coordinador (se muestran en list/claim-next/review-next)
+op_broadcast() { put _coord broadcast "$(now) $1"; }
+show_broadcast() { local b; b="$(get _coord broadcast)"; [ -n "$b" ] && printf '\n>>> AVISO DEL COORDINADOR: %s\n\n' "$b" >&2; return 0; }
+
 # ---------- comandos
 cmd_list() {
-  begin; rm -f "$IDX"
+  begin; rm -f "$IDX"; show_broadcast
   printf "%-5s %-7s %-18s %-20s %-20s %-4s %s\n" ID TIPO ESTADO DUEÑO REVISOR DEPS TITULO
-  parse | while IFS='|' read -r id tipo deps title; do
+  parse | while IFS='|' read -r id tipo deps title asig; do
     local ready="ok"; deps_done "$id" || ready="--"
-    printf "%-5s %-7s %-18s %-20s %-20s %-4s %s\n" "$id" "$tipo" "$(status "$id")" "$(get "$id" owner)" "$(get "$id" reviewer)" "$ready" "$title"
+    printf "%-5s %-7s %-18s %-20s %-20s %-4s %s\n" "$id" "$tipo" "$(status "$id")" "$(get "$id" owner)" "$(get "$id" reviewer)" "$ready" "$title${asig:+  [→ $asig]}"
+  done
+}
+# TSV para tableros: id, tipo, estado, dueño, revisor, deps_listas, deps, asignada, ultimo_evento, titulo
+cmd_tsv() {
+  begin; rm -f "$IDX"
+  printf "id\ttipo\testado\tdueno\trevisor\tdeps_listas\tdeps\tasignada\tultimo_evento\ttitulo\n"
+  parse | while IFS='|' read -r id tipo deps title asig; do
+    local ready="si"; deps_done "$id" || ready="no"
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" "$id" "$tipo" "$(status "$id")" "$(get "$id" owner)" "$(get "$id" reviewer)" "$ready" "$deps" "$asig" "$(get "$id" log | grep . | tail -1)" "$title"
   done
 }
 cmd_claim() { check_agent "$2"; fetch; exists "$1"; txn op_claim "$1" "$2"; echo "CLAIMED $1 -> worktree: $(ensure_worktree "$1")"; }
 cmd_claim_next() {
   check_agent "$1"; PICKED=""
-  txn op_pick "$1"
+  txn op_pick "$1"; begin; rm -f "$IDX"; show_broadcast
   [ -n "$PICKED" ] || { echo "NONE: no hay tareas disponibles ahora (ver 'list')"; return 0; }
   local wt; wt="$(ensure_worktree "$PICKED")"
   echo "CLAIMED $PICKED -> worktree: $wt  (rama task/$PICKED)"
@@ -159,7 +176,7 @@ cmd_submit() {
 }
 cmd_review_next() {
   check_agent "$1"; PICKED=""
-  txn op_review_pick "$1"
+  txn op_review_pick "$1"; begin; rm -f "$IDX"; show_broadcast
   [ -n "$PICKED" ] || { echo "NONE: nada pendiente de revisión"; return 0; }
   local wt; wt="$(ensure_worktree "$PICKED")"
   git -C "$wt" pull -q --ff-only "$REMOTE" "task/$PICKED" 2>/dev/null || true
@@ -200,6 +217,8 @@ cmd_init_state() {
 
 case "${1:-help}" in
   list) cmd_list ;;
+  tsv) cmd_tsv ;;
+  broadcast) txn op_broadcast "${*:2}"; echo "AVISO publicado" ;;
   claim) cmd_claim "${2:?id}" "${3:-}" ;;
   claim-next) cmd_claim_next "${2:-}" ;;
   submit) cmd_submit "${2:?id}" ;;
@@ -214,6 +233,8 @@ case "${1:-help}" in
   *) cat <<EOF
 uso: scripts/tasks.sh <comando>     (agente = <sesion>:<nombre>; sesiones: $SESSIONS)
   list                        tablero con estado de todas las tareas
+  tsv                         lo mismo en TSV (para dashboards)
+  broadcast "mensaje"         publica un aviso que todas las sesiones verán (solo coordinador)
   claim-next <agente>         toma tu tarea devuelta o la primera abierta con deps listas (crea worktree)
   claim <T-XX> <agente>       toma una tarea concreta
   submit <T-XX>               empuja task/T-XX y la pasa a revisión

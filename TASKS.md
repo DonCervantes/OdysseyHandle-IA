@@ -184,6 +184,7 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 
 ### T-15 · Tablero Streamlit
 - **tipo:** claude
+- **asignada:** gpt-dylan
 - **deps:** T-13
 - **rutas:** `dashboard/`, `.streamlit/`
 - **qué:** lee `var/runs/<run_id>/` (y BD si existe). Curvas de error vs pólizas de las 3 variantes, área
@@ -219,6 +220,7 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 
 ### T-20 · README, guion de demo y semilla de demo
 - **tipo:** claude
+- **asignada:** claude-elias
 - **deps:** T-13, T-14, T-23
 - **rutas:** `README.md`, `docs/demo.md`, `scripts/demo.sh`
 - **qué:** instalación, cómo correr API/tablero/experimento, guion de la demo de 40 s alineado al pitch,
@@ -297,3 +299,65 @@ Reglas comunes de aceptación para TODA tarea `claude`:
   pólizas que `parametros`, tasa de aceptación de la última generación ≥ que la primera o explicado.
   Reportar también semillas 1, 7 y 123 (robustez, sin cherry-picking). Si no se logra honestamente,
   documentar números y causas; no se vale maquillar el simulador ni el evaluador.
+
+### T-24 · Dashboard de progreso de las sesiones
+- **tipo:** claude
+- **asignada:** gpt-dylan
+- **deps:** —
+- **rutas:** `tools/progreso/`, `tests/test_progreso.py`
+- **qué:** página sencilla (Streamlit, puerto 8502 para no chocar con el tablero RSI) que lee
+  `scripts/tasks.sh tsv` cada 30 s y muestra: % de tareas `claude` hechas, conteo por estado, tabla de
+  tareas con estado/dueño/revisor/último evento, tareas bloqueadas por dependencias, actividad por sesión
+  (claude-dylan, claude-elias, gpt-dylan, cursor-elias: hechas, en curso, revisadas) y tareas humanas
+  pendientes. Solo lectura: nunca llama a comandos que cambien estado. Comando de arranque documentado
+  en `tools/progreso/README.md` (`.venv/bin/streamlit run tools/progreso/app.py --server.port 8502`).
+- **aceptación:** test que parsea una salida TSV de ejemplo y calcula los agregados; la página arranca.
+
+### T-25 · Prueba de punta a punta vía API
+- **tipo:** claude
+- **asignada:** claude-elias
+- **deps:** —
+- **rutas:** `tests/test_e2e.py`
+- **qué:** con `TestClient` y BD/directorios temporales: expediente de muestra (EXP-001) → perfil +
+  cotización → `POST /outcomes` simulados → `POST /rsi/run` (corrida pequeña) → `GET /patches` →
+  aprobar un parche → la cotización del mismo auto cambia y registra la nueva `agent_version` →
+  `POST /versions/cotizador/revert/{sha}` → la cotización vuelve a la original.
+- **aceptación:** corre en modo mock en < 60 s; falla si se rompe cualquier eslabón.
+
+### T-26 · Dictamen preliminar de siniestros (RF-15)
+- **tipo:** claude
+- **asignada:** cursor-elias
+- **deps:** —
+- **rutas:** `autoguard/agents/dictamen.py`, `tests/test_dictamen.py`, endpoint nuevo en
+  `autoguard/api/dictamen.py` (router que se monta en `main.py` con 2 líneas)
+- **qué:** dado el perfil registrado (daños previos) y fotos del siniestro (vía `agents/visual.inspect`),
+  separar daños nuevos vs preexistentes, estimar costo del siniestro, y banderas antifraude determinísticas
+  (daño reclamado ya existía, zona incompatible con el relato, monto atípico). Salida explicable.
+- **aceptación:** tests con casos simulados: siniestro legítimo, daño preexistente reclamado (montachoques).
+
+### T-27 · Guion y narración del video de respaldo
+- **tipo:** claude
+- **asignada:** claude-elias
+- **deps:** T-20
+- **rutas:** `docs/video_respaldo.md`
+- **qué:** guion de 3 min alineado al pitch con tomas de pantalla (frontend, tablero RSI), texto de
+  narración listo para ElevenLabs (frases cortas, pronunciación de siglas), y lista de capturas a grabar.
+  Usar los números REALES de la corrida de T-23.
+
+### T-28 · Set de evaluación con LLM real
+- **tipo:** claude
+- **asignada:** cursor-elias
+- **deps:** —
+- **rutas:** `scripts/eval_llm.py`, `data/eval/`, `docs/eval_llm.md`
+- **qué:** script que, si hay `ANTHROPIC_API_KEY`, mide precisión de extracción documental (meta ≥90%) y
+  recall de daños (meta ≥80%) sobre las muestras existentes y nuevas SIMULADAS, con `LLM_CACHE=1`, y
+  reporta costo estimado en tokens. Sin llave, sale con mensaje claro. Ningún test llama a la red.
+
+### T-29 · Modo demo en vivo del tablero RSI
+- **tipo:** claude
+- **asignada:** gpt-dylan
+- **deps:** T-15
+- **rutas:** `dashboard/`
+- **qué:** reproducir una corrida generación por generación con controles (play/pausa/velocidad), resaltar
+  cada parche aceptado al aparecer, y plan B: cargar una corrida pre-grabada de `var/runs/` o de
+  `data/demo_run/` si no hay corrida nueva. Pensado para los 40 s de demo del pitch.

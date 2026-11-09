@@ -1,5 +1,8 @@
 # AGENTS.md — Protocolo de trabajo multi-sesión
 
+> **⚠ METODOLOGÍA PARALELA EN PAUSA (2026-11-09 21:45 UTC).** Se trabaja por turnos siguiendo `RELEVO.md`.
+> No uses `claim-next`/`review-next`. Las reglas técnicas de abajo siguen vigentes.
+
 Este repo lo construyen **4 sesiones de IA en paralelo**, en 2 máquinas y 3 herramientas:
 
 | Sesión | Persona | Herramienta |
@@ -62,6 +65,12 @@ Los worktrees usan el `.venv` del checkout principal: `"$(git rev-parse --path-f
    - `scripts/tasks.sh reject T-XX "qué falla, archivo:línea, cómo reproducir"` → vuelve a su dueño.
    El revisor no reescribe la tarea; arreglos triviales (≤5 líneas) sí, commiteados en la rama.
 
+## Avisos del coordinador
+
+Si `list`, `claim-next` o `review-next` imprimen `>>> AVISO DEL COORDINADOR`, léelo y síguelo: es la
+forma en que el coordinador (claude-dylan) habla con todas las sesiones. Ejecuta `scripts/tasks.sh list`
+al menos cada 10 minutos.
+
 ## Estados
 
 `open → claimed → review → reviewing → done` y `reviewing → changes_requested → claimed`.
@@ -76,5 +85,6 @@ Un claim abandonado se libera con `scripts/tasks.sh release T-XX` (avisa a su du
 - Todo funciona **sin llaves** (LLM en modo mock vía `autoguard/llm.py`, fallback determinístico) y es
   reproducible con semilla fija. Tests nunca llaman a la red.
 - Llaves solo en `.env` (gitignored). Nunca en código ni logs.
+- Una tarea con `asignada: <sesion>` solo la puede tomar esa sesión (`claim-next` la salta para las demás).
 - Las tareas `tipo: humano` no se reclaman: las hace una persona y se marcan con `mark-done`.
 - No toques `TASKS.md` salvo para agregar tareas nuevas al final, y hazlo en una rama de tarea.
