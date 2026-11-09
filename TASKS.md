@@ -262,3 +262,20 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 ### T-97 · Cancelar Lovable Pro antes de la renovación
 - **tipo:** humano
 - **deps:** T-93
+
+## Tareas agregadas
+
+### T-22 · Cargar `.env` y completar `.env.example`
+- **tipo:** claude
+- **deps:** —
+- **rutas:** `autoguard/settings.py` (nuevo), `autoguard/__init__.py` (solo la llamada a carga), `.env.example`, `tests/test_settings.py`
+- **qué:** hoy ningún módulo llama a `load_dotenv`, así que `.env` se ignora. Cargar `.env` de la raíz del
+  repo (sin sobreescribir variables ya exportadas) al importar `autoguard`, de forma que funcione para la
+  API, el loop RSI, el tablero y los scripts. Completar `.env.example` con TODAS las variables que lee el
+  código (hoy: ANTHROPIC_API_KEY, LLM_PROVIDER, LLM_MODEL, LLM_EFFORT, LLM_CACHE, LLM_CACHE_DIR,
+  DATABASE_URL, AUTOGUARD_API_KEY, AUTOGUARD_CORS_ORIGINS, TAVILY_API_KEY, FIRECRAWL_API_KEY,
+  VALUACION_OFFLINE, VALUACION_CACHE_DIR; verifícalo con grep), cada una con comentario y valor por
+  defecto seguro.
+- **aceptación:** test con `.env` temporal que demuestra la carga y que una variable exportada gana; los
+  tests existentes siguen en modo mock aunque exista un `.env` con llave (pytest fuerza `LLM_PROVIDER=mock`
+  vía `conftest.py` o equivalente) — nunca llaman a la red.
