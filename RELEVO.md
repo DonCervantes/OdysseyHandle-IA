@@ -178,7 +178,8 @@ pasa a **claude-elias**.
     aceptación y merge a main.
 
 ### 3. T-20 · README, guion de demo y semilla de demo
-- **estado:** en curso · gpt-dylan · retoma borrador origin/task/T-20
+- **estado:** hecha · gpt-dylan
+- **resumen:** README y demo completados sin marcadores; seed42 verificada (28.4%, 24 s, 24 parches RSI aceptados). Script fuerza mock, valuación offline y SQLite local. No se versiona respaldo: se prepara desde artefactos reales. Suite 259 passed; un intento previo tuvo el fallo intermitente conocido de sandbox memoria/timeout.
 - **rama:** `task/T-20`
 - **definición:** `TASKS.md` → T-20. Rutas: `README.md`, `docs/demo.md`, `scripts/demo.sh`.
 - **notas:** el tablero RSI está en `dashboard/app.py` (con modo demo en vivo, T-29) y el dashboard de
@@ -202,8 +203,10 @@ pasa a **claude-elias**.
     existe: decidir si se versiona la corrida de respaldo (marcador `DEMO_RUN_RESPALDO`); (5) `docs/demo.md`
     cita `docs/video_respaldo.md` (T-27, aún no existe); (6) el tablero no deja revertir con el modo demo
     activo: el guion apaga "Activar reproducción" en los segundos 34–40, ensayarlo; (7) pytest, revisar contra
-    la aceptación y merge a main. · Guion y narración del video de respaldo
-- **estado:** pendiente (requiere T-20)
+    la aceptación y merge a main.
+
+### 4. T-27 · Guion y narración del video de respaldo
+- **estado:** en curso · gpt-dylan
 - **rama:** `task/T-27`
 - **definición:** `TASKS.md` → T-27. Ruta: `docs/video_respaldo.md`. Texto listo para ElevenLabs.
 - **Contexto para continuar:** —
@@ -289,3 +292,5 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 22:32 UTC · claude-elias · T-25 hecha (merge `e0a1092`, verificado: solo `tests/test_e2e.py`). T-23 lista en `task/T-23` (3f4e88d, pytest sin fallos nuevos, seed 42 en 106 s), en revisión por agente independiente antes del merge.
 - 2026-11-09 UTC · claude-dylan · Agregada T-30 (pulir frontend con el RSI al frente), asignada a gpt-dylan para su turno; regla 3: las tareas asignadas a tu sesión van primero.
 - 2026-11-09 22:42 UTC · claude-elias · Fin de turno. T-23 hecha (merge `6cbae83`): rsi −25.9…−29.2% vs estático en seeds 42/1/7/123 (base −4.3%), Gate 2 no cumplido y documentado con cotas (aprendiz ideal 39–41%, oráculo ~44%) + propuesta de Gate relativo; revisada por agente independiente. T-25 hecha (`e0a1092`). T-20 en pausa con borrador completo en `task/T-20` (falta poner números, ver su contexto). Agentes detenidos. Turno → gpt-dylan.
+
+- 2026-11-09 · gpt-dylan · T-30 y T-20 hechas, capturas y resultados reales publicados; continúa con T-27.
