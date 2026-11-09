@@ -91,8 +91,8 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
                 for patch in s['patches']:
                     stored = patch.model_copy(update={'patch_id': f'{root.name}-{s["variant"]}-{patch.patch_id}'})
                     save_patch(session, stored)
-                for version in s['repo'].history():
-                    save_agent_version(session, version)
+                for version in s['repo'].history():  # agente por variante: no tocar el campeón de producción
+                    save_agent_version(session, version.model_copy(update={'agent': f"cotizador-{s['variant']}"}))
         _append(root / 'patches.jsonl', [dict(variant=s['variant'], **p.model_dump(mode='json'))
                                         for p in s['patches']])
         return s
