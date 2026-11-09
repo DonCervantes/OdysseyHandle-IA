@@ -67,3 +67,21 @@ python scripts/eval_llm.py --json
 - `tests/conftest.py` fuerza `LLM_PROVIDER=mock`, limpia `OPENAI_API_KEY` y pone `AUTOGUARD_NO_DOTENV=1`.
 - Este script **no** se importa desde tests; es solo CLI manual/demo.
 - Los agentes documental/visual ya tienen `--eval` en mock (100 %); este script es el chequeo con LLM real + set ampliado.
+
+## Resultado medido (2026-11-10, LLM real)
+
+Primera corrida con OpenAI `gpt-6.1-sol` (effort `low`, `LLM_CACHE=1`), 24 llamadas reales a la API, sin
+aciertos de caché; tokens reportados por la API (no estimados).
+
+| Métrica | Resultado | Meta |
+| --- | --- | --- |
+| Precisión de extracción documental (15 docs, 80 campos: VIN, placas, marca, modelo, año, vigencia) | **100.0%** | ≥ 90% |
+| Recall de daños en fotos (9 fotos; tp=15, fn=0, fp=0) | **100.0%** (precisión 100.0%) | ≥ 80% |
+| Tokens | 20,882 entrada · 2,427 salida | — |
+| Costo estimado | **USD 0.066** | — |
+| Tiempo | ~73 s | — |
+
+**Límite honesto:** las muestras son imágenes SIMULADAS generadas por código (documentos renderizados limpios y
+fotos esquemáticas), mucho más fáciles que fotos y escaneos reales. El resultado prueba que la integración con el
+LLM real funciona de punta a punta y cumple las metas en este set; no es una estimación del desempeño con
+documentos reales. Repetir la corrida es gratis mientras exista la caché en `var/llm_cache/`.

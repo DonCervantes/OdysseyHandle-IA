@@ -256,11 +256,15 @@ pasa a **claude-elias**.
 - **Contexto para continuar:** —
 
 ### 6. Tareas humanas (las hace una persona; la sesión de turno solo puede preparar instrucciones)
-- **T-92** Crear proyecto Supabase y aplicar `db/migrations/001_init.sql`; poner `DATABASE_URL` en `.env`.
-- **T-93** Pegar `docs/lovable_prompt.md` en Lovable, conectar GitHub primero.
-- **T-95** Desplegar backend (Railway/Render) y tablero (Streamlit Cloud).
-- **T-96** Grabar video de respaldo (requiere T-27) y ensayar el pitch 3 veces.
-- **T-97** Cancelar Lovable Pro antes de la renovación.
+- ~~**T-92** Supabase~~ — **descartada**: todo corre en local con SQLite (`sqlite:///var/autoguard.db`).
+- ~~**T-93** Lovable~~ — **descartada**: el frontend es T-33 (React local, sin Lovable).
+- ~~**T-95** Despliegue~~ — **descartada**: sin despliegue. Arranque local: `bash scripts/demo.sh --start`
+  (API :8000, tablero :8501), `bash scripts/demo.sh --stop` para apagar. Verificado el 2026-11-09 (health,
+  tablero y `POST /expedientes` responden 200).
+- **T-96** Grabar video de respaldo (requiere T-27) y ensayar el pitch 3 veces. **Narración ya generada** (claude-dylan, 2026-11-10) con la voz clonada de Dylan ("Dylan speedhack"; el clon profesional "dylanslat" aún no está entrenado en ElevenLabs): 6 MP3, uno por sección de `docs/video_respaldo.md`, ~2:28 en total, en `var/narracion/` (local, no versionado) y con 2 tomas por sección en el flujo de ElevenLabs. Falta grabar la pantalla y montar. Si cambia la cifra del pitch (T-99), regenerar solo las secciones 3 y 5.
+- **T-97** Cancelar Lovable Pro **ya** (no se usa).
+- ~~**T-98** Probar el LLM real~~ — **hecha** (claude-dylan, 2026-11-10): `gpt-6.1-sol`, precisión documental 100% (meta ≥90%), recall de daños 100% (meta ≥80%), 24 llamadas, USD 0.066. Muestras SIMULADAS limpias: no extrapolar a documentos reales. Detalle en `docs/eval_llm.md`. El `.env` sigue con `LLM_PROVIDER=mock` (la demo no gasta salvo `--llm-real`).
+- **T-99** Decidir la cifra del RSI para el pitch: 26–29% vs reglas fijas, o "66–74% de la mejora máxima alcanzable" (cota de T-23).
 
 ### 7. T-31 · Migrar el proveedor LLM a OpenAI
 - **estado:** **hecha** · claude-dylan · merge en main `f428888`
@@ -308,6 +312,45 @@ pasa a **claude-elias**.
   etiquetados.
 - **aceptación:** `npm install && npm run dev` en `frontend/` levanta el sitio; con la API local corriendo, todas
   las pantallas funcionan contra endpoints reales; `npm run build` sin errores; cifras de México con fuente visible.
+- **Contexto para continuar:** (claude-elias, checkpoint 23:30 UTC)
+  - **Hecho (rama `task/T-33`, `37a1999`):** base del frontend en `frontend/`: Vite 5 + React 18 + TypeScript +
+    Tailwind 3 + react-router + recharts; sistema de diseño (tokens RGB en `src/index.css`, clases base), cliente único
+    de la API (`src/lib/api.ts`), tipos del contrato (`src/lib/types.ts`), formatos es-MX, componentes compartidos
+    (`src/components/ui.tsx`), layout de la app con barra lateral y estado de la API, rutas y `frontend/README.md`.
+    `npm run build` pasa.
+  - **En curso (agentes en paralelo, cada uno en sus archivos):** cifras de México verificadas con fuente
+    (`src/data/mexico.ts`), landing (`src/pages/Landing.tsx` + `src/landing/`), expediente y siniestro
+    (`NuevoExpediente`, `Expediente`, `Siniestro` + `src/components/expediente/`), laboratorio RSI, parches, versiones
+    y resumen (`Resumen`, `Laboratorio`, `Parches`, `Versiones` + `src/components/rsi/`).
+  - **Falta:** integrar lo de los agentes, probar end to end contra la API local, revisión independiente y merge.
+  - **Correr:** `bash scripts/demo.sh --start` (API :8000) y en `frontend/`: `npm install && npm run dev` (:5173).
+
+### 10. T-34 · Arranque local único y documentación sin Lovable (en paralelo a T-33)
+- **estado:** **hecha** · claude-dylan (en paralelo, sin tocar `frontend/`)
+- **resumen:** `bash scripts/demo.sh --start` levanta API (:8000), tablero (:8501) y, si existe
+  `frontend/package.json`, el frontend con `npm run dev -- --port 5173 --strictPort` (hace `npm install` si falta
+  `node_modules`) pasando `VITE_API_URL=http://localhost:8000`; `--stop` apaga todo; `--llm-real` usa `.env`.
+  **Para T-33 (claude-elias):** que el frontend lea la URL de la API de `import.meta.env.VITE_API_URL` y que el
+  script `dev` sea Vite (acepta `--port`). README/demo/video ya apuntan a `http://localhost:5173`.
+- **rutas:** `scripts/demo.sh`, `README.md`, `docs/demo.md`, `docs/video_respaldo.md`
+- **qué:** `scripts/demo.sh --start` también levanta el frontend de `frontend/` (si existe `package.json`):
+  `npm install` si falta, `VITE_API_URL=http://localhost:$API_PORT`, puerto `FRONT_PORT` (5173); `--stop` lo
+  apaga. README, guion de demo y video: frontend local en lugar de Lovable, todo local, OpenAI como proveedor.
+- **Contexto para continuar:** —
+
+### 10. T-34 · `POST /patches/{id}/approve` re-aplica parches ya decididos y pisa la razón del evaluador
+- **estado:** pendiente
+- **rutas:** `autoguard/api/main.py`, `tests/test_api.py`
+- **qué:** hoy aprobar un parche con veredicto `aceptado`/`rechazado` vuelve a aplicarlo al campeón (crea otra versión)
+  y sobrescribe `razon`. Propuesta: 409 si el parche ya tiene veredicto (salvo una aprobación explícita del actuario
+  que se registre aparte, sin pisar la razón del evaluador). Hallazgo de T-33 (claude-elias:w6).
+- **Contexto para continuar:** —
+
+### 11. T-35 · La bitácora de parches mezcla todas las corridas
+- **estado:** pendiente
+- **rutas:** `autoguard/api/main.py` (`GET /patches`), `autoguard/rsi/loop.py` (si hace falta guardar `run_id`), tests.
+- **qué:** con `DATABASE_URL` cada `POST /rsi/run` agrega sus ~188 parches a la BD y `GET /patches` los devuelve todos
+  juntos. Agregar filtro `run_id` (o `corrida=latest`) y exponerlo para el frontend. Hallazgo de T-33.
 - **Contexto para continuar:** —
 
 ### Decisión abierta
@@ -352,3 +395,10 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 23:25 UTC · claude-dylan · La persona indica que claude-dylan sigue en turno; toma T-32 (en curso). Siguiente turno: claude-elias.
 - 2026-11-09 23:40 UTC · claude-dylan · T-32 hecha (patch_id único por variante). La cola automatizada quedó vacía: solo quedan tareas humanas (T-92, T-93, T-95, T-96, T-97). Siguiente turno: claude-elias.
 - 2026-11-09 23:12 UTC · claude-elias · Inicio de turno por indicación de la persona; agrega y toma T-33 (frontend completo local, rama `task/T-33`, solo `frontend/`).
+- 2026-11-09 23:50 UTC · claude-dylan · Decisión de la persona: todo local y sin despliegue. T-92 y T-95 descartadas; T-93 ajustada a correr el frontend de Lovable en local. Smoke test local de `scripts/demo.sh --start` OK.
+- 2026-11-10 00:00 UTC · claude-dylan · Por poco tiempo, la persona pide dejar fuera lo que sobra: Lovable (T-93) descartada, T-97 cancelar ya, plan sin Lovable/Supabase/despliegue. claude-dylan toma T-34 en paralelo (sin tocar `frontend/`) con autorización de la persona; el turno sigue siendo de claude-elias.
+- 2026-11-09 23:30 UTC · claude-elias · Checkpoint T-33: base del frontend empujada (`task/T-33`); 4 agentes construyen datos de México, landing y pantallas de la app.
+- 2026-11-10 00:20 UTC · claude-dylan · T-34 hecha (arranque local único con frontend; docs sin Lovable). Revisado `.env`: OPENAI_API_KEY presente, pero LLM_PROVIDER=mock ⇒ hoy no se usa el LLM real (decisión de la persona). Turno sigue con claude-elias (T-33).
+- 2026-11-10 00:35 UTC · claude-dylan · T-98 hecha con autorización de la persona: eval con LLM real (OpenAI gpt-6.1-sol) pasa metas (100%/100%, USD 0.066).
+- 2026-11-10 00:50 UTC · claude-dylan · LLM real activado en `.env` (LLM_PROVIDER=auto, LLM_CACHE=1) por indicación de la persona; prueba real de `POST /expedientes` OK. Narración del video generada con ElevenLabs (voz de Dylan).
+- 2026-11-09 23:55 UTC · claude-elias · T-33: todas las pantallas implementadas y probadas contra la API (`task/T-33` 4c54833); en revisión independiente y QA. Agregadas T-34 y T-35 (hallazgos de backend).
