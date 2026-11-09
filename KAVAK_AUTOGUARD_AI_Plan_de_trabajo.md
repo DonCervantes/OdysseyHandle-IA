@@ -253,7 +253,7 @@ El grafo operativo registra cada predicción en PostgreSQL; el grafo RSI compara
 
 ## Tecnologías a implementar
 
-El núcleo es Python con LangGraph y Streamlit para los datos; de tus beneficios usamos Lovable, Linear y Miro de forma esencial, Tavily y Firecrawl solo para la valuación, y dejamos fuera ElevenLabs y backboard.io salvo un uso opcional.
+El núcleo es Python con LangGraph y Streamlit para los datos; de los beneficios permitidos usamos Lovable, Linear y Miro de forma esencial, Tavily y Firecrawl solo para la valuación, ElevenLabs solo para el video de respaldo y backboard.io queda en reserva.
 
 ### Stack núcleo
 
@@ -272,9 +272,10 @@ El núcleo es Python con LangGraph y Streamlit para los datos; de tus beneficios
 
 ### Beneficios Hacktoberfest: qué usamos y para qué
 
+Solo se usan estos 7 beneficios; ningún otro servicio de pago entra al proyecto. La ingestión de resultados, el disparo del ciclo RSI y la aprobación de parches se operan directo con la API desde el frontend y el tablero.
+
 | Herramienta | Decisión | Uso concreto | Cuidado |
 | --- | --- | --- | --- |
-| n8n Cloud Pro | No usar | Fuera del alcance: la ingestión de resultados, el disparo del ciclo RSI y la aprobación de parches se hacen directo con la API (`POST /outcomes`, `POST /rsi/run`, `POST /patches/{id}/approve`) desde el frontend y el tablero | Ninguno |
 | Lovable Pro | Usar con presupuesto | Frontend de usuario: carga de documentos y expediente; el tablero de datos va en Streamlit | 100 créditos: un prompt inicial muy detallado, máximo unas 10 iteraciones grandes, conectar GitHub desde el inicio y hacer ajustes menores en código. Cancelar antes de la renovación |
 | Linear Business | Usar | Backlog, 3 ciclos de una semana, issues por historia de usuario | Ninguno: dura hasta abril de 2027 |
 | Miro Enterprise | Usar | Event storming, arquitectura, storyboard del pitch | Ninguno: dura hasta enero de 2027 |

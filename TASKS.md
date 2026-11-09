@@ -219,7 +219,7 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 
 ### T-20 · README, guion de demo y semilla de demo
 - **tipo:** claude
-- **deps:** T-13, T-14
+- **deps:** T-13, T-14, T-23
 - **rutas:** `README.md`, `docs/demo.md`, `scripts/demo.sh`
 - **qué:** instalación, cómo correr API/tablero/experimento, guion de la demo de 40 s alineado al pitch,
   semilla elegida y resultados esperados, plan B (video).
@@ -279,3 +279,29 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 - **aceptación:** test con `.env` temporal que demuestra la carga y que una variable exportada gana; los
   tests existentes siguen en modo mock aunque exista un `.env` con llave (pytest fuerza `LLM_PROVIDER=mock`
   vía `conftest.py` o equivalente) — nunca llaman a la red.
+
+### T-23 · Cumplir el Gate 2: mejorador orientado a la pérdida asimétrica
+- **tipo:** claude
+- **deps:** T-13
+- **rutas:** `autoguard/rsi/mejorador.py`, `autoguard/rsi/analista.py`, `autoguard/rsi/loop.py`,
+  `autoguard/rsi/graph.py`, `autoguard/rsi/meta.py`, sus tests. PROHIBIDO tocar `autoguard/sim/`,
+  `autoguard/evaluator/`, `objective.py`, contratos.
+- **contexto (revisión de T-13, seed 42):** regret estático 51.31M, `parametros` 44.80M, `rsi` 49.11M
+  (solo −4.3%). Causas: (1) el mejorador corrige la MEDIA de `error_rel`, pero con L asimétrica
+  (α=1.5, β=1.0) el multiplicador óptimo de un segmento es el que minimiza `objective.loss` en train
+  (≈ cuantil α/(α+β)=0.6 de costo/prima), no el de la media; desde la generación 3 casi todos los parches
+  se rechazan. (2) Los parches de una generación se evalúan secuencialmente contra un campeón ya
+  actualizado ⇒ doble corrección (gen 1: regla ×1.24 y factor 1.42 sobre km≥200k aceptados juntos).
+  (3) La métrica de convergencia da "convergida" a la variante estática (600 pólizas): no sirve.
+- **qué:** (a) el mejorador calcula cada multiplicador por búsqueda 1-D minimizando `objective.loss` sobre
+  las filas train del segmento (con encogimiento por n); el analista prioriza por pérdida reducible, no
+  por sesgo medio. (b) Evaluar todos los parches de una generación contra el MISMO campeón y aceptar el
+  mejor (o componer los aceptados y re-evaluar la composición antes de commitear). (c) Definir convergencia
+  de forma explícita y defendible (p.ej. primer N a partir del cual la pérdida media móvil queda dentro de
+  x% de la pérdida del oráculo `oracle_expected_cost` calibrado al cuantil 0.6, o del mínimo alcanzado), y
+  que la variante estática NO converja si su error no baja. (d) Asegurar que el brazo `nueva_variable`
+  pueda capturar `marca`/`danos_costo` y que las reglas de 2 variables capturen interacciones.
+- **aceptación:** con `--seed 42` en modo mock: RSI ≥40% menos regret que estático, RSI converge en menos
+  pólizas que `parametros`, tasa de aceptación de la última generación ≥ que la primera o explicado.
+  Reportar también semillas 1, 7 y 123 (robustez, sin cherry-picking). Si no se logra honestamente,
+  documentar números y causas; no se vale maquillar el simulador ni el evaluador.
