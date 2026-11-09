@@ -166,6 +166,9 @@ Reglas comunes de aceptación para TODA tarea `claude`:
   Parches con `veredicto="invalido"` (T-08) se registran pero no se evalúan. `vehicle_id` del simulador es
   `SIM-{seed}-{n}`; helpers `profiles_df`/`input_hash` en `agents/cotizador.py`; `db.repo.predictions_df`/
   `outcomes_df` ya tienen el formato de `recolector.collect`.
+  El test AST de T-09 solo permite que `autoguard/rsi/` importe `objective.loss`, `split_holdout` y
+  `evaluate` del evaluador: calcula R(N) como `np.cumsum(loss(...))` y NO importes `regret` ni constantes.
+  `evaluate` muta el Patch (veredicto, razon, metrics_before/after) — pásalo tal cual a `MetaImprover.update`.
 
 ### T-14 · API FastAPI
 - **tipo:** claude
