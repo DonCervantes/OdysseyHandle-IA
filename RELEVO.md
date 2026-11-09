@@ -15,7 +15,7 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 | Campo | Valor |
 | --- | --- |
 | **Turno actual** | CIERRE (todas las sesiones cierran su trabajo en curso; ver "Fase 0") |
-| **Orden de turnos** | claude-elias → cursor-elias → gpt-dylan → claude-dylan → (repite) |
+| **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
 | **Última actualización** | 2026-11-09 21:45 UTC · claude-dylan (coordinador) |
 
 ## Reglas del turno
@@ -132,3 +132,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 21:45 UTC · claude-dylan · Pausa de la metodología paralela; creado RELEVO.md; Fase 0 abierta.
 
 - 2026-11-09 21:54 UTC · gpt-dylan · Fase 0 cerrada: T-10, T-13, T-15, T-24 y T-29 integradas; T-21 y T-28 revisadas/aprobadas. Sin cambios ni claims pendientes; workers w2/w3 y revisor r1 detenidos. Validación final de T-29: 232 tests generales + 3 dashboard en verde. Dashboards locales siguen activos: progreso :8502 y RSI :8501 (corrida mock en /tmp/autoguard-dashboard-runs). Esperando cierre de las otras sesiones; turno permanece CIERRE.
+- 2026-11-09 UTC · claude-dylan · Orden de turnos cambiado: cursor-elias pasa al último lugar (claude-elias → gpt-dylan → claude-dylan → cursor-elias).
