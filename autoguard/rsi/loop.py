@@ -86,6 +86,12 @@ def plateau_polizas(rows, window=CONV_WINDOW, tol=CONV_TOL, min_drop=0.10):
     return int(rows['polizas'].iloc[start])
 
 
+def unique_patch_id(variant, patch_id):
+    """`<variante>-<patch_id>`; idempotente (no duplica el prefijo)."""
+    prefix = f'{variant}-'
+    return patch_id if not variant or patch_id.startswith(prefix) else prefix + patch_id
+
+
 def acceptance_by_generation(path, variant):
     """Tasa de aceptación por generación de una variante (desde patches.jsonl): sobre todos los parches, y
     `evaluados` = solo los que llegaron al holdout con un cambio de prima posible (sin `invalido` ni el
@@ -235,8 +241,10 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
                     save_patch(session, stored)
                 for version in s['repo'].history():  # agente por variante: no tocar el campeón de producción
                     save_agent_version(session, version.model_copy(update={'agent': f"cotizador-{s['variant']}"}))
-        _append(root / 'patches.jsonl', [dict(variant=s['variant'], **p.model_dump(mode='json'))
-                                        for p in s['patches']])
+        # patch_id único por variante: el mejorador numera igual en `parametros` y `rsi` (T-32).
+        _append(root / 'patches.jsonl', [{'variant': s['variant'], **p.model_dump(mode='json'),
+                                          'patch_id': unique_patch_id(s['variant'], p.patch_id)}
+                                         for p in s['patches']])
         return s
 
     def meta(s):

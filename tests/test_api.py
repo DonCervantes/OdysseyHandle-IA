@@ -322,3 +322,25 @@ def test_revert_restores_config(ctx):
     assert len(hist) == 3  # el historial conserva todo
     assert client.post("/versions/cotizador/revert/deadbeef", headers=H).status_code == 404
     assert client.post(f"/versions/otro/revert/{sha0}", headers=H).status_code == 404
+
+
+def test_patch_ids_unicos_por_variante_en_corridas_viejas(ctx):
+    """T-32: el mismo patch_id en `parametros` y `rsi` no debe aprobar el parche de otra variante."""
+    client, settings, _ = ctx
+    d = settings.runs_dir / "run-vieja"
+    d.mkdir(parents=True)
+    (d / "summary.json").write_text("{}")
+    par = _patch("g1-0-ajuste_factor").model_copy(update={"hipotesis": "variante parametros"})
+    rsi = Patch(patch_id="g1-0-ajuste_factor", generation=1, tipo="ajuste_factor", hipotesis="variante rsi",
+                cambios=[ConfigChange(op="set", path="factores.uso.categorias.app_transporte", value=1.30)])
+    lines = [json.dumps({"variant": "parametros", **par.model_dump(mode="json")}),
+             json.dumps({"variant": "rsi", **rsi.model_dump(mode="json")})]
+    (d / "patches.jsonl").write_text("\n".join(lines) + "\n")
+
+    ids = [p["patch_id"] for p in client.get("/patches", headers=H).json()["patches"]]
+    assert ids == ["parametros-g1-0-ajuste_factor", "rsi-g1-0-ajuste_factor"]
+    r = client.post("/patches/rsi-g1-0-ajuste_factor/approve", headers=H)
+    assert r.status_code == 200, r.text
+    assert r.json()["patch"]["hipotesis"] == "variante rsi"
+    prima = client.post("/quote", json=_profile(), headers=H).json()
+    assert prima["output"]["factores"]["uso"] == pytest.approx(1.30)

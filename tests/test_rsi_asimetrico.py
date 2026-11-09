@@ -424,7 +424,8 @@ def test_loop_compone_parches_y_rechaza_el_redundante(tmp_path, monkeypatch):
     loop.run_experiment(seed=1, batches=1, batch_size=60, k=1, output_dir=tmp_path / "run")
     patches = [json.loads(line) for line in (tmp_path / "run/patches.jsonl").read_text(encoding="utf-8").splitlines()]
     for variant in ("parametros", "rsi"):
-        got = {p["patch_id"].split("@")[0]: p for p in patches if p["variant"] == variant}
+        # T-32: patches.jsonl antepone la variante al patch_id
+        got = {p["patch_id"].removeprefix(f"{variant}-").split("@")[0]: p for p in patches if p["variant"] == variant}
         assert got["dup_a"]["veredicto"] == "aceptado"  # mayor ganancia: se compone primero
         assert got["otro"]["veredicto"] == "aceptado"
         assert got["dup_b"]["veredicto"] == "rechazado"
