@@ -14,7 +14,7 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | claude-dylan (gpt-dylan completó T-30, T-20 y T-27; quedan tareas humanas) |
+| **Turno actual** | claude-dylan (trabajando T-31) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
 | **Última actualización** | 2026-11-09 22:42 UTC · claude-elias (T-23 y T-25 hechas; T-20 en pausa; turno → gpt-dylan) |
 
@@ -263,12 +263,22 @@ pasa a **claude-elias**.
 - **T-97** Cancelar Lovable Pro antes de la renovación.
 
 ### 7. T-31 · Migrar el proveedor LLM a OpenAI
-- **estado:** pendiente · solicitado por el usuario a gpt-dylan
+- **estado:** en curso · claude-dylan · 2026-11-09 22:55 UTC (solicitada por el usuario a gpt-dylan)
 - **rama:** `task/T-31`
 - **rutas:** `autoguard/llm.py`, `scripts/eval_llm.py`, `.env.example`, `pyproject.toml`, tests LLM/settings/evaluación y documentación afectada.
 - **qué:** usar OpenAI en lugar de Anthropic. Conservar `complete_json`, modo mock sin llaves, validación, imágenes/PDF, fallback y caché. Adaptar evaluación real y conteo de tokens, actualizar limpieza de secretos en tests y eliminar requisitos de Anthropic. Elegir y documentar un modelo con las capacidades requeridas al implementar, consultando documentación oficial.
 - **aceptación:** sin llave o provider mock no hay llamadas; cliente falso cubre JSON, imágenes/PDF, errores y reintento; suite completa sin red. No leer ni imprimir llaves. `.env.example` debe pedir solo OPENAI_API_KEY como credencial de proveedor obligatoria.
 - **Contexto para continuar:** `.env` LOCAL ya preparado con OPENAI_API_KEY (vacía si no existía) y LLM_PROVIDER=mock. Se quitaron la llave Anthropic y el modelo Claude del archivo local; nunca se trasladó una llave Anthropic a OpenAI. El código sigue usando Anthropic hasta implementar esta tarea. Preservar cualquier OPENAI_API_KEY que el usuario introduzca. No activar llamadas reales como parte de tests. Fuente: https://developers.openai.com/api/docs/quickstart .
+
+### 8. T-32 · `patch_id` repetido entre variantes en `patches.jsonl`
+- **estado:** pendiente
+- **rama:** `task/T-32`
+- **qué:** hallazgo de T-23: los `patch_id` se repiten entre variantes (`parametros` y `rsi`) en
+  `patches.jsonl`, y `autoguard/api/main.py:_buscar_parche` toma el primero que encuentra (puede aprobar el
+  parche de `parametros` cuando el usuario eligió uno de `rsi`). Hacer los ids únicos por variante (p.ej.
+  prefijo `rsi-`/`par-` al escribir) o buscar por (variante, patch_id); cuidar que el tablero y la API sigan
+  leyendo corridas viejas. Test que lo reproduzca.
+- **Contexto para continuar:** —
 
 ### Decisión abierta
 El equipo está evaluando **cambiar el plan de trabajo** (posible cambio de foco según el resultado de
@@ -307,3 +317,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 · gpt-dylan · T-30, T-20 y T-27 integradas y verificadas (259 tests generales; dashboard 3). Corrida seed42 regenerada: 28.4%, convergencia estricta null. .env local preparado por solicitud humana sin versionar llaves. Cola automática terminada; turno → claude-dylan para coordinación de pendientes humanos.
 
 - 2026-11-09 · gpt-dylan · Por petición del usuario, proveedor elegido OpenAI; .env local preparado sin exponer valores. T-31 pendiente para siguiente turno; el cliente aún no está migrado. Turno de claude-dylan conservado.
+- 2026-11-09 22:55 UTC · claude-dylan · Inicio de turno; toma T-31 (en curso). Agregada T-32 (patch_id repetido entre variantes, hallazgo de T-23).
