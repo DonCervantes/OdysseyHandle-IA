@@ -32,8 +32,9 @@ from autoguard.sim.market import MarketSimulator
 CONV_WINDOW = 3  # lotes de la media móvil
 CONV_TOL = 0.10  # convergida = pérdida media móvil ≤ (1 + CONV_TOL) × la del oráculo, de ahí al final
 TABU_GENS = 2  # generaciones sin re-proponer un objetivo rechazado
-ROUNDS_MAX = int(os.getenv('X1_ROUNDS', '2'))
-_X1 = os.getenv('X1_VARIANT', '')
+# Rondas por generación: si una ronda acepta parches, se propone otra sobre el campeón ya actualizado
+# (mismas filas train/holdout; cada parche pasa igual por el evaluador). Aplica a parametros y rsi.
+ROUNDS_MAX = 2
 
 
 def _append(path, records):
@@ -113,10 +114,8 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
         subs = None
         if s['variant'] == 'parametros':
             arms = ['ajuste_factor'] * 3
-        elif 'A' in _X1:
+        else:  # control limitado a 1 slot y sustitutos para slots cuyo brazo no logra proponer nada
             arms, subs = s['meta'].plan_arms(3)
-        else:
-            arms = s['meta'].choose_arms(3)
         evitar = {t for t, until in s['tabu'].items() if until >= s['generation']}
         s['patches'] = propose(s['cfg'], s['hypotheses'], arms, s['generation'],
                                lecciones=s['meta'].lecciones, train=s['train'], evitar=evitar,
@@ -126,7 +125,7 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
 
     def evaluator(s):
         s = _evaluate_round(s)
-        if 'B' in _X1:
+        if ROUNDS_MAX > 1:
             all_patches = list(s['patches'])
             all_accepted = list(s['accepted'])
             for r in range(2, ROUNDS_MAX + 1):
@@ -139,8 +138,7 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
                 s['hypotheses'] = analyze(s['train'], top_k=12)
                 evitar = {t for t, until in s['tabu'].items() if until >= s['generation']}
                 evitar |= {patch_target(p) for p in all_patches if patch_target(p)}
-                arms = s['_arms'] if s['variant'] == 'parametros' else (
-                    s['meta'].plan_arms(3)[0] if 'A' in _X1 else s['meta'].choose_arms(3))
+                arms = s['_arms'] if s['variant'] == 'parametros' else s['meta'].plan_arms(3)[0]
                 s['patches'] = propose(s['cfg'], s['hypotheses'], arms, s['generation'],
                                        lecciones=s['meta'].lecciones, train=s['train'], evitar=evitar,
                                        sustitutos=s['_subs'])
