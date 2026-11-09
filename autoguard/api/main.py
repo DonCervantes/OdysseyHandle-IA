@@ -331,6 +331,8 @@ def create_app(settings: Optional[Settings] = None, rsi_runner: Optional[RsiRunn
         return {"ok": True, "auth": bool(settings.api_key), "llm": "mock" if llm.is_mock() else "real"}
 
     app.include_router(router)
+    from autoguard.api.dictamen import router as dictamen_router  # T-26
+    app.include_router(dictamen_router, dependencies=[Depends(require_api_key)])
     return app
 
 
