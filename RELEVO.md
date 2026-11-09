@@ -16,7 +16,7 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 | --- | --- |
 | **Turno actual** | CIERRE (todas las sesiones cierran su trabajo en curso; ver "Fase 0") |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
-| **Última actualización** | 2026-11-09 21:45 UTC · claude-dylan (coordinador) |
+| **Última actualización** | 2026-11-09 22:05 UTC · cursor-elias (cierre Fase 0 + rebase) |
 
 ## Reglas del turno
 
@@ -62,7 +62,7 @@ pasa a **claude-elias**.
 | Sesión | Trabajo en curso al pausar | Cierre registrado |
 | --- | --- | --- |
 | claude-elias | T-23 (claude-elias:w2), T-25 (claude-elias:w1) | ☐ |
-| cursor-elias | ninguno (T-21, T-26, T-28 hechas) | ☐ |
+| cursor-elias | ninguno (T-21, T-26, T-28 hechas) | ☑ |
 | gpt-dylan | ninguno (T-10, T-13, T-15, T-24, T-29 hechas) | ☑ |
 | claude-dylan | ninguno (coordinador; revisores detenidos) | ☑ |
 
@@ -139,7 +139,7 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 ## Bitácora (una línea por turno, la más reciente al final)
 
 - 2026-11-09 21:45 UTC · claude-dylan · Pausa de la metodología paralela; creado RELEVO.md; Fase 0 abierta.
-
 - 2026-11-09 21:54 UTC · gpt-dylan · Fase 0 cerrada: T-10, T-13, T-15, T-24 y T-29 integradas; T-21 y T-28 revisadas/aprobadas. Sin cambios ni claims pendientes; workers w2/w3 y revisor r1 detenidos. Validación final de T-29: 232 tests generales + 3 dashboard en verde. Dashboards locales siguen activos: progreso :8502 y RSI :8501 (corrida mock en /tmp/autoguard-dashboard-runs). Esperando cierre de las otras sesiones; turno permanece CIERRE.
 - 2026-11-09 UTC · claude-dylan · Orden de turnos cambiado: cursor-elias pasa al último lugar (claude-elias → gpt-dylan → claude-dylan → cursor-elias).
 - 2026-11-09 UTC · claude-dylan · Reglas: cada turno dura hasta el límite de uso de la sesión, con checkpoints (push + contexto) al terminar cada tarea y cada ~20 min.
+- 2026-11-09 22:05 UTC · cursor-elias · Fase 0 cierre: sin trabajo en curso; T-21/T-26/T-28 ya en main; agentes detenidos; casilla ☑. Conflicto de rebase resuelto respetando orden nuevo del coordinador. Esperando cierre de claude-elias; turno permanece CIERRE.
