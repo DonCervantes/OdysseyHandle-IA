@@ -16,7 +16,7 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 | --- | --- |
 | **Turno actual** | claude-elias (desde 22:08 UTC) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
-| **Última actualización** | 2026-11-09 22:21 UTC · claude-elias (checkpoint T-23; T-25 y T-20 en curso con agentes) |
+| **Última actualización** | 2026-11-09 22:32 UTC · claude-elias (T-25 hecha; T-23 en revisión) |
 
 ## Reglas del turno
 
@@ -140,7 +140,12 @@ pasa a **claude-elias**.
     `python -m pytest tests/test_mejorador.py tests/test_analista.py tests/test_loop.py tests/test_evaluator.py tests/test_meta.py`.
 
 ### 2. T-25 · Prueba de punta a punta vía API
-- **estado:** en curso · claude-elias (agente claude-elias:w1, en paralelo a T-23) · 22:20 UTC · rama `task/T-25` en origin (ab8582e)
+- **estado:** **hecha** · claude-elias · 22:32 UTC · merge en main `e0a1092`
+- **resumen:** `tests/test_e2e.py` recorre todo el flujo vía API con TestClient, SQLite y directorios temporales,
+  modo mock y semilla 42: expediente EXP-001 → perfil + cotización (coincide con `/quote` y el linaje) →
+  `POST /outcomes` idempotente → `POST /rsi/run` en proceso + `/runs/latest` + `/patches` → aprobar un parche
+  cambia la prima y la `agent_version` → revertir devuelve la prima original (linaje con 3 versiones). Tarda
+  ~37 s (aceptación < 60 s). Pytest completo: sin fallos nuevos (solo los preexistentes de Windows).
 - **rama:** `task/T-25`
 - **definición:** `TASKS.md` → T-25. Ruta: `tests/test_e2e.py`. No depende de T-23.
 - **Contexto para continuar:** (claude-elias, 22:10 UTC)
@@ -208,3 +213,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 22:10 UTC · claude-elias · Fase 0 cierre: T-23 y T-25 en pausa con ramas en origin (`task/T-23` 4c7e67c, `task/T-25` ab8582e) y "Contexto para continuar" lleno. T-23: rsi −4.3% → −22.4% (seed 42); cotas medidas: oráculo ~44%, aprendiz ideal 39–41% ⇒ 40% fijo inalcanzable honestamente. Experimentos a medias en `exp/T-23-x1/x3/x4` y scripts de cotas en `exp/T-23-cotas`. T-19 revisada y aprobada antes de la pausa. 6 agentes en segundo plano detenidos (w1, r1, x1–x4). Las 4 sesiones cerraron ⇒ Fase 0 completa.
 - 2026-11-09 22:08 UTC · claude-elias · Inicio de turno (Fase 0 completa); toma T-23 (en curso).
 - 2026-11-09 22:21 UTC · claude-elias · Checkpoint T-23 (a8e9013: rsi −27.4% seed 42). Por instrucción de la persona, agentes en paralelo dentro del turno: w1 cierra T-25, w3 redacta T-20 (sin merge hasta T-23).
+- 2026-11-09 22:32 UTC · claude-elias · T-25 hecha (merge `e0a1092`, verificado: solo `tests/test_e2e.py`). T-23 lista en `task/T-23` (3f4e88d, pytest sin fallos nuevos, seed 42 en 106 s), en revisión por agente independiente antes del merge.
