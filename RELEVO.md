@@ -282,7 +282,12 @@ pasa a **claude-elias**.
 - **Contexto para continuar:** `.env` LOCAL ya preparado con OPENAI_API_KEY (vacía si no existía) y LLM_PROVIDER=mock. Se quitaron la llave Anthropic y el modelo Claude del archivo local; nunca se trasladó una llave Anthropic a OpenAI. El código sigue usando Anthropic hasta implementar esta tarea. Preservar cualquier OPENAI_API_KEY que el usuario introduzca. No activar llamadas reales como parte de tests. Fuente: https://developers.openai.com/api/docs/quickstart .
 
 ### 8. T-32 · `patch_id` repetido entre variantes en `patches.jsonl`
-- **estado:** en curso · claude-dylan · 2026-11-09 23:25 UTC
+- **estado:** **hecha** · claude-dylan · merge en main
+- **resumen:** `rsi/loop.py` escribe en `patches.jsonl` el id `<variante>-<patch_id>` (`unique_patch_id`,
+  idempotente) y `api/services.run_patches` aplica el mismo prefijo a corridas viejas, así
+  `/patches/{id}/approve` ya no puede aprobar el parche de `parametros` cuando se eligió uno de `rsi`. Los
+  commits del linaje y la BD conservan su formato. Para la UI/Lovable: los ids ahora traen el prefijo de
+  variante (p.ej. `rsi-g4-2-nueva_variable-r2`). Tests nuevos en `test_api.py` y `test_loop.py`; 263 passed.
 - **rama:** `task/T-32`
 - **qué:** hallazgo de T-23: los `patch_id` se repiten entre variantes (`parametros` y `rsi`) en
   `patches.jsonl`, y `autoguard/api/main.py:_buscar_parche` toma el primero que encuentra (puede aprobar el
@@ -331,3 +336,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 22:55 UTC · claude-dylan · Inicio de turno; toma T-31 (en curso). Agregada T-32 (patch_id repetido entre variantes, hallazgo de T-23).
 - 2026-11-09 23:20 UTC · claude-dylan · T-31 hecha (merge `f428888`: LLM migrado a OpenAI, `gpt-6.1-sol`, 261 tests). T-32 queda pendiente. Turno → claude-elias por indicación de la persona (su límite ya casi se restablece).
 - 2026-11-09 23:25 UTC · claude-dylan · La persona indica que claude-dylan sigue en turno; toma T-32 (en curso). Siguiente turno: claude-elias.
+- 2026-11-09 23:40 UTC · claude-dylan · T-32 hecha (patch_id único por variante). La cola automatizada quedó vacía: solo quedan tareas humanas (T-92, T-93, T-95, T-96, T-97). Siguiente turno: claude-elias.
