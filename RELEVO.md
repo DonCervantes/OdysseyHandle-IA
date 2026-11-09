@@ -22,7 +22,9 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 1. Al empezar: `git checkout main && git pull origin main` y lee este archivo completo.
 2. Si el "Turno actual" no es tu sesión, **no trabajes**: espera. (Excepción: Fase 0.)
-3. Toma la **primera** tarea de la cola con estado `pendiente` o `en pausa`. Escribe en ella
+3. Si en la cola hay una tarea **asignada a tu sesión** (`asignada: <sesion>`) en estado `pendiente` o
+   `en pausa`, tómala primero. Si no, toma la **primera** tarea de la cola con estado `pendiente` o `en pausa`
+   que no esté asignada a otra sesión. Escribe en ella
    `estado: en curso · <tu-sesion> · <hora UTC>` y haz commit + push a main de inmediato
    (así nadie más la toma).
 4. Trabaja en la rama `task/T-XX` (si ya existe en origin, continúa desde ella:
@@ -178,7 +180,49 @@ pasa a **claude-elias**.
 - **definición:** `TASKS.md` → T-27. Ruta: `docs/video_respaldo.md`. Texto listo para ElevenLabs.
 - **Contexto para continuar:** —
 
-### 5. Tareas humanas (las hace una persona; la sesión de turno solo puede preparar instrucciones)
+### 5. T-30 · Pulir el frontend con el RSI como protagonista (sin look "vibecodeado")
+- **asignada:** gpt-dylan (es lo primero que hace en su turno)
+- **estado:** pendiente
+- **rama:** `task/T-30`
+- **rutas:** `dashboard/` (tablero RSI en Streamlit, incluido el modo demo de T-29), `.streamlit/config.toml`,
+  `docs/lovable_prompt.md` (alinear el estilo del frontend de Lovable con el del tablero), capturas en `docs/`.
+  No tocar `autoguard/` salvo lectura; si el tablero necesita un dato que el loop no escribe, agrégalo como
+  tarea nueva al final de la cola.
+- **objetivo:** que los jueces entiendan en 40 s que el sistema **se mejora solo y aprende a mejorarse**, y
+  que el producto se vea diseñado por un equipo, no generado.
+- **el RSI al frente (en este orden en la página principal):**
+  1. Titular con la cifra clave de la corrida (regret RSI vs estático, % de reducción, pólizas a
+     convergencia) leída de `var/runs/<run_id>/summary.json`, nunca escrita a mano.
+  2. Curvas de pérdida vs pólizas de las 3 variantes con el **área de regret sombreada** y anotaciones en
+     los puntos donde se aceptó un parche.
+  3. El ciclo RSI como diagrama con el estado de la generación actual: recolector → analista → mejorador →
+     evaluador congelado → linaje → meta-mejorador.
+  4. Bitácora de parches como historia: hipótesis → cambio (diff legible) → métricas en holdout antes/después
+     → veredicto y motivo; filtros por veredicto y tipo; botón de reversión con confirmación.
+  5. "Aprende a mejorar": evolución de los posteriors del bandido por tipo de parche y tasa de aceptación
+     por generación, con las lecciones del meta-mejorador.
+  6. Garantías: evaluador inmutable, holdout que el mejorador nunca ve, lista blanca de variables, todo
+     revertible. Linaje de versiones navegable.
+- **criterios anti-"vibecodeado" (el revisor los verifica uno por uno):**
+  - Sistema visual propio y sobrio: 1 familia tipográfica, escala de tamaños consistente, paleta corta
+    (neutros + 1 color de acento + colores semánticos para las 3 variantes, iguales en todas las gráficas),
+    tema en `.streamlit/config.toml`. Sin gradientes decorativos, sin emojis en títulos, sin "glassmorphism".
+  - Textos escritos por una persona: títulos que afirman algo ("El RSI reduce el regret 47%") en vez de
+    genéricos ("Dashboard", "Métricas"); sin relleno tipo "potenciado por IA"; español consistente.
+  - Números formateados (MXN con separador de miles, % con 1 decimal, pólizas enteras) y unidades en
+    cada eje y tarjeta; leyendas con nombres de negocio ("Reglas fijas", "Solo parámetros", "RSI completo").
+  - Jerarquía clara: una idea por sección, espacio en blanco, nada de 12 tarjetas iguales en fila.
+  - Estados vacíos, de carga y de error útiles (p.ej. "Aún no hay corridas: ejecuta `python -m
+    autoguard.rsi.loop --seed 42`"). Nada de texto placeholder ni datos inventados.
+  - Etiqueta discreta y permanente "Datos simulados".
+  - Funciona en pantalla de proyector (1280×720) y se lee a distancia.
+- **aceptación:** `streamlit run dashboard/app.py` arranca con una corrida mock y con la corrida pre-grabada
+  del modo demo; los tests existentes de `dashboard/` siguen en verde; capturas antes/después en
+  `docs/tablero-rsi.png` (y una nueva por sección clave); el resumen en esta tarea lista qué cambió.
+  Si T-23 cambia los números, el tablero los refleja sin tocar código.
+- **Contexto para continuar:** —
+
+### 6. Tareas humanas (las hace una persona; la sesión de turno solo puede preparar instrucciones)
 - **T-92** Crear proyecto Supabase y aplicar `db/migrations/001_init.sql`; poner `DATABASE_URL` en `.env`.
 - **T-93** Pegar `docs/lovable_prompt.md` en Lovable, conectar GitHub primero.
 - **T-95** Desplegar backend (Railway/Render) y tablero (Streamlit Cloud).
@@ -214,3 +258,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 22:08 UTC · claude-elias · Inicio de turno (Fase 0 completa); toma T-23 (en curso).
 - 2026-11-09 22:21 UTC · claude-elias · Checkpoint T-23 (a8e9013: rsi −27.4% seed 42). Por instrucción de la persona, agentes en paralelo dentro del turno: w1 cierra T-25, w3 redacta T-20 (sin merge hasta T-23).
 - 2026-11-09 22:32 UTC · claude-elias · T-25 hecha (merge `e0a1092`, verificado: solo `tests/test_e2e.py`). T-23 lista en `task/T-23` (3f4e88d, pytest sin fallos nuevos, seed 42 en 106 s), en revisión por agente independiente antes del merge.
+- 2026-11-09 UTC · claude-dylan · Agregada T-30 (pulir frontend con el RSI al frente), asignada a gpt-dylan para su turno; regla 3: las tareas asignadas a tu sesión van primero.
