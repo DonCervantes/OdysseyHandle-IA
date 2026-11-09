@@ -57,7 +57,7 @@ export default function Siniestro() {
     try {
       const r = await api.dictamenExpediente(formDictamen(fotos.map((f) => f.file), vehicleId, zonas, monto));
       setRes(r);
-      setTimeout(() => resRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+      setTimeout(() => { resRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }); resRef.current?.focus({ preventScroll: true }); }, 50);
     } catch (e) {
       setError(e);
     } finally {
@@ -89,7 +89,7 @@ export default function Siniestro() {
             <label className="label" htmlFor="vid">ID del vehículo</label>
             <input id="vid" className="input num" placeholder="veh-…" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} aria-invalid={intentado && !vehicleId.trim()} />
             {intentado && !vehicleId.trim() && <p className="mt-1 text-[14px] text-alta" role="alert">Escribe el ID de un vehículo con expediente.</p>}
-            {guardados.length === 0 && (
+            {guardados.length === 0 && !vehicleId.trim() && (
               <p className="mt-2 text-[13px] text-muted">
                 No hay expedientes en esta sesión. <Link to="/app/expediente/nuevo" className="text-taupe underline underline-offset-2">Crea uno</Link> o pega su ID.
               </p>
@@ -155,7 +155,7 @@ export default function Siniestro() {
         </aside>
       </form>
 
-      <div ref={resRef} className="scroll-mt-24">
+      <div ref={resRef} tabIndex={-1} className="scroll-mt-24 outline-none" aria-live="polite">
         {enviando ? (
           <div className="space-y-4" aria-busy="true" aria-label="Emitiendo dictamen"><Skeleton className="h-32" /><Skeleton className="h-48" /></div>
         ) : error != null ? (

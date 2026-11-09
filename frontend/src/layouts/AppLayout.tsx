@@ -1,5 +1,6 @@
 // Layout de la app: barra lateral (como la maqueta de la referencia) + barra superior con estado de la API.
-import { NavLink, Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Dot, Logo, SimBadge, useAsync } from "../components/ui";
 import { api, API_URL } from "../lib/api";
 
@@ -25,6 +26,8 @@ function ApiStatus() {
 }
 
 export default function AppLayout() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]); // cada pantalla abre desde arriba
   return (
     <div className="min-h-screen bg-paper">
       <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-ink focus:px-3 focus:py-2 focus:text-paper">Saltar al contenido</a>
