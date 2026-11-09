@@ -169,6 +169,8 @@ Reglas comunes de aceptación para TODA tarea `claude`:
   El test AST de T-09 solo permite que `autoguard/rsi/` importe `objective.loss`, `split_holdout` y
   `evaluate` del evaluador: calcula R(N) como `np.cumsum(loss(...))` y NO importes `regret` ni constantes.
   `evaluate` muta el Patch (veredicto, razon, metrics_before/after) — pásalo tal cual a `MetaImprover.update`.
+  La API (T-14) lanza `python -m autoguard.rsi.loop --seed --batches --batch-size --k` y lee
+  `var/runs/<run_id>/patches.jsonl` (un Patch JSON por línea): respeta esa CLI y ese formato.
 
 ### T-14 · API FastAPI
 - **tipo:** claude
@@ -237,6 +239,8 @@ Reglas comunes de aceptación para TODA tarea `claude`:
 - **rutas:** `docs/auditoria.md` (+ fixes pequeños vía la tarea dueña)
 - **qué:** verificar lista blanca, que el RSI no puede tocar evaluador/objetivo, que no hay llaves en el
   repo, URLs firmadas/almacenamiento privado documentado, trazabilidad predicción→versión.
+  Revisar: la API desactiva auth si `AUTOGUARD_API_KEY` está vacía (decisión de T-14) y no guarda archivos
+  subidos (`storage_url` vacío).
 
 ## Tareas humanas (no las reclama un agente; se marcan con `mark-done`)
 
