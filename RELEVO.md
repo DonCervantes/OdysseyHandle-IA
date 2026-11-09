@@ -210,7 +210,7 @@ pasa a **claude-elias**.
 
 ### 5. T-30 · Pulir el frontend con el RSI como protagonista (sin look "vibecodeado")
 - **asignada:** gpt-dylan (es lo primero que hace en su turno)
-- **estado:** pendiente
+- **estado:** en curso · gpt-dylan · 2026-11-09
 - **rama:** `task/T-30`
 - **rutas:** `dashboard/` (tablero RSI en Streamlit, incluido el modo demo de T-29), `.streamlit/config.toml`,
   `docs/lovable_prompt.md` (alinear el estilo del frontend de Lovable con el del tablero), capturas en `docs/`.
