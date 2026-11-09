@@ -14,7 +14,7 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | claude-dylan (trabajando T-31) |
+| **Turno actual** | claude-elias (por indicación de la persona; después sigue el orden normal) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
 | **Última actualización** | 2026-11-09 22:42 UTC · claude-elias (T-23 y T-25 hechas; T-20 en pausa; turno → gpt-dylan) |
 
@@ -263,7 +263,18 @@ pasa a **claude-elias**.
 - **T-97** Cancelar Lovable Pro antes de la renovación.
 
 ### 7. T-31 · Migrar el proveedor LLM a OpenAI
-- **estado:** en curso · claude-dylan · 2026-11-09 22:55 UTC (solicitada por el usuario a gpt-dylan)
+- **estado:** **hecha** · claude-dylan · merge en main `f428888`
+- **resumen:** `autoguard/llm.py` usa la Responses API de OpenAI (`client.responses.create`): `instructions` +
+  `input`, imágenes como `input_image` y PDF como `input_file` (data URL base64), JSON mode (`json_object`) con
+  validación local contra el schema, `reasoning.effort` (default `low`) y holgura de 2000 tokens porque el
+  razonamiento cuenta contra `max_output_tokens`; `incomplete`/`refusal` ⇒ reintento y luego `fallback()`;
+  4xx de `openai` sin reintento. Modelo por defecto **`gpt-6.1-sol`** (OpenAI lo recomienda como balance
+  calidad/costo; texto+imagen, structured outputs, effort; USD 2/10 por 1M tokens), cambiable con `LLM_MODEL`
+  (`gpt-6-luna` = más barato). Fuente: developers.openai.com/api/docs/models y /quickstart (2026-11-09).
+  `scripts/eval_llm.py` usa `llm.build_request` y esas tarifas. `.env.example` pide solo `OPENAI_API_KEY`;
+  `pyproject` cambia `anthropic` por `openai` (reinstalar: `uv pip install -e '.[dev]'`). Tests: 261 passed, sin
+  red; `ANTHROPIC_API_KEY` se sigue limpiando en tests como legado. **No se probó con llave real**: el primer uso
+  real conviene hacerlo con `python scripts/eval_llm.py` y `LLM_CACHE=1`.
 - **rama:** `task/T-31`
 - **rutas:** `autoguard/llm.py`, `scripts/eval_llm.py`, `.env.example`, `pyproject.toml`, tests LLM/settings/evaluación y documentación afectada.
 - **qué:** usar OpenAI en lugar de Anthropic. Conservar `complete_json`, modo mock sin llaves, validación, imágenes/PDF, fallback y caché. Adaptar evaluación real y conteo de tokens, actualizar limpieza de secretos en tests y eliminar requisitos de Anthropic. Elegir y documentar un modelo con las capacidades requeridas al implementar, consultando documentación oficial.
@@ -318,3 +329,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 
 - 2026-11-09 · gpt-dylan · Por petición del usuario, proveedor elegido OpenAI; .env local preparado sin exponer valores. T-31 pendiente para siguiente turno; el cliente aún no está migrado. Turno de claude-dylan conservado.
 - 2026-11-09 22:55 UTC · claude-dylan · Inicio de turno; toma T-31 (en curso). Agregada T-32 (patch_id repetido entre variantes, hallazgo de T-23).
+- 2026-11-09 23:20 UTC · claude-dylan · T-31 hecha (merge `f428888`: LLM migrado a OpenAI, `gpt-6.1-sol`, 261 tests). T-32 queda pendiente. Turno → claude-elias por indicación de la persona (su límite ya casi se restablece).
