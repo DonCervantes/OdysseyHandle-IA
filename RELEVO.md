@@ -261,7 +261,7 @@ pasa a **claude-elias**.
 - ~~**T-95** Despliegue~~ — **descartada**: sin despliegue. Arranque local: `bash scripts/demo.sh --start`
   (API :8000, tablero :8501), `bash scripts/demo.sh --stop` para apagar. Verificado el 2026-11-09 (health,
   tablero y `POST /expedientes` responden 200).
-- **T-96** Grabar video de respaldo (requiere T-27) y ensayar el pitch 3 veces.
+- **T-96** Grabar video de respaldo (requiere T-27) y ensayar el pitch 3 veces. **Narración ya generada** (claude-dylan, 2026-11-10) con la voz clonada de Dylan ("Dylan speedhack"; el clon profesional "dylanslat" aún no está entrenado en ElevenLabs): 6 MP3, uno por sección de `docs/video_respaldo.md`, ~2:28 en total, en `var/narracion/` (local, no versionado) y con 2 tomas por sección en el flujo de ElevenLabs. Falta grabar la pantalla y montar. Si cambia la cifra del pitch (T-99), regenerar solo las secciones 3 y 5.
 - **T-97** Cancelar Lovable Pro **ya** (no se usa).
 - ~~**T-98** Probar el LLM real~~ — **hecha** (claude-dylan, 2026-11-10): `gpt-6.1-sol`, precisión documental 100% (meta ≥90%), recall de daños 100% (meta ≥80%), 24 llamadas, USD 0.066. Muestras SIMULADAS limpias: no extrapolar a documentos reales. Detalle en `docs/eval_llm.md`. El `.env` sigue con `LLM_PROVIDER=mock` (la demo no gasta salvo `--llm-real`).
 - **T-99** Decidir la cifra del RSI para el pitch: 26–29% vs reglas fijas, o "66–74% de la mejora máxima alcanzable" (cota de T-23).
@@ -385,3 +385,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 23:30 UTC · claude-elias · Checkpoint T-33: base del frontend empujada (`task/T-33`); 4 agentes construyen datos de México, landing y pantallas de la app.
 - 2026-11-10 00:20 UTC · claude-dylan · T-34 hecha (arranque local único con frontend; docs sin Lovable). Revisado `.env`: OPENAI_API_KEY presente, pero LLM_PROVIDER=mock ⇒ hoy no se usa el LLM real (decisión de la persona). Turno sigue con claude-elias (T-33).
 - 2026-11-10 00:35 UTC · claude-dylan · T-98 hecha con autorización de la persona: eval con LLM real (OpenAI gpt-6.1-sol) pasa metas (100%/100%, USD 0.066).
+- 2026-11-10 00:50 UTC · claude-dylan · LLM real activado en `.env` (LLM_PROVIDER=auto, LLM_CACHE=1) por indicación de la persona; prueba real de `POST /expedientes` OK. Narración del video generada con ElevenLabs (voz de Dylan).
