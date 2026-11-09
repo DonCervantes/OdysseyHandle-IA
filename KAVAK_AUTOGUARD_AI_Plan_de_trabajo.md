@@ -224,7 +224,7 @@ Los resultados reales mejoran a los agentes solo si pasa el evaluador.
 
 ```mermaid
 flowchart TD
-    FE["Lovable + Streamlit<br/>expediente · tablero de datos"] --> API
+    FE["Frontend React local + Streamlit<br/>expediente · tablero de datos"] --> API
     SR["Simulador y resultados<br/>taller, venta, siniestros"] --> API["API FastAPI · contratos Pydantic<br/>ingestión y aprobación humana"]
 
     subgraph OP["Grafo operativo · LangGraph + LLM"]
@@ -253,7 +253,7 @@ El grafo operativo registra cada predicción en PostgreSQL; el grafo RSI compara
 
 ## Tecnologías a implementar
 
-El núcleo es Python con LangGraph y Streamlit para los datos. De los beneficios permitidos solo usamos los que aportan algo que el proyecto no tiene: Lovable para el frontend, Tavily y Firecrawl para la valuación y ElevenLabs para el video de respaldo. Linear, Miro y backboard.io no se usan porque duplicarían lo que ya resuelven el repo y PostgreSQL.
+El núcleo es Python con LangGraph, Streamlit para los datos y un frontend React propio que corre en local. De los beneficios permitidos solo usamos Tavily y Firecrawl para la valuación (con caché) y ElevenLabs para el video de respaldo; Lovable, Linear, Miro y backboard.io no se usan.
 
 ### Stack núcleo
 
@@ -268,7 +268,7 @@ El núcleo es Python con LangGraph y Streamlit para los datos. De los beneficios
 | Archivos | Disco local (solo se guardan las extracciones) | Fotos y documentos |
 | Versionado de agentes | Git (GitPython) + archivos YAML | Cada parche es un commit revertible |
 | Sandbox | Docker sin red | Ejecutar código de parches de nivel 3 |
-| Ejecución | Todo en local con `scripts/demo.sh` (API :8000, tablero :8501, frontend Lovable con `npm run dev`); sin despliegue | Demo reproducible sin depender de red |
+| Ejecución | Todo en local: `scripts/demo.sh --start` levanta API (:8000), tablero (:8501) y el frontend React de `frontend/` (:5173) si existe; sin despliegue | Demo reproducible sin depender de red |
 
 ### Beneficios Hacktoberfest: qué usamos y para qué
 
@@ -276,7 +276,7 @@ Solo se usan beneficios de la lista permitida, y únicamente los que aportan alg
 
 | Herramienta | Decisión | Uso concreto | Cuidado |
 | --- | --- | --- | --- |
-| Lovable Pro | Usar con presupuesto | Frontend de usuario: carga de documentos y expediente; el tablero de datos va en Streamlit | 100 créditos: un prompt inicial muy detallado, máximo unas 10 iteraciones grandes, conectar GitHub desde el inicio y hacer ajustes menores en código. Cancelar antes de la renovación |
+| Lovable Pro | No usar | El frontend es propio (React + Vite en `frontend/`, corre en local); Lovable no alcanza una API local y gastaría créditos | Cancelar ya la suscripción |
 | Linear Business | No usar | El backlog vive en `TASKS.md` y el estado en `scripts/tasks.sh` (rama `tasks-state`), que coordina a las 4 sesiones; llevarlo también en Linear sería doble captura | Ninguno |
 | Miro Enterprise | No usar | Los diagramas de arquitectura y de sprints ya están en Mermaid dentro del plan y del repo; el storyboard del pitch va en `docs/demo.md` | Ninguno |
 | Tavily | Usar solo en valuación | Buscar anuncios de autos comparables | Cachear resultados; presupuestar unas 300 búsquedas |
@@ -298,8 +298,8 @@ flowchart LR
     G1{{"Gate 1: base corriendo<br/>simulador y cotizador registran"}}
     S2["Sprint 2 · Ciclo RSI (Semana 2)<br/>Recolector y analista<br/>Mejorador y evaluador fijo<br/>Meta-mejorador (bandido)<br/>Inspección visual de daños"]
     G2{{"Gate 2: RSI supera al estático<br/>regret al menos 40% menor"}}
-    S3["Sprint 3 · Producto y demo (Semana 3)<br/>Frontend en Lovable<br/>Aprobación de parches en frontend y tablero<br/>Tablero de datos en Streamlit<br/>Ensayo del pitch"]
-    H{{"Hackathon<br/>demo ensayada 3 veces<br/>vence Lovable"}}
+    S3["Sprint 3 · Producto y demo (Semana 3)<br/>Frontend React local<br/>Aprobación de parches en frontend y tablero<br/>Tablero de datos en Streamlit<br/>Ensayo del pitch"]
+    H{{"Hackathon<br/>demo local ensayada 3 veces"}}
     S1 --> G1 --> S2 --> G2 --> S3 --> H
 ```
 
@@ -311,7 +311,7 @@ Cada gate se revisa en la retrospectiva del sprint; el avance se sigue en `TASKS
 
 - [ ] Crear repo, estructura de carpetas y protocolo multi-sesión (`AGENTS.md`, `scripts/tasks.sh`)
 - [ ] Definir contratos JSON con Pydantic (perfil, predicción, parche)
-- [ ] Crear tablas en Supabase (vehicles, predictions, outcomes, errors, agent_versions, patches, meta_strategy)
+- [ ] Crear tablas (vehicles, predictions, outcomes, errors, agent_versions, patches, meta_strategy) en SQLite local
 - [ ] Simulador: población sintética, riesgo oculto, demanda y siniestros con semilla fija
 - [ ] Cotizador base con factores en YAML y registro de predicciones
 - [ ] Agente documental: extraer campos de 3 documentos de ejemplo
@@ -330,22 +330,22 @@ Cada gate se revisa en la retrospectiva del sprint; el avance se sigue en `TASKS
 
 **Sprint 3: producto y demo**
 
-- [ ] Frontend en Lovable: carga y expediente (un prompt inicial detallado)
+- [ ] Frontend React local (`frontend/`): expediente, dictamen, laboratorio RSI, bitácora y versiones
 - [ ] Tablero de datos en Streamlit: curvas de error, área de regret, bitácora y botón de reversión
 - [ ] Aprobación de parches desde el frontend y el tablero (vía API)
 - [ ] Valuación con comparables (Tavily y Firecrawl, con caché)
 - [ ] Grabar video de respaldo de la demo
 - [ ] Ensayar el pitch 3 veces con cronómetro
-- [ ] Cancelar Lovable Pro antes de su renovación
+- [ ] Cancelar Lovable Pro (no se usa)
 
 ### Roles
 
 | Rol | Entregables |
 | --- | --- |
 | Líder técnico y RSI | Grafo RSI, evaluador congelado, meta-mejorador |
-| Backend y datos | API, Supabase, simulador, registro de predicciones |
+| Backend y datos | API, SQLite, simulador, registro de predicciones |
 | Agentes de percepción | Documental, inspección visual, valuación |
-| Frontend y automatización | Lovable, tablero en Streamlit |
+| Frontend | Frontend React local, tablero en Streamlit |
 | Producto y pitch | PRD, modelo de negocio, guion, video de respaldo |
 
 ### Riesgos del plan
@@ -353,8 +353,7 @@ Cada gate se revisa en la retrospectiva del sprint; el avance se sigue en `TASKS
 | Riesgo | Mitigación |
 | --- | --- |
 | El RSI no supera al ajuste simple de parámetros | Empezar por segmentos con sesgo claro en el simulador; mostrar también la mejora del meta-mejorador |
-| Se agotan los créditos de Lovable | Conectar GitHub desde el primer prompt y editar en código |
-| Expira Lovable antes del hackathon | Frontend en GitHub; alternativa: llevar todo el frontend a Streamlit |
+| El frontend local no queda a tiempo | La demo funciona con el tablero Streamlit y Swagger (`/docs`) de la API |
 | El LLM genera parches inválidos | Validar el YAML con Pydantic antes de evaluar; descartar sin consumir el conjunto reservado |
 | La demo en vivo falla | Video de respaldo y semilla fija para resultados reproducibles |
 
