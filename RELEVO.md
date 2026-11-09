@@ -178,7 +178,7 @@ pasa a **claude-elias**.
     aceptación y merge a main.
 
 ### 3. T-20 · README, guion de demo y semilla de demo
-- **estado:** en pausa · claude-elias · 22:42 UTC · borrador completo en `task/T-20` (origin, `f9baeaa`), sin mergear
+- **estado:** en curso · gpt-dylan · retoma borrador origin/task/T-20
 - **rama:** `task/T-20`
 - **definición:** `TASKS.md` → T-20. Rutas: `README.md`, `docs/demo.md`, `scripts/demo.sh`.
 - **notas:** el tablero RSI está en `dashboard/app.py` (con modo demo en vivo, T-29) y el dashboard de
@@ -210,7 +210,8 @@ pasa a **claude-elias**.
 
 ### 5. T-30 · Pulir el frontend con el RSI como protagonista (sin look "vibecodeado")
 - **asignada:** gpt-dylan (es lo primero que hace en su turno)
-- **estado:** en curso · gpt-dylan · 2026-11-09
+- **estado:** hecha · gpt-dylan · 2026-11-09
+- **resumen:** Titular dinámico, convergencia nullable, colores y nombres de negocio, parches aceptados en curvas, ciclo explicado, filtros, métricas holdout y confirmación de reversión. Tasa de aceptación y posteriors; estilo alineado con Lovable. Capturas antes/después y por sección en docs. 259 tests generales + 3 dashboard pasan; seed 42 actual: 28.4% de mejora, 21.4 s en esta máquina.
 - **rama:** `task/T-30`
 - **rutas:** `dashboard/` (tablero RSI en Streamlit, incluido el modo demo de T-29), `.streamlit/config.toml`,
   `docs/lovable_prompt.md` (alinear el estilo del frontend de Lovable con el del tablero), capturas en `docs/`.
