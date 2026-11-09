@@ -73,7 +73,10 @@ export interface RunSummary {
 }
 export interface RunLatest { run_id: string; summary: RunSummary; archivos: string[]; n_parches: number; curva?: CurvePoint[] }
 
-export interface RsiJob { job_id: string; estado: string; params?: Record<string, number>; [k: string]: unknown }
+export interface RsiJob {
+  job_id: string; estado: "corriendo" | "terminado" | "fallido" | string; params?: Record<string, number>;
+  inicio?: string; log?: string; returncode?: number | null; [k: string]: unknown;
+}
 
 export interface Health { ok: boolean; auth: boolean; llm: "mock" | "real" }
 
