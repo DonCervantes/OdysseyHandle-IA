@@ -4,6 +4,15 @@ Sitio y app web de AutoGuard AI. Corre **solo en local** contra la API FastAPI d
 
 ## Correr
 
+Todo con un comando (desde la raíz del repo):
+
+```bash
+bash frontend/start-local.sh          # API :8000 + tablero :8501 + frontend :5173
+bash frontend/start-local.sh --stop   # detiene API y tablero
+```
+
+O paso a paso:
+
 ```bash
 # 1) backend: API en :8000 (y tablero Streamlit en :8501), en modo simulado y sin llaves
 bash scripts/demo.sh --start
