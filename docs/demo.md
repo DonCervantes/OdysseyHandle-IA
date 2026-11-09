@@ -40,18 +40,18 @@ Comprobación rápida antes de subir al escenario: `bash scripts/demo.sh` imprim
 1. `bash scripts/demo.sh --start` → corrida seed 42 lista, API en `:8000`, tablero en `:8501`.
 2. Navegador con **dos pestañas** ya abiertas y con zoom al 125 %:
    - Pestaña A: frontend de Lovable (o, si no está desplegado, Swagger `http://localhost:8000/docs` en
-     `POST /expedientes`) con los archivos `data/samples/docs/EXP-001-{FAC,TC,POL}.png` y
-     `data/samples/fotos/FOTO-001.png` a mano.
+     `POST /expedientes`) con los archivos `data/samples/docs/EXP-002-{FAC,TC,POL}.png` y
+     `data/samples/fotos/FOTO-002.png` a mano (EXP-002 es el que trae la alerta más clara: `VIN_NO_COINCIDE`, severidad alta, y dos daños).
    - Pestaña B: tablero `http://localhost:8501`, corrida **demo-seed42** seleccionada, *Activar
      reproducción* encendido, velocidad **2×** (20 generaciones en ~20 s) y en generación 0 (↺ Inicio).
-3. Cargar una vez el expediente EXP-001 para "calentar" la API (la primera llamada importa módulos).
+3. Cargar una vez el expediente EXP-002 para "calentar" la API (la primera llamada importa módulos).
 4. Video de respaldo abierto en otra ventana, pausado en el segundo 0 (ver Plan B).
 
 ## Guion segundo a segundo
 
 | Tiempo | En pantalla | Acción | Narración (del pitch) |
 | --- | --- | --- | --- |
-| 0–8 s | Pestaña A: expediente EXP-001 | Subir factura, tarjeta, póliza y una foto; enviar. Aparecen **alertas** (discrepancias documentales, daño detectado con costo) y la **prima con sus factores** e intervalo. | *(puente)* "Este es un auto revisado por los agentes: alertas, daños y una prima que se explica sola." |
+| 0–8 s | Pestaña A: expediente EXP-002 | Subir factura, tarjeta, póliza y FOTO-002; enviar (~1 s en mock). Aparece la **alerta** `VIN_NO_COINCIDE` (alta), los daños con costo (espejo estrellado, rayón en puerta) y la **prima con sus factores** e intervalo. | *(puente)* "Este es un auto revisado por los agentes: alertas, daños y una prima que se explica sola." |
 | 8–12 s | Pestaña B: tablero en G0 | Cambiar de pestaña. Las tres curvas arrancan juntas. Pulsar **▶ Play**. | "Aquí hay tres cotizadores viendo los mismos autos." |
 | 12–20 s | Curva *Pérdida media por lote* | La gris (estático) se queda plana; la verde (RSI) baja generación a generación. | "El de reglas fijas sigue equivocándose. El nuestro baja su error con cada póliza." |
 | 20–28 s | Curva *Regret acumulado* (área sombreada) | Señalar el área: la gris crece más rápido que la verde. Métrica *Reducción de regret RSI* sube hasta {{T23_MEJORA_42}}. | "Esta área sombreada es el dinero que cuesta aprender, y con RSI es mucho menor." |
@@ -82,10 +82,10 @@ Ordenados de menor a mayor degradación:
 
    ```bash
    curl -s -X POST http://localhost:8000/expedientes \
-     -F docs=@data/samples/docs/EXP-001-FAC.png \
-     -F docs=@data/samples/docs/EXP-001-TC.png \
-     -F docs=@data/samples/docs/EXP-001-POL.png \
-     -F fotos=@data/samples/fotos/FOTO-001.png \
+     -F docs=@data/samples/docs/EXP-002-FAC.png \
+     -F docs=@data/samples/docs/EXP-002-TC.png \
+     -F docs=@data/samples/docs/EXP-002-POL.png \
+     -F fotos=@data/samples/fotos/FOTO-002.png \
      -F 'datos={"kilometraje": 45000, "uso": "particular", "zona": "CDMX"}'
    ```
 

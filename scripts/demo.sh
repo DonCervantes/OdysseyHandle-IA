@@ -92,6 +92,7 @@ echo "Python: $PY ($("$PY" --version 2>&1))"
 # ------------------------------------------------------------------ 2. modo mock
 export LLM_PROVIDER=mock
 export AUTOGUARD_RUNS_DIR="$RUNS_DIR"
+export PYTHONIOENCODING=utf-8
 echo "LLM_PROVIDER=mock (sin llamadas al LLM real) · corridas en $RUNS_DIR"
 
 # ------------------------------------------------------------------ 3. corrida seed 42
