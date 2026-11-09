@@ -134,9 +134,13 @@ op_set() { # id expected_status new_status note [notes_text]
 op_release() { has "$1" || return 3; rmtask "$1"; }
 op_mark_done() { put "$1" owner "${2:-humano}"; setst "$1" done manual; }
 
+# ---------- avisos del coordinador (se muestran en list/claim-next/review-next)
+op_broadcast() { put _coord broadcast "$(now) $1"; }
+show_broadcast() { local b; b="$(get _coord broadcast)"; [ -n "$b" ] && printf '\n>>> AVISO DEL COORDINADOR: %s\n\n' "$b" >&2; return 0; }
+
 # ---------- comandos
 cmd_list() {
-  begin; rm -f "$IDX"
+  begin; rm -f "$IDX"; show_broadcast
   printf "%-5s %-7s %-18s %-20s %-20s %-4s %s\n" ID TIPO ESTADO DUEÑO REVISOR DEPS TITULO
   parse | while IFS='|' read -r id tipo deps title asig; do
     local ready="ok"; deps_done "$id" || ready="--"
@@ -155,7 +159,7 @@ cmd_tsv() {
 cmd_claim() { check_agent "$2"; fetch; exists "$1"; txn op_claim "$1" "$2"; echo "CLAIMED $1 -> worktree: $(ensure_worktree "$1")"; }
 cmd_claim_next() {
   check_agent "$1"; PICKED=""
-  txn op_pick "$1"
+  txn op_pick "$1"; begin; rm -f "$IDX"; show_broadcast
   [ -n "$PICKED" ] || { echo "NONE: no hay tareas disponibles ahora (ver 'list')"; return 0; }
   local wt; wt="$(ensure_worktree "$PICKED")"
   echo "CLAIMED $PICKED -> worktree: $wt  (rama task/$PICKED)"
@@ -172,7 +176,7 @@ cmd_submit() {
 }
 cmd_review_next() {
   check_agent "$1"; PICKED=""
-  txn op_review_pick "$1"
+  txn op_review_pick "$1"; begin; rm -f "$IDX"; show_broadcast
   [ -n "$PICKED" ] || { echo "NONE: nada pendiente de revisión"; return 0; }
   local wt; wt="$(ensure_worktree "$PICKED")"
   git -C "$wt" pull -q --ff-only "$REMOTE" "task/$PICKED" 2>/dev/null || true
@@ -214,6 +218,7 @@ cmd_init_state() {
 case "${1:-help}" in
   list) cmd_list ;;
   tsv) cmd_tsv ;;
+  broadcast) txn op_broadcast "${*:2}"; echo "AVISO publicado" ;;
   claim) cmd_claim "${2:?id}" "${3:-}" ;;
   claim-next) cmd_claim_next "${2:-}" ;;
   submit) cmd_submit "${2:?id}" ;;
@@ -229,6 +234,7 @@ case "${1:-help}" in
 uso: scripts/tasks.sh <comando>     (agente = <sesion>:<nombre>; sesiones: $SESSIONS)
   list                        tablero con estado de todas las tareas
   tsv                         lo mismo en TSV (para dashboards)
+  broadcast "mensaje"         publica un aviso que todas las sesiones verán (solo coordinador)
   claim-next <agente>         toma tu tarea devuelta o la primera abierta con deps listas (crea worktree)
   claim <T-XX> <agente>       toma una tarea concreta
   submit <T-XX>               empuja task/T-XX y la pasa a revisión
