@@ -66,6 +66,26 @@ def convergence_polizas(rows, window=CONV_WINDOW, tol=CONV_TOL):
     return int(rows['polizas'].iloc[first])
 
 
+def plateau_polizas(rows, window=CONV_WINDOW, tol=CONV_TOL, min_drop=0.10):
+    """Convergencia a la propia meseta: primer N desde el cual la media móvil queda ≤ (1+tol) × su nivel
+    final (media de las últimas `window` ventanas) en TODAS las ventanas restantes. Solo cuenta si el error
+    BAJÓ: nivel final ≤ (1 − min_drop) × la primera ventana; si no (p.ej. el estático), None."""
+    rows = rows.sort_values('batch')
+    roll = rows['loss'].rolling(window).mean().to_numpy()
+    valid = ~np.isnan(roll)
+    if valid.sum() < window:
+        return None
+    final = float(np.mean(roll[valid][-window:]))
+    first = float(roll[valid][0])
+    if not final <= (1 - min_drop) * first:
+        return None
+    ok = np.where(valid, roll <= (1 + tol) * final, False)
+    if not ok[-1]:
+        return None
+    start = len(ok) - int(np.argmin(ok[::-1])) if not ok.all() else 0
+    return int(rows['polizas'].iloc[start])
+
+
 def acceptance_by_generation(path, variant):
     """Tasa de aceptación por generación de una variante (desde patches.jsonl)."""
     rows = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines() if line.strip()]
@@ -249,6 +269,7 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
     conv_rsi, conv_par = convergence['rsi'], convergence['parametros']
     summary = dict(simulados=True, seed=seed, batches=batches, batch_size=batch_size, k=k,
                    regret=regrets, mejora_rsi=improvement, convergencia_polizas=convergence,
+                   convergencia_meseta_polizas={v: plateau_polizas(frame[frame.variant == v]) for v in variants},
                    gate2=bool(improvement >= .4 and conv_rsi is not None and
                               (conv_par is None or conv_rsi < conv_par)),
                    referencia_oraculo=dict(
@@ -264,7 +285,9 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
                        f'Convergencia: primer N desde el cual la pérdida media móvil ({CONV_WINDOW} lotes) queda, '
                        f'para el resto de la corrida, dentro de {CONV_TOL:.0%} de la del oráculo calibrado '
                        '(costo esperado real × el multiplicador que minimiza la pérdida congelada). Una '
-                       'variante que nunca llega no converge (null).',
+                       'variante que nunca llega no converge (null). `gate2` usa esta definición.',
+                       f'Convergencia a la meseta (secundaria): primer N desde el cual la media móvil queda dentro de '
+                       f'{CONV_TOL:.0%} de su propio nivel final, solo si el error bajó ≥10% (el estático no converge).',
                        'El oráculo es solo referencia del benchmark: conoce el riesgo oculto desde la póliza 1, '
                        'por eso su mejora sobre el estático es la cota superior alcanzable.',
                        'BD opcional guarda parches y versiones; curvas en disco.'])
