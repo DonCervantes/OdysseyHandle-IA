@@ -1,0 +1,74 @@
+{
+  "nota": "SIMULADO: ejemplo de caché para la demo, no son anuncios reales",
+  "marca": "Nissan",
+  "modelo": "Versa",
+  "anio": 2019,
+  "query": "Nissan Versa 2019 precio venta seminuevo México",
+  "guardado": "2026-11-09T00:00:00+00:00",
+  "comparables": [
+    {
+      "titulo": "SIMULADO Nissan Versa 2020",
+      "url": "https://simulado.local/anuncio/f06c19221567ebb6-0",
+      "precio": 201500.0,
+      "anio": 2020,
+      "kilometraje": 77309,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Nissan Versa 2019",
+      "url": "https://simulado.local/anuncio/f06c19221567ebb6-1",
+      "precio": 158800.0,
+      "anio": 2019,
+      "kilometraje": 107417,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Nissan Versa 2018",
+      "url": "https://simulado.local/anuncio/f06c19221567ebb6-2",
+      "precio": 111600.0,
+      "anio": 2018,
+      "kilometraje": 123391,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Nissan Versa 2020",
+      "url": "https://simulado.local/anuncio/f06c19221567ebb6-3",
+      "precio": 168100.0,
+      "anio": 2020,
+      "kilometraje": 92705,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Nissan Versa 2018",
+      "url": "https://simulado.local/anuncio/f06c19221567ebb6-4",
+      "precio": 124600.0,
+      "anio": 2018,
+      "kilometraje": 128386,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Nissan Versa 2019",
+      "url": "https://simulado.local/anuncio/f06c19221567ebb6-5",
+      "precio": 174800.0,
+      "anio": 2019,
+      "kilometraje": 99409,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Nissan Versa 2018",
+      "url": "https://simulado.local/anuncio/f06c19221567ebb6-6",
+      "precio": 109400.0,
+      "anio": 2018,
+      "kilometraje": 120371,
+      "origen": "mock"
+    },
+    {
+      "titulo": "SIMULADO Nissan Versa 2018",
+      "url": "https://simulado.local/anuncio/f06c19221567ebb6-7",
+      "precio": 132100.0,
+      "anio": 2018,
+      "kilometraje": 126417,
+      "origen": "mock"
+    }
+  ]
+}

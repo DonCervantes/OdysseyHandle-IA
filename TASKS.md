@@ -161,6 +161,14 @@ Reglas comunes de aceptación para TODA tarea `claude`:
   < 1 min, y `summary.json` reporta regret RSI vs estático. **Gate 2: RSI ≥40% menos regret que estático y
   converge en menos pólizas que `parametros`.** Si no se logra, documentarlo en el commit con números y
   proponer ajustes (no maquillar el simulador para que el resultado sea trivial).
+- **notas de integración:** copiar en cada Patch `metrics_before["loss"]`, `metrics_after["loss"]` y
+  `metrics_after["ganancia"]` del Verdict antes de `MetaImprover.update` (si no, el bandido nunca premia).
+  Parches con `veredicto="invalido"` (T-08) se registran pero no se evalúan. `vehicle_id` del simulador es
+  `SIM-{seed}-{n}`; helpers `profiles_df`/`input_hash` en `agents/cotizador.py`; `db.repo.predictions_df`/
+  `outcomes_df` ya tienen el formato de `recolector.collect`.
+  El test AST de T-09 solo permite que `autoguard/rsi/` importe `objective.loss`, `split_holdout` y
+  `evaluate` del evaluador: calcula R(N) como `np.cumsum(loss(...))` y NO importes `regret` ni constantes.
+  `evaluate` muta el Patch (veredicto, razon, metrics_before/after) — pásalo tal cual a `MetaImprover.update`.
 
 ### T-14 · API FastAPI
 - **tipo:** claude
