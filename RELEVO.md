@@ -262,6 +262,14 @@ pasa a **claude-elias**.
 - **T-96** Grabar video de respaldo (requiere T-27) y ensayar el pitch 3 veces.
 - **T-97** Cancelar Lovable Pro antes de la renovación.
 
+### 7. T-31 · Migrar el proveedor LLM a OpenAI
+- **estado:** pendiente · solicitado por el usuario a gpt-dylan
+- **rama:** `task/T-31`
+- **rutas:** `autoguard/llm.py`, `scripts/eval_llm.py`, `.env.example`, `pyproject.toml`, tests LLM/settings/evaluación y documentación afectada.
+- **qué:** usar OpenAI en lugar de Anthropic. Conservar `complete_json`, modo mock sin llaves, validación, imágenes/PDF, fallback y caché. Adaptar evaluación real y conteo de tokens, actualizar limpieza de secretos en tests y eliminar requisitos de Anthropic. Elegir y documentar un modelo con las capacidades requeridas al implementar, consultando documentación oficial.
+- **aceptación:** sin llave o provider mock no hay llamadas; cliente falso cubre JSON, imágenes/PDF, errores y reintento; suite completa sin red. No leer ni imprimir llaves. `.env.example` debe pedir solo OPENAI_API_KEY como credencial de proveedor obligatoria.
+- **Contexto para continuar:** `.env` LOCAL ya preparado con OPENAI_API_KEY (vacía si no existía) y LLM_PROVIDER=mock. Se quitaron la llave Anthropic y el modelo Claude del archivo local; nunca se trasladó una llave Anthropic a OpenAI. El código sigue usando Anthropic hasta implementar esta tarea. Preservar cualquier OPENAI_API_KEY que el usuario introduzca. No activar llamadas reales como parte de tests. Fuente: https://developers.openai.com/api/docs/quickstart .
+
 ### Decisión abierta
 El equipo está evaluando **cambiar el plan de trabajo** (posible cambio de foco según el resultado de
 T-23). Si este archivo recibe una sección "Plan nuevo", esa sección manda sobre la cola de arriba.
@@ -297,3 +305,5 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 · gpt-dylan · T-30 y T-20 hechas, capturas y resultados reales publicados; continúa con T-27.
 
 - 2026-11-09 · gpt-dylan · T-30, T-20 y T-27 integradas y verificadas (259 tests generales; dashboard 3). Corrida seed42 regenerada: 28.4%, convergencia estricta null. .env local preparado por solicitud humana sin versionar llaves. Cola automática terminada; turno → claude-dylan para coordinación de pendientes humanos.
+
+- 2026-11-09 · gpt-dylan · Por petición del usuario, proveedor elegido OpenAI; .env local preparado sin exponer valores. T-31 pendiente para siguiente turno; el cliente aún no está migrado. Turno de claude-dylan conservado.
