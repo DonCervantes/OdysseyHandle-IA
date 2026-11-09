@@ -90,8 +90,8 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
     curves = []
     for variant in variants:
         repo = ConfigRepo(root / 'configs' / variant)
-        repo.init(initial)
-        states[variant] = dict(cfg=initial.model_copy(deep=True), repo=repo,
+        sha = repo.init(initial)
+        states[variant] = dict(cfg=initial.model_copy(deep=True), repo=repo, sha=sha,
                                meta=MetaImprover(ARMS, seed), closed=[], regret=0.0, generation=0, tabu={})
 
     def recollect(s):
@@ -150,7 +150,7 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
 
     def lineage(s):
         for patch, cfg in s['accepted']:
-            s['repo'].commit(cfg, json.dumps(patch.model_dump(mode='json'), ensure_ascii=False))
+            s['sha'] = s['repo'].commit(cfg, json.dumps(patch.model_dump(mode='json'), ensure_ascii=False))
         if os.getenv('DATABASE_URL'):
             from autoguard.db.session import session_scope
             from autoguard.db.repo import save_patch, save_agent_version
@@ -182,7 +182,7 @@ def run_experiment(seed=42, batches=60, batch_size=200, k=3, output_dir=None):
             prices = quote_df(batch, s['cfg'])
             outcomes = simulator.resolve(batch, prices)
             predictions = batch.assign(prima=prices, prediction_id=batch['vehicle_id'],
-                                       agent_version=f"cotizador@{s['repo'].current()[1][:7]}")
+                                       agent_version=f"cotizador@{s['sha'][:7]}")  # = repo.current()[1], sin releer Git
             outcomes['prediction_id'] = batch['vehicle_id'].to_numpy()
             if bench[-1][1] is None:  # costo_real no depende de las primas: igual para las 3 variantes
                 bench[-1] = (bench[-1][0], outcomes['costo_real'].to_numpy(dtype=float))

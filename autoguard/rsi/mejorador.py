@@ -44,12 +44,14 @@ import numpy as np
 import pandas as pd
 
 from autoguard import llm
-from autoguard.agents.cotizador import quote_df
+from autoguard.agents.cotizador import _column as _cot_column
+from autoguard.agents.cotizador import _factor_vector as _cot_factor_vector
+from autoguard.agents.cotizador import _has_var as _cot_has_var
 from autoguard.config_schema import CotizadorConfig, apply_patch, dump_config
 from autoguard.contracts import VARIABLES_PERMITIDAS, ConfigChange, Hypothesis, Patch
 from autoguard.rsi.analista import BINS as ANALISTA_BINS
 from autoguard.rsi.analista import best_multiplier, row_loss, total_loss
-from autoguard.segments import ANIO_REFERENCIA, _split, describe, segment_mask
+from autoguard.segments import ANIO_REFERENCIA, _split, describe, segment_mask, segment_variables
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
@@ -254,6 +256,65 @@ def _heuristic(arm: str, cfg: CotizadorConfig, h: Optional[Hypothesis], leccione
 
 
 # ---------------------------------------------------------------- modo con datos (T-23)
+class _TrainCache:
+    """Cachés sobre un `train` FIJO (una llamada a `propose`): vector de cada factor, máscara de cada
+    segmento y categorías observadas. `quote` reproduce `quote_df` operación por operación (mismo orden
+    de productos), así que el resultado es idéntico bit a bit pero no recalcula factores/reglas que no
+    cambian entre candidatos."""
+
+    def __init__(self, train: pd.DataFrame):
+        self.train = train
+        self.n = len(train)
+        self._fv: dict[Any, np.ndarray] = {}
+        self._masks: dict[str, np.ndarray] = {}
+        self._cats: dict[str, list[str]] = {}
+        self._has: dict[str, bool] = {}
+
+    @staticmethod
+    def _factor_key(f) -> Any:
+        return (f.variable, f.default,
+                tuple(f.bins) if f.bins is not None else None,
+                tuple(f.valores) if f.valores is not None else None,
+                tuple(sorted(f.categorias.items())) if f.categorias is not None else None)
+
+    def factor_vec(self, f) -> np.ndarray:
+        key = self._factor_key(f)
+        v = self._fv.get(key)
+        if v is None:
+            v = _cot_factor_vector(f, _cot_column(self.train, f.variable), self.n)
+            self._fv[key] = v
+        return v
+
+    def mask(self, seg: dict[str, Any]) -> np.ndarray:
+        key = repr(sorted(seg.items()))
+        m = self._masks.get(key)
+        if m is None:
+            m = segment_mask(self.train, seg)
+            self._masks[key] = m
+        return m
+
+    def has_var(self, var: str) -> bool:
+        h = self._has.get(var)
+        if h is None:
+            h = self._has[var] = _cot_has_var(self.train, var)
+        return h
+
+    def categories(self, var: str) -> list[str]:
+        c = self._cats.get(var)
+        if c is None:
+            c = self._cats[var] = sorted(self.train[var].dropna().astype(str).unique())
+        return c
+
+    def quote(self, cfg: CotizadorConfig) -> np.ndarray:
+        prima = np.full(self.n, float(cfg.base), dtype=float)
+        for f in cfg.factores.values():
+            prima *= self.factor_vec(f)
+        for r in cfg.reglas:
+            if all(self.has_var(v) for v in segment_variables(r.segmento)):
+                prima *= np.where(self.mask(r.segmento), r.multiplicador, 1.0)
+        return prima
+
+
 def _col(df: pd.DataFrame, var: str) -> Optional[pd.Series]:
     if var == "antiguedad" and "antiguedad" not in df.columns and "anio" in df.columns:
         return ANIO_REFERENCIA - df["anio"]
@@ -303,20 +364,20 @@ def _refit_factor(name: str, f, train: pd.DataFrame, prima: np.ndarray, costo: n
     return cambios, diffs
 
 
-def _train_loss(cfg: CotizadorConfig, cambios: list[ConfigChange], train: pd.DataFrame,
+def _train_loss(cfg: CotizadorConfig, cambios: list[ConfigChange], tc: _TrainCache,
                 costo: np.ndarray) -> Optional[float]:
     try:
         new_cfg = apply_patch(cfg, Patch(patch_id="probe", generation=0, tipo="ajuste_factor",
                                          hipotesis="", cambios=cambios))
     except Exception:  # noqa: BLE001 — no aplica => no es candidato
         return None
-    return total_loss(quote_df(train, new_cfg), costo)
+    return total_loss(tc.quote(new_cfg), costo)
 
 
-def _data_cambio_regla(cfg, h, train, prima, costo, rule_id: str) -> Optional[dict[str, Any]]:
+def _data_cambio_regla(cfg, h, tc: _TrainCache, prima, costo, rule_id: str) -> Optional[dict[str, Any]]:
     if not h.segmento:
         return None
-    m = segment_mask(train, h.segmento)
+    m = tc.mask(h.segmento)
     if m.sum() < MIN_N_GRUPO:
         return None
     mult = best_multiplier(prima[m], costo[m])
@@ -389,7 +450,7 @@ MAX_AMORTIGUAR = 2  # cada amortiguamiento toma la raíz cuadrada del multiplica
 _NUMERICAS = ("antiguedad", "anio", "kilometraje", "siniestros_previos")
 
 
-def _check_segments(cfgs: list[CotizadorConfig], train: pd.DataFrame, segmento: dict[str, Any]) -> list[dict]:
+def _check_segments(cfgs: list[CotizadorConfig], tc: _TrainCache, segmento: dict[str, Any]) -> list[dict]:
     segs: list[dict[str, Any]] = []
     for c in cfgs:
         for f in c.factores.values():
@@ -400,8 +461,8 @@ def _check_segments(cfgs: list[CotizadorConfig], train: pd.DataFrame, segmento: 
                         seg[f"{f.variable}_max"] = f.bins[i + 1] - 1
                     segs.append(seg)
     for var in ("uso", "zona", "marca"):
-        if var in train.columns:
-            segs.extend({var: v} for v in sorted(train[var].dropna().astype(str).unique()))
+        if var in tc.train.columns:
+            segs.extend({var: v} for v in tc.categories(var))
     if segmento:
         segs.append(dict(segmento))
     for c in cfgs:
@@ -415,10 +476,10 @@ def _check_segments(cfgs: list[CotizadorConfig], train: pd.DataFrame, segmento: 
     return out
 
 
-def _worst_segment(cfg, new_cfg, train, l_before: np.ndarray, l_after: np.ndarray, segmento) -> float:
+def _worst_segment(cfg, new_cfg, tc: _TrainCache, l_before: np.ndarray, l_after: np.ndarray, segmento) -> float:
     worst = 0.0
-    for seg in _check_segments([cfg, new_cfg], train, segmento):
-        m = segment_mask(train, seg)
+    for seg in _check_segments([cfg, new_cfg], tc, segmento):
+        m = tc.mask(seg)
         if m.sum() < ROBUST_MIN_N:
             continue
         sb = float(l_before[m].sum())
@@ -482,7 +543,7 @@ def _diff_from(cfg: CotizadorConfig, cambios: list[ConfigChange]) -> str:
     return "; ".join(parts)
 
 
-def _robustify(cfg, prop, train, costo, l_before: np.ndarray, segmento) -> Optional[dict[str, Any]]:
+def _robustify(cfg, prop, tc: _TrainCache, costo, l_before: np.ndarray, segmento) -> Optional[dict[str, Any]]:
     """Exige que el parche baje la pérdida en train y que ningún segmento de train empeore > ROBUST_EPS;
     si algún segmento empeora, amortigua el paso hasta MAX_AMORTIGUAR veces. None si no lo logra."""
     base = float(l_before.sum())
@@ -493,11 +554,11 @@ def _robustify(cfg, prop, train, costo, l_before: np.ndarray, segmento) -> Optio
                                              hipotesis="", cambios=cambios))
         except Exception:  # noqa: BLE001
             return None
-        l_after = row_loss(quote_df(train, new_cfg), costo)
+        l_after = row_loss(tc.quote(new_cfg), costo)
         after = float(l_after.sum())
         if not after < base:
             return None
-        worst = _worst_segment(cfg, new_cfg, train, l_before, l_after, segmento)
+        worst = _worst_segment(cfg, new_cfg, tc, l_before, l_after, segmento)
         if worst <= ROBUST_EPS:
             nota = f"train: pérdida {after / base - 1:+.2%}, peor segmento {worst:+.1%}"
             if k:
@@ -516,7 +577,7 @@ def _hyp_for_var(hyps: list[Hypothesis], var: str) -> Optional[tuple[int, Hypoth
     return match[0] if match else None
 
 
-def _candidates(arm, cfg, hyps, used_hyps, used_targets, train, prima, costo, base, generation, j, existing_ids):
+def _candidates(arm, cfg, hyps, used_hyps, used_targets, tc, prima, costo, base, generation, j, existing_ids):
     """Candidatos de un brazo como (target, índice_hipótesis, hipótesis, propuesta, texto, segmento),
     los que más bajan la pérdida en train primero."""
     out = []
@@ -525,8 +586,8 @@ def _candidates(arm, cfg, hyps, used_hyps, used_targets, train, prima, costo, ba
             target = f"factor:{name}"
             if target in used_targets:
                 continue
-            cambios, diffs = _refit_factor(name, f, train, prima, costo)
-            after = _train_loss(cfg, cambios, train, costo) if cambios else None
+            cambios, diffs = _refit_factor(name, f, tc.train, prima, costo)
+            after = _train_loss(cfg, cambios, tc, costo) if cambios else None
             if after is None or not after < base:
                 continue
             hit = _hyp_for_var(hyps, f.variable)
@@ -540,11 +601,11 @@ def _candidates(arm, cfg, hyps, used_hyps, used_targets, train, prima, costo, ba
             target = f"nueva:{var}"
             if target in used_targets or _GRUPOS.get(var, var) in used or var in cfg.factores:
                 continue
-            factor = _new_factor(var, train, prima, costo)
+            factor = _new_factor(var, tc.train, prima, costo)
             if factor is None:
                 continue
             cambios = [ConfigChange(op="add_factor", path=var, value=factor)]
-            after = _train_loss(cfg, cambios, train, costo)
+            after = _train_loss(cfg, cambios, tc, costo)
             if after is None or not after < base:
                 continue
             hit = _hyp_for_var(hyps, var)
@@ -557,10 +618,10 @@ def _candidates(arm, cfg, hyps, used_hyps, used_targets, train, prima, costo, ba
             target = "regla:" + describe(h.segmento)
             if i in used_hyps or target in used_targets:
                 continue
-            prop = _data_cambio_regla(cfg, h, train, prima, costo, _rule_id(generation, j, h, existing_ids))
+            prop = _data_cambio_regla(cfg, h, tc, prima, costo, _rule_id(generation, j, h, existing_ids))
             if prop is None:
                 continue
-            after = _train_loss(cfg, prop["cambios"], train, costo)
+            after = _train_loss(cfg, prop["cambios"], tc, costo)
             if after is None or not after < base:
                 continue
             pref = 0 if len(_vars_of(h)) >= 2 else 1
@@ -572,7 +633,8 @@ def _candidates(arm, cfg, hyps, used_hyps, used_targets, train, prima, costo, ba
 def _propose_data(cfg, hypotheses, arms, generation, lecciones, max_patches, train, evitar) -> list[Patch]:
     train = train.reset_index(drop=True)
     costo = train["costo_real"].to_numpy(dtype=float)
-    prima = quote_df(train, cfg)  # prima del campeón vigente (no la histórica)
+    tc = _TrainCache(train)
+    prima = tc.quote(cfg)  # prima del campeón vigente (no la histórica)
     l_before = row_loss(prima, costo)
     base = float(l_before.sum())
     hyps = sorted(hypotheses, key=lambda h: -h.impacto)
@@ -596,12 +658,12 @@ def _propose_data(cfg, hypotheses, arms, generation, lecciones, max_patches, tra
             patches.append(_make_patch(cfg, patch_id, generation, arm, h, prop or heur))
             continue
         chosen = None
-        for target, i, h, prop, text, seg in _candidates(arm, cfg, hyps, used_hyps, used_targets, train,
+        for target, i, h, prop, text, seg in _candidates(arm, cfg, hyps, used_hyps, used_targets, tc,
                                                          prima, costo, base, generation, j, existing_ids):
             if use_llm:
                 rid = _rule_id(generation, j, h, existing_ids)
                 prop = _llm_proposal(arm, cfg, h, lecciones, rid, prop) or prop
-            robust = _robustify(cfg, prop, train, costo, l_before, seg)
+            robust = _robustify(cfg, prop, tc, costo, l_before, seg)
             if robust is not None:
                 chosen = (target, i, h, robust, text, seg)
                 break

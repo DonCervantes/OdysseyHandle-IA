@@ -112,6 +112,17 @@ def _sign_test_p(costo: np.ndarray, prima: np.ndarray) -> float:
     return float(2 * stats.norm.sf(abs(z)))
 
 
+def _sign_test_p_many(masks: np.ndarray, under: np.ndarray) -> list[float]:
+    """`_sign_test_p` para cada fila de `masks` (bool, segmentos × pólizas); `under` = costo > prima."""
+    n = masks.sum(axis=1).astype(float)
+    k = (masks & under).sum(axis=1).astype(float)
+    q = P_SUBCOTIZA_OPTIMO
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z = (k - n * q) / np.sqrt(n * q * (1 - q))
+    p = 2 * stats.norm.sf(np.abs(z))
+    return [1.0 if ni == 0 else float(pi) for ni, pi in zip(n, p)]
+
+
 def _py(v: Any) -> Any:
     return v.item() if isinstance(v, np.generic) else v
 
@@ -182,13 +193,16 @@ def analyze(errors: pd.DataFrame, top_k: int = 3, min_n: int = 30) -> list[Hypot
         if m.sum() >= min_n:
             candidates.append(({**s1, **s2}, m))
 
+    # Prueba de signo vectorizada sobre todos los candidatos a la vez (misma aritmética que
+    # `_sign_test_p`, elemento a elemento: resultado idéntico, sin una llamada a scipy por segmento).
+    pvals = _sign_test_p_many(np.array([m for _, m in candidates]), costo > prima) if candidates else []
     scored = []
-    for seg, m in candidates:
-        e = err[m]
+    for (seg, m), p in zip(candidates, pvals):
+        if not (p < P_MAX):
+            continue
         n = int(m.sum())
-        sesgo = float(e.mean())
-        p = _sign_test_p(costo[m], prima[m])
-        if not (p < P_MAX) or sesgo == 0:
+        sesgo = float(err[m].mean())
+        if sesgo == 0:
             continue
         mult = best_multiplier(prima[m], costo[m])
         reducible = float(lss[m].sum() - total_loss(mult * prima[m], costo[m]))
