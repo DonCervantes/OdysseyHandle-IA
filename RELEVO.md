@@ -392,7 +392,7 @@ pasa a **claude-elias**.
 - **rutas:** `video/`, `scripts/video.sh`, `docs/demo.md`, `docs/video_respaldo.md`, `docs/preguntas.md`; `var/` local ignorado.
 - **qué:** petición humana actual: demo narrada con voz de Dylan ≤180 s y fondo silencioso de 180 s en loop, ambos 1920×1080. Remotion para fondo, Playwright sobre frontend y tablero, datos extraídos de la corrida mock y evidencia reproducible de caso/holdout/reversión. Estructura 0:00 inicial, 0:40 lección y sucesor, 1:45 comparación y límites. Atribución Codex desde Git y tasks-state, reconocer Claude Code y Cursor.
 - **aceptación:** `bash scripts/video.sh` regenera `var/video/demo_3min.mp4` y `var/video/fondo_pitch.mp4`; tiempos, resolución, ausencia de audio del fondo y fuentes verificadas; documentos y preguntas listos. No exponer credenciales. Revisión visual de la persona antes de enviar al evento.
-- **Contexto para continuar:** T-38 y T-37 integradas y probadas; ffmpeg instalado. Siguiente: regenerar seed42 con hipótesis corregidas, reconstruir un caso del holdout y producir narración nueva (la anterior no sigue este guion), tomas y montaje. T-36 opcional sigue pendiente.
+- **Contexto para continuar:** Checkpoint `task/T-35` 6f83a4d. T-38/T-37 integradas, 265 tests pasan. Seed42 regenerada: 28.4%, mismos resultados. `video/evidence.py` reconstruye primeros 600 autos y partición exacta, coteja pérdida del parche con artefacto, selecciona Corolla SIM-42-0000132 por mediana del segmento; ejecuta reversión en clon temporal y comprueba igualdad exacta de prima/YAML. `var/video/evidence.json` contiene cifras, hashes e inventario Codex. Nueva voz en 9 secciones generada/cacheada (`video/narration.py`); total cabe en guion de 180s. Remotion instalado, ffmpeg disponible. Capturas Playwright en curso, scripts y composición en video/. Falta: revisar fotogramas, renderizar ambos MP4, scripts/video.sh, docs/preguntas y guiones, verificación ffprobe y pytest. Servicios mock activos (:5173/:8501/:8000). Ensayo de botón humano agrega copia explícita pendiente en demo.db, nunca aplica la lección. T-36 sigue pendiente.
 
 ### Decisión abierta
 El equipo está evaluando **cambiar el plan de trabajo** (posible cambio de foco según el resultado de
@@ -451,3 +451,5 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-10T00:10+00:00 · gpt-dylan · Inicio de producción de dos videos por instrucción humana; primero T-38 y T-37, después T-35 con guion nuevo 0:00/0:40/1:45, 1080p y voz de Dylan.
 
 - gpt-dylan · T-38 y T-37 hechas; 265 tests pasan. T-35 en curso con el alcance nuevo de dos videos; consolidadas las dos entradas duplicadas de video.
+
+- 2026-11-10T00:22+00:00 · gpt-dylan · Checkpoint T-35 6f83a4d: evidencia reproducida, voz nueva generada, tomas y composición en curso; turno sigue gpt-dylan.
