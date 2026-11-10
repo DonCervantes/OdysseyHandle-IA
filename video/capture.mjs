@@ -11,6 +11,7 @@ async function shot(name,url,prepare){
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(url,{waitUntil:'domcontentloaded'});await page.waitForTimeout(2500);if(prepare)await prepare(page);
  await page.waitForTimeout(1200);await page.screenshot({path:path.join(out,name+'.png')});
+ if(name==='approval') { const box=await page.locator('table').boundingBox(); await page.screenshot({path:path.join(out,'approval-detail.png'),clip:{x:box.x,y:Math.max(0,box.y-115),width:box.width,height:Math.min(350,810-Math.max(0,box.y-115))}}); }
  const start=Date.now();await page.mouse.move(1380,770);await page.waitForTimeout(7500);
  const vid=page.video();await context.close();await vid.saveAs(path.join(out,name+'.webm'));
  report.push({name,url,errors,hold_seconds:(Date.now()-start)/1000});console.log('Grabada',name);
