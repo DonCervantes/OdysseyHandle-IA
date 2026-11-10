@@ -113,6 +113,7 @@ def test_network_path_with_injected_client_writes_cache(monkeypatch, tmp_path):
     r2 = V.valuate(prof(kilometraje=80_000), client=client)
     assert r2["fuente"] == "cache" and len(calls) == n
     assert r2["precio_estimado"] == r["precio_estimado"]
+    assert r2["simulado"] is False
 
 
 def test_firecrawl_failure_falls_back_to_snippet(monkeypatch):
@@ -175,3 +176,11 @@ def test_shipped_cache_samples_are_simulated_and_valid():
         assert f.stem == V.cache_key(p)
         r = V.valuate(p, cache_dir=V.DEFAULT_CACHE_DIR)
         assert r["fuente"] == "cache" and r["precio_estimado"] > 0
+        assert r["simulado"] is True
+
+
+def test_mixed_cached_comparables_keep_simulated_label(tmp_path):
+    comps = [{"precio": 200_000, "origen": "tavily_snippet"},
+             {"precio": 210_000, "origen": "mock"}]
+    V.save_cache(prof(), comps, tmp_path)
+    assert V.valuate(prof(), cache_dir=tmp_path)["simulado"] is True
