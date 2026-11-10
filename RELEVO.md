@@ -14,9 +14,9 @@ sin otro contexto. Contexto general del proyecto: `KAVAK_AUTOGUARD_AI_Plan_de_tr
 
 | Campo | Valor |
 | --- | --- |
-| **Turno actual** | gpt-dylan (claude-elias pasó el turno: T-33 integrada, armar la demo) |
+| **Turno actual** | claude-dylan (gpt-dylan cerró T-35, T-37 y T-38; videos listos para revisión humana) |
 | **Orden de turnos** | claude-elias → gpt-dylan → claude-dylan → cursor-elias → (repite) |
-| **Última actualización** | 2026-11-09 23:53 UTC · claude-elias (T-33 hecha; turno → gpt-dylan) |
+| **Última actualización** | 2026-11-10 00:40 UTC · gpt-dylan |
 
 ## Reglas del turno
 
@@ -261,7 +261,7 @@ pasa a **claude-elias**.
 - ~~**T-95** Despliegue~~ — **descartada**: sin despliegue. Arranque local: `bash scripts/demo.sh --start`
   (API :8000, tablero :8501), `bash scripts/demo.sh --stop` para apagar. Verificado el 2026-11-09 (health,
   tablero y `POST /expedientes` responden 200).
-- **T-96** Grabar video de respaldo (requiere T-27) y ensayar el pitch 3 veces. **Narración ya generada** (claude-dylan, 2026-11-10) con la voz clonada de Dylan ("Dylan speedhack"; el clon profesional "dylanslat" aún no está entrenado en ElevenLabs): 6 MP3, uno por sección de `docs/video_respaldo.md`, ~2:28 en total, en `var/narracion/` (local, no versionado) y con 2 tomas por sección en el flujo de ElevenLabs. Falta grabar la pantalla y montar. Si cambia la cifra del pitch (T-99), regenerar solo las secciones 3 y 5.
+- **T-96** Video de respaldo producido en T-35 (gpt-dylan): `var/video/demo_3min.mp4`, voz de Dylan, 3:00; fondo sin audio `fondo_pitch.mp4`, 3:00. Pendiente humano: escuchar/revisar ambos antes de enviar y ensayar el pitch 3 veces. La narración antigua en var/narracion/ quedó reemplazada por var/video/audio/.
 - **T-97** Cancelar Lovable Pro **ya** (no se usa).
 - ~~**T-98** Probar el LLM real~~ — **hecha** (claude-dylan, 2026-11-10): `gpt-6.1-sol`, precisión documental 100% (meta ≥90%), recall de daños 100% (meta ≥80%), 24 llamadas, USD 0.066. Muestras SIMULADAS limpias: no extrapolar a documentos reales. Detalle en `docs/eval_llm.md`. El `.env` sigue con `LLM_PROVIDER=mock` (la demo no gasta salvo `--llm-real`).
 - **T-99** Decidir la cifra del RSI para el pitch: 26–29% vs reglas fijas, o "66–74% de la mejora máxima alcanzable" (cota de T-23).
@@ -387,12 +387,15 @@ pasa a **claude-elias**.
 
 ### 15. T-35 · Dos videos del RSI Hackathon
 - **asignada:** gpt-dylan
-- **estado:** en curso · gpt-dylan
+- **estado:** hecha · gpt-dylan · merge `bd10de1`
+- **resumen:** Dos MP4 locales en var/video/: demo_3min.mp4 con voz de Dylan (7.7 MB) y fondo_pitch.mp4 sin audio (5.3 MB), ambos 180.000 s, 1920×1080, H.264/30fps. Pipeline Playwright + ElevenLabs + Remotion, guiones y preguntas completos; 265 tests pasan.
+  Caso reservado reconstruido, YAML/commit y reversión exacta; 28.4% seed42, 25.9–29.2% en cuatro semillas. No se cambian simulador/evaluador ni se oculta Gate 2 fallido.
+  Verificación de streams, hashes, dos segundos finales sin voz y loop (diferencia RGB media 0.115/255). Revisados fotogramas, no sustituye revisión auditiva humana antes del evento.
 - **rama:** `task/T-35`
 - **rutas:** `video/`, `scripts/video.sh`, `docs/demo.md`, `docs/video_respaldo.md`, `docs/preguntas.md`; `var/` local ignorado.
 - **qué:** petición humana actual: demo narrada con voz de Dylan ≤180 s y fondo silencioso de 180 s en loop, ambos 1920×1080. Remotion para fondo, Playwright sobre frontend y tablero, datos extraídos de la corrida mock y evidencia reproducible de caso/holdout/reversión. Estructura 0:00 inicial, 0:40 lección y sucesor, 1:45 comparación y límites. Atribución Codex desde Git y tasks-state, reconocer Claude Code y Cursor.
 - **aceptación:** `bash scripts/video.sh` regenera `var/video/demo_3min.mp4` y `var/video/fondo_pitch.mp4`; tiempos, resolución, ausencia de audio del fondo y fuentes verificadas; documentos y preguntas listos. No exponer credenciales. Revisión visual de la persona antes de enviar al evento.
-- **Contexto para continuar:** Checkpoint `task/T-35` 369b07f. T-38/T-37 integradas, 265 tests pasan. Seed42 regenerada: 28.4%, mismos resultados. `video/evidence.py` reconstruye primeros 600 autos y partición exacta, coteja pérdida del parche con artefacto, selecciona Corolla SIM-42-0000132 por mediana del segmento; ejecuta reversión en clon temporal y comprueba igualdad exacta de prima/YAML. `var/video/evidence.json` contiene cifras, hashes e inventario Codex. Nueva voz en 9 secciones generada/cacheada (`video/narration.py`); total cabe en guion de 180s. Remotion instalado, ffmpeg disponible. Capturas Playwright terminadas y fotogramas de las 9 secciones revisados. Corregidos margen gris del WEBM y zoom del botón Aprobar. scripts/video.sh y docs/demo.md, video_respaldo.md, preguntas.md completos; generados desde evidencia. En ejecución: comando único de regeneración con render de 180 s y suite pytest. Falta: comprobar MP4 con ffprobe, continuidad del loop y cerrar/integrar. Servicios mock activos (:5173/:8501/:8000). Ensayo de botón humano agrega copia explícita pendiente en demo.db, nunca aplica la lección. T-36 sigue pendiente.
+- **Contexto para continuar:** Producción terminada. `bash scripts/video.sh` regenera desde main; instala npm si falta. `.env` solo se lee para ElevenLabs; nada de llaves ni var/ versionado. Reporte `var/video/verification.json`, evidencia `var/video/evidence.json`, tomas/qa en var/video; tabla completa de cifras en docs/video_respaldo.md. Locución cacheada por hash; el comando no repite gasto si no cambia. Se corrigió padding AAC de 53ms recortando solo cola silenciosa: duración exacta 180s. El ensayo de botón Aprobar usa copia pendiente identificada en demo.db, sin aplicar ni cambiar el veredicto original. T-36 opcional no abordada; pendientes previos de backend y ensayo humano permanecen en cola.
 
 ### Decisión abierta
 El equipo está evaluando **cambiar el plan de trabajo** (posible cambio de foco según el resultado de
@@ -455,3 +458,5 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-10T00:22+00:00 · gpt-dylan · Checkpoint T-35 6f83a4d: evidencia reproducida, voz nueva generada, tomas y composición en curso; turno sigue gpt-dylan.
 
 - 2026-11-10T00:32+00:00 · gpt-dylan · Checkpoint T-35 369b07f: guiones, tomas y revisión visual terminados; render y verificación completos en curso.
+
+- 2026-11-10 00:40 UTC · gpt-dylan · Cierre T-35: dos videos 1080p de 180.000 s; demo con voz ElevenLabs, fondo sin audio y loop verificado. T-37/T-38 corregidas antes de grabar; 265 tests. Scripts/documentos integrados en bd10de1. T-36 opcional sigue pendiente. Turno → claude-dylan; falta revisión auditiva y ensayo humanos, no se publicó video externamente.
