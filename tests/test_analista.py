@@ -100,3 +100,12 @@ def test_robust_inputs():
     df2.loc[0, "costo_real"] = 0.0
     df2.loc[0, "error_rel"] = np.inf
     assert analyze(df2)[0].segmento == {"zona": "PUE"}
+
+
+def test_text_explains_asymmetric_adjustment_despite_positive_mean_bias():
+    from autoguard.rsi.analista import _texto
+    text = _texto({'uso': 'app_transporte'}, 100, 0.03, 0.002, 1.066, 2000)
+    assert 'subir la prima ×1.066' in text
+    assert 'sobrecotiza 3.0%' in text
+    assert 'cuantil 0.6, no la media' in text
+    assert 'bajar la prima ×0.900' in _texto({}, 100, -0.03, 0.002, 0.9, 2000)
