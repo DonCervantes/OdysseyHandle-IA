@@ -358,35 +358,6 @@ pasa a **claude-elias**.
   que se registre aparte, sin pisar la razón del evaluador). Hallazgo de T-33 (claude-elias:w6).
 - **Contexto para continuar:** —
 
-### 11. T-35 · La bitácora de parches mezcla todas las corridas
-- **estado:** pendiente
-- **rutas:** `video/` (nuevo: grabación y montaje), `scripts/video.sh` (nuevo), `docs/demo.md`,
-  `docs/video_respaldo.md`, `var/` (local, no versionado)
-- **listo para usar:** narración por sección en `var/narracion/01_problema.mp3 … 06_garantias.mp3` (voz de Dylan,
-  ~2:28 total; 2 tomas por sección en el flujo de ElevenLabs). `.env` tiene `ELEVENLABS_API_KEY` (validada: 200),
-  `ELEVENLABS_VOICE_ID=p5iXpAa2IUO1zWeY1wNg`, `ELEVENLABS_MODEL_ID=eleven_v4`, y el LLM real activo
-  (`LLM_PROVIDER=auto`, `LLM_CACHE=1`). Arranque: `bash scripts/demo.sh --start` (mock, reproducible).
-- **qué (todo automatizado, sin grabación manual):**
-  1. **Grabación con Playwright** (`video/grabar.ts` o `.py`, `recordVideo`, 1280×720): levanta la demo con
-     `scripts/demo.sh --start`, y recorre las tomas de `docs/video_respaldo.md` / `docs/demo.md` en el tablero
-     (:8501) y, cuando T-33 esté en main, en el frontend (:5173): cargar EXP-002 + FOTO-002, ver alertas/daños/prima,
-     pasar al tablero, reproducir la corrida demo-seed42, abrir un parche aceptado, abrir «Versiones y garantías» y
-     revertir (sobre una COPIA de la corrida para no alterar la original). Una toma por sección → `var/video/tomas/`.
-     Mientras T-33 no esté, grabar las tomas de expediente con Swagger (`/docs`) como plan B y regrabarlas después.
-  2. **Montaje con Remotion** (`video/` proyecto Remotion; o ffmpeg si Remotion no se puede usar): una composición
-     de 3:00 que alinea cada toma con su MP3 de narración en los tiempos 0:00/0:25/0:55/1:35/2:05/2:35, títulos
-     sobrios con las cifras leídas de `var/runs/demo-seed42/summary.json` (nunca escritas a mano), etiqueta
-     permanente "Datos simulados" y 2–3 s finales sin voz. Mismo estilo visual que el tablero (T-30). Render a
-     `var/video/autoguard_respaldo.mp4`.
-  3. `scripts/video.sh` = un comando que hace 1 + 2. Instalar lo que falte (`brew install ffmpeg`,
-     `npx playwright install chromium`, dependencias de Remotion en `video/`).
-  4. Ensayo cronometrado del guion de 40 s de `docs/demo.md` con nota de qué falló.
-  Si cambia la cifra del pitch (T-99), regenerar SOLO las narraciones 3 y 5 con la misma voz/modelo y re-renderizar.
-  Licencia de Remotion: gratis para personas y equipos pequeños; confirmarlo en remotion.dev. Nunca imprimir ni
-  versionar llaves; nada de `var/` ni `.env` en git.
-- **aceptación:** `bash scripts/video.sh` deja `var/video/autoguard_respaldo.mp4` (~3:00, 1280×720 o 1920×1080) con
-  narración sincronizada y tomas reales de la app; la persona lo revisa antes de darlo por bueno.
-- **Contexto para continuar:** —
 
 ### 12. T-36 · `save_document` pisa documentos entre vehículos con el mismo nombre de archivo
 - **estado:** pendiente
@@ -397,7 +368,8 @@ pasa a **claude-elias**.
 - **Contexto para continuar:** —
 
 ### 13. T-37 · `valuacion.simulado` es `false` cuando la fuente es `cache` con comparables simulados
-- **estado:** en curso · gpt-dylan
+- **estado:** hecha · gpt-dylan
+- **resumen:** La valuación mantiene simulado=true con caché sintética o mixta; caché web real permanece false. Pruebas de ambas procedencias; suite completa 265 tests en verde.
 - **rutas:** `autoguard/agents/valuacion.py`, `tests/test_valuacion.py`
 - **qué:** `simulado = fuente == "mock"` (`valuacion.py:250`), pero la caché trae comparables SIMULADOS; marcar
   `simulado` según el origen real de los comparables. Hallazgo de T-33 (r2).
@@ -412,25 +384,15 @@ pasa a **claude-elias**.
   la prima ×1.066 aunque el sesgo medio sea +3%"). Hallazgo de T-33 (QA).
 - **Contexto para continuar:** —
 
-### 11. T-35 · Armar la demo y el video de respaldo (en paralelo a T-33)
-- **asignada:** gpt-dylan (autorizada por la persona en paralelo al turno de claude-elias; NO tocar `frontend/`)
-- **estado:** pendiente
+
+### 15. T-35 · Dos videos del RSI Hackathon
+- **asignada:** gpt-dylan
+- **estado:** en curso · gpt-dylan
 - **rama:** `task/T-35`
-- **rutas:** `docs/demo.md`, `docs/video_respaldo.md`, `scripts/video.sh` (nuevo), `var/` (local, no versionado)
-- **listo para usar:** narración por sección en `var/narracion/01_problema.mp3 … 06_garantias.mp3` (voz de Dylan,
-  ~2:28 total; 2 tomas por sección en el flujo de ElevenLabs). `.env` tiene `ELEVENLABS_API_KEY` (validada: 200),
-  `ELEVENLABS_VOICE_ID=p5iXpAa2IUO1zWeY1wNg`, `ELEVENLABS_MODEL_ID=eleven_v4`, y el LLM real activo
-  (`LLM_PROVIDER=auto`, `LLM_CACHE=1`). Arranque: `bash scripts/demo.sh --start` (mock) o `--start --llm-real`.
-- **qué:** (1) `brew install ffmpeg` si falta; `scripts/video.sh` que una la narración en una pista con los
-  silencios de `docs/video_respaldo.md` (tiempos 0:00/0:25/0:55/1:35/2:05/2:35) y, si existen grabaciones de
-  pantalla en `var/video/tomas/`, las monte con la pista en `var/video/autoguard_respaldo.mp4`; (2) lista exacta
-  de tomas a grabar con su duración; (3) ensayo cronometrado del guion de 40 s de `docs/demo.md` con el tablero
-  y Swagger (plan B) y nota de qué falló; (4) cuando T-33 esté en main, grabar/actualizar las tomas del frontend
-  en `http://localhost:5173`. Si cambia la cifra del pitch (T-99), regenerar SOLO las secciones 3 y 5 con la
-  misma voz y modelo. Nunca imprimir ni versionar llaves.
-- **aceptación:** `bash scripts/video.sh` produce la pista de narración (y el MP4 si hay tomas); ensayo
-  documentado; nada de `var/` ni `.env` en git.
-- **Contexto para continuar:** —
+- **rutas:** `video/`, `scripts/video.sh`, `docs/demo.md`, `docs/video_respaldo.md`, `docs/preguntas.md`; `var/` local ignorado.
+- **qué:** petición humana actual: demo narrada con voz de Dylan ≤180 s y fondo silencioso de 180 s en loop, ambos 1920×1080. Remotion para fondo, Playwright sobre frontend y tablero, datos extraídos de la corrida mock y evidencia reproducible de caso/holdout/reversión. Estructura 0:00 inicial, 0:40 lección y sucesor, 1:45 comparación y límites. Atribución Codex desde Git y tasks-state, reconocer Claude Code y Cursor.
+- **aceptación:** `bash scripts/video.sh` regenera `var/video/demo_3min.mp4` y `var/video/fondo_pitch.mp4`; tiempos, resolución, ausencia de audio del fondo y fuentes verificadas; documentos y preguntas listos. No exponer credenciales. Revisión visual de la persona antes de enviar al evento.
+- **Contexto para continuar:** T-38 y T-37 integradas y probadas; ffmpeg instalado. Siguiente: regenerar seed42 con hipótesis corregidas, reconstruir un caso del holdout y producir narración nueva (la anterior no sigue este guion), tomas y montaje. T-36 opcional sigue pendiente.
 
 ### Decisión abierta
 El equipo está evaluando **cambiar el plan de trabajo** (posible cambio de foco según el resultado de
@@ -487,3 +449,5 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-10 01:20 UTC · claude-dylan · T-35 ampliada: grabación automatizada con Playwright y montaje con Remotion (o ffmpeg); no hace falta grabar pantalla a mano.
 
 - 2026-11-10T00:10+00:00 · gpt-dylan · Inicio de producción de dos videos por instrucción humana; primero T-38 y T-37, después T-35 con guion nuevo 0:00/0:40/1:45, 1080p y voz de Dylan.
+
+- gpt-dylan · T-38 y T-37 hechas; 265 tests pasan. T-35 en curso con el alcance nuevo de dos videos; consolidadas las dos entradas duplicadas de video.
