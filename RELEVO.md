@@ -388,6 +388,26 @@ pasa a **claude-elias**.
   la prima ×1.066 aunque el sesgo medio sea +3%"). Hallazgo de T-33 (QA).
 - **Contexto para continuar:** —
 
+### 11. T-35 · Armar la demo y el video de respaldo (en paralelo a T-33)
+- **asignada:** gpt-dylan (autorizada por la persona en paralelo al turno de claude-elias; NO tocar `frontend/`)
+- **estado:** pendiente
+- **rama:** `task/T-35`
+- **rutas:** `docs/demo.md`, `docs/video_respaldo.md`, `scripts/video.sh` (nuevo), `var/` (local, no versionado)
+- **listo para usar:** narración por sección en `var/narracion/01_problema.mp3 … 06_garantias.mp3` (voz de Dylan,
+  ~2:28 total; 2 tomas por sección en el flujo de ElevenLabs). `.env` tiene `ELEVENLABS_API_KEY` (validada: 200),
+  `ELEVENLABS_VOICE_ID=p5iXpAa2IUO1zWeY1wNg`, `ELEVENLABS_MODEL_ID=eleven_v4`, y el LLM real activo
+  (`LLM_PROVIDER=auto`, `LLM_CACHE=1`). Arranque: `bash scripts/demo.sh --start` (mock) o `--start --llm-real`.
+- **qué:** (1) `brew install ffmpeg` si falta; `scripts/video.sh` que una la narración en una pista con los
+  silencios de `docs/video_respaldo.md` (tiempos 0:00/0:25/0:55/1:35/2:05/2:35) y, si existen grabaciones de
+  pantalla en `var/video/tomas/`, las monte con la pista en `var/video/autoguard_respaldo.mp4`; (2) lista exacta
+  de tomas a grabar con su duración; (3) ensayo cronometrado del guion de 40 s de `docs/demo.md` con el tablero
+  y Swagger (plan B) y nota de qué falló; (4) cuando T-33 esté en main, grabar/actualizar las tomas del frontend
+  en `http://localhost:5173`. Si cambia la cifra del pitch (T-99), regenerar SOLO las secciones 3 y 5 con la
+  misma voz y modelo. Nunca imprimir ni versionar llaves.
+- **aceptación:** `bash scripts/video.sh` produce la pista de narración (y el MP4 si hay tomas); ensayo
+  documentado; nada de `var/` ni `.env` en git.
+- **Contexto para continuar:** —
+
 ### Decisión abierta
 El equipo está evaluando **cambiar el plan de trabajo** (posible cambio de foco según el resultado de
 T-23). Si este archivo recibe una sección "Plan nuevo", esa sección manda sobre la cola de arriba.
@@ -439,3 +459,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 23:55 UTC · claude-elias · T-33: todas las pantallas implementadas y probadas contra la API (`task/T-33` 4c54833); en revisión independiente y QA. Agregadas T-34 y T-35 (hallazgos de backend).
 - 2026-11-09 23:53 UTC · claude-elias · T-33 hecha (merge `a57104a`): frontend completo en `frontend/`, revisado y probado de punta a punta. Agregadas T-36, T-37 y T-38 (hallazgos de backend). **@gpt-dylan: el frontend ya está integrado en main; te toca armar la demo** (instrucciones en T-33 y `frontend/README.md`). Turno → gpt-dylan.
 - 2026-11-10 01:00 UTC · claude-dylan · `.env` local (esta Mac, compartido con gpt-dylan) ahora tiene `ELEVENLABS_VOICE_ID=p5iXpAa2IUO1zWeY1wNg` (voz de Dylan), `ELEVENLABS_MODEL_ID=eleven_v4` y `ELEVENLABS_API_KEY` vacía: la persona debe pegar la llave. No lo usa el código de autoguard; es solo para la narración. Narración ya generada en `var/narracion/`.
+- 2026-11-10 01:10 UTC · claude-dylan · Llave de ElevenLabs validada (200, voz "Dylan speedhack"). Agregada T-35 (armar demo y video) asignada a gpt-dylan en paralelo, sin tocar `frontend/`. ffmpeg no está instalado.
