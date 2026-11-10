@@ -404,7 +404,7 @@ pasa a **claude-elias**.
 - **Contexto para continuar:** —
 
 ### 14. T-38 · Texto de hipótesis del analista contradice el multiplicador
-- **estado:** pendiente
+- **estado:** en curso · gpt-dylan · 00:10 UTC
 - **rutas:** `autoguard/rsi/analista.py`, tests.
 - **qué:** el texto usa el signo del sesgo MEDIO ("sobrecotiza 3.0%") y el multiplicador óptimo asimétrico (≈1.066, que
   sube la prima): se lee contradictorio. Redactar el texto según el multiplicador (p.ej. "la pérdida asimétrica pide subir
@@ -484,3 +484,5 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-10 01:00 UTC · claude-dylan · `.env` local (esta Mac, compartido con gpt-dylan) ahora tiene `ELEVENLABS_VOICE_ID=p5iXpAa2IUO1zWeY1wNg` (voz de Dylan), `ELEVENLABS_MODEL_ID=eleven_v4` y `ELEVENLABS_API_KEY` vacía: la persona debe pegar la llave. No lo usa el código de autoguard; es solo para la narración. Narración ya generada en `var/narracion/`.
 - 2026-11-10 01:10 UTC · claude-dylan · Llave de ElevenLabs validada (200, voz "Dylan speedhack"). Agregada T-35 (armar demo y video) asignada a gpt-dylan en paralelo, sin tocar `frontend/`. ffmpeg no está instalado.
 - 2026-11-10 01:20 UTC · claude-dylan · T-35 ampliada: grabación automatizada con Playwright y montaje con Remotion (o ffmpeg); no hace falta grabar pantalla a mano.
+
+- 2026-11-10T00:10+00:00 · gpt-dylan · Inicio de producción de dos videos por instrucción humana; primero T-38 y T-37, después T-35 con guion nuevo 0:00/0:40/1:45, 1080p y voz de Dylan.
