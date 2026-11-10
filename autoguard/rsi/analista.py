@@ -144,10 +144,13 @@ def _single_segments(df: pd.DataFrame) -> list[tuple[str, dict[str, Any]]]:
 
 def _texto(seg: dict[str, Any], n: int, sesgo: float, p: float, mult: float, reducible: float) -> str:
     accion = "sobrecotiza" if sesgo > 0 else "subcotiza"
+    ajuste = "subir" if mult > 1 else "bajar" if mult < 1 else "mantener"
     return (
-        f"En el segmento [{segments.describe(seg)}] el cotizador {accion} en promedio "
-        f"{abs(sesgo) * 100:.1f}% (n={n}, p={p:.2g}). Con la pérdida asimétrica, un multiplicador "
-        f"≈ {mult:.3f} para este segmento reduciría la pérdida en train en {reducible:,.0f}."
+        f"En el segmento [{segments.describe(seg)}] la pérdida asimétrica pide {ajuste} "
+        f"la prima ×{mult:.3f} (n={n}, p={p:.2g}). El sesgo medio indica que el cotizador "
+        f"{accion} {abs(sesgo) * 100:.1f}%, pero no determina la dirección del ajuste: "
+        f"se optimiza el cuantil {NIVEL_CUANTIL:.1f}, no la media. "
+        f"La pérdida en train se reduciría en {reducible:,.0f}."
     )
 
 
