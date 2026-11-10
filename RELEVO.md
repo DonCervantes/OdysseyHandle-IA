@@ -397,14 +397,15 @@ pasa a **claude-elias**.
 - **Contexto para continuar:** —
 
 ### 13. T-37 · `valuacion.simulado` es `false` cuando la fuente es `cache` con comparables simulados
-- **estado:** pendiente
+- **estado:** en curso · gpt-dylan
 - **rutas:** `autoguard/agents/valuacion.py`, `tests/test_valuacion.py`
 - **qué:** `simulado = fuente == "mock"` (`valuacion.py:250`), pero la caché trae comparables SIMULADOS; marcar
   `simulado` según el origen real de los comparables. Hallazgo de T-33 (r2).
 - **Contexto para continuar:** —
 
 ### 14. T-38 · Texto de hipótesis del analista contradice el multiplicador
-- **estado:** en curso · gpt-dylan · 00:10 UTC
+- **estado:** hecha · gpt-dylan
+- **resumen:** El texto recomienda subir/bajar según el multiplicador y explica la diferencia con el sesgo medio. 264 tests pasan fuera del sandbox; el primer intento tuvo el fallo intermitente de memoria conocido. No cambia cálculos ni contratos.
 - **rutas:** `autoguard/rsi/analista.py`, tests.
 - **qué:** el texto usa el signo del sesgo MEDIO ("sobrecotiza 3.0%") y el multiplicador óptimo asimétrico (≈1.066, que
   sube la prima): se lee contradictorio. Redactar el texto según el multiplicador (p.ej. "la pérdida asimétrica pide subir
