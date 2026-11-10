@@ -28,7 +28,7 @@ for segment in n:
 
 def frame(t):
     return np.frombuffer(subprocess.check_output(['ffmpeg','-v','error','-ss',str(t),'-i',str(OUT/'fondo_pitch.mp4'),'-frames:v','1','-vf','scale=480:270','-pix_fmt','rgb24','-f','rawvideo','-']),dtype=np.uint8).astype(float)
-a,b=frame(0),frame(179.9667)
+a,b=frame(0),frame(179.95)
 assert a.shape==b.shape and len(a)>0
 seam=float(abs(a-b).mean());report['loop_seam_mean_absolute_rgb_difference']=seam
 assert seam<2,'Loop seam is visible: first/last frames differ'

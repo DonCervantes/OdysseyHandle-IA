@@ -1,11 +1,12 @@
+import {browserPath} from './browser.mjs';
 import {chromium} from 'playwright';
 import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';
 const root=path.dirname(execFileSync('git',['rev-parse','--path-format=absolute','--git-common-dir'],{encoding:'utf8'}).trim());
 const out=path.join(root,'var/video/tomas');fs.mkdirSync(out,{recursive:true});
 const evidence=JSON.parse(fs.readFileSync(path.join(root,'var/video/evidence.json')));
-function chromePath(){if(process.env.CHROME_PATH)return process.env.CHROME_PATH;const base=path.join(os.homedir(),'Library/Caches/ms-playwright');if(fs.existsSync(base)){for(const p of fs.readdirSync(base).filter(p=>p.startsWith('chromium_headless_shell-')).reverse()){const f=path.join(base,p,'chrome-headless-shell-mac-arm64/chrome-headless-shell');if(fs.existsSync(f))return f;}}return undefined;}
-const browser=await chromium.launch({headless:true,executablePath:chromePath()});const report=[];
+
+const browser=await chromium.launch({headless:true,executablePath:browserPath()});const report=[];
 async function shot(name,url,prepare){
  const context=await browser.newContext({viewport:{width:1440,height:810},recordVideo:{dir:out,size:{width:1920,height:1080}},reducedMotion:'reduce'});
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
