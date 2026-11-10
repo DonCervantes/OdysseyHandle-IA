@@ -247,7 +247,13 @@ def estimate(profile: VehicleProfile, comparables: list[dict], fuente: str) -> d
         "precio_mercado": round(med, 2),
         "descuento_danos": round(danos, 2),
         "n_comparables": int(mask.sum()),
-        "simulado": fuente == "mock",
+        # La caché es un medio de almacenamiento, no el origen de los anuncios.
+        # Una mezcla que contiene datos sintéticos también debe etiquetarse.
+        "simulado": fuente == "mock" or any(
+            c.get("origen") == "mock" or c.get("simulado") is True
+            or "SIMULADO" in str(c.get("titulo", "")).upper()
+            for c in comps
+        ),
     }
 
 
