@@ -360,9 +360,32 @@ pasa a **claude-elias**.
 
 ### 11. T-35 · La bitácora de parches mezcla todas las corridas
 - **estado:** pendiente
-- **rutas:** `autoguard/api/main.py` (`GET /patches`), `autoguard/rsi/loop.py` (si hace falta guardar `run_id`), tests.
-- **qué:** con `DATABASE_URL` cada `POST /rsi/run` agrega sus ~188 parches a la BD y `GET /patches` los devuelve todos
-  juntos. Agregar filtro `run_id` (o `corrida=latest`) y exponerlo para el frontend. Hallazgo de T-33.
+- **rutas:** `video/` (nuevo: grabación y montaje), `scripts/video.sh` (nuevo), `docs/demo.md`,
+  `docs/video_respaldo.md`, `var/` (local, no versionado)
+- **listo para usar:** narración por sección en `var/narracion/01_problema.mp3 … 06_garantias.mp3` (voz de Dylan,
+  ~2:28 total; 2 tomas por sección en el flujo de ElevenLabs). `.env` tiene `ELEVENLABS_API_KEY` (validada: 200),
+  `ELEVENLABS_VOICE_ID=p5iXpAa2IUO1zWeY1wNg`, `ELEVENLABS_MODEL_ID=eleven_v4`, y el LLM real activo
+  (`LLM_PROVIDER=auto`, `LLM_CACHE=1`). Arranque: `bash scripts/demo.sh --start` (mock, reproducible).
+- **qué (todo automatizado, sin grabación manual):**
+  1. **Grabación con Playwright** (`video/grabar.ts` o `.py`, `recordVideo`, 1280×720): levanta la demo con
+     `scripts/demo.sh --start`, y recorre las tomas de `docs/video_respaldo.md` / `docs/demo.md` en el tablero
+     (:8501) y, cuando T-33 esté en main, en el frontend (:5173): cargar EXP-002 + FOTO-002, ver alertas/daños/prima,
+     pasar al tablero, reproducir la corrida demo-seed42, abrir un parche aceptado, abrir «Versiones y garantías» y
+     revertir (sobre una COPIA de la corrida para no alterar la original). Una toma por sección → `var/video/tomas/`.
+     Mientras T-33 no esté, grabar las tomas de expediente con Swagger (`/docs`) como plan B y regrabarlas después.
+  2. **Montaje con Remotion** (`video/` proyecto Remotion; o ffmpeg si Remotion no se puede usar): una composición
+     de 3:00 que alinea cada toma con su MP3 de narración en los tiempos 0:00/0:25/0:55/1:35/2:05/2:35, títulos
+     sobrios con las cifras leídas de `var/runs/demo-seed42/summary.json` (nunca escritas a mano), etiqueta
+     permanente "Datos simulados" y 2–3 s finales sin voz. Mismo estilo visual que el tablero (T-30). Render a
+     `var/video/autoguard_respaldo.mp4`.
+  3. `scripts/video.sh` = un comando que hace 1 + 2. Instalar lo que falte (`brew install ffmpeg`,
+     `npx playwright install chromium`, dependencias de Remotion en `video/`).
+  4. Ensayo cronometrado del guion de 40 s de `docs/demo.md` con nota de qué falló.
+  Si cambia la cifra del pitch (T-99), regenerar SOLO las narraciones 3 y 5 con la misma voz/modelo y re-renderizar.
+  Licencia de Remotion: gratis para personas y equipos pequeños; confirmarlo en remotion.dev. Nunca imprimir ni
+  versionar llaves; nada de `var/` ni `.env` en git.
+- **aceptación:** `bash scripts/video.sh` deja `var/video/autoguard_respaldo.mp4` (~3:00, 1280×720 o 1920×1080) con
+  narración sincronizada y tomas reales de la app; la persona lo revisa antes de darlo por bueno.
 - **Contexto para continuar:** —
 
 ### 12. T-36 · `save_document` pisa documentos entre vehículos con el mismo nombre de archivo
@@ -460,3 +483,4 @@ con LLM real · T-29 modo demo del tablero. Suite: 232 tests en verde al pausar.
 - 2026-11-09 23:53 UTC · claude-elias · T-33 hecha (merge `a57104a`): frontend completo en `frontend/`, revisado y probado de punta a punta. Agregadas T-36, T-37 y T-38 (hallazgos de backend). **@gpt-dylan: el frontend ya está integrado en main; te toca armar la demo** (instrucciones en T-33 y `frontend/README.md`). Turno → gpt-dylan.
 - 2026-11-10 01:00 UTC · claude-dylan · `.env` local (esta Mac, compartido con gpt-dylan) ahora tiene `ELEVENLABS_VOICE_ID=p5iXpAa2IUO1zWeY1wNg` (voz de Dylan), `ELEVENLABS_MODEL_ID=eleven_v4` y `ELEVENLABS_API_KEY` vacía: la persona debe pegar la llave. No lo usa el código de autoguard; es solo para la narración. Narración ya generada en `var/narracion/`.
 - 2026-11-10 01:10 UTC · claude-dylan · Llave de ElevenLabs validada (200, voz "Dylan speedhack"). Agregada T-35 (armar demo y video) asignada a gpt-dylan en paralelo, sin tocar `frontend/`. ffmpeg no está instalado.
+- 2026-11-10 01:20 UTC · claude-dylan · T-35 ampliada: grabación automatizada con Playwright y montaje con Remotion (o ffmpeg); no hace falta grabar pantalla a mano.
