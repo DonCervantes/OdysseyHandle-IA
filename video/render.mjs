@@ -24,5 +24,12 @@ for(const id of selected){
  }
  let last=-1;
  await renderMedia({serveUrl,composition,browserExecutable,codec:'h264',outputLocation:path.join(out,id==='Demo'?'demo_3min.mp4':'fondo_pitch.mp4'),pixelFormat:'yuv420p',crf:19,x264Preset:'fast',concurrency:4,audioCodec:'aac',muted:id==='Fondo',onProgress:({progress})=>{const pct=Math.floor(progress*10)*10;if(pct!==last){last=pct;console.log(`${id}: ${pct}%`);}}});
+ // AAC padding can make the container 53 ms longer than the 180 s video.
+ // Keep all 5400 video frames and end the silent audio tail before that boundary.
+ if(id==='Demo') {
+  const dest=path.join(out,'demo_3min.mp4'),temp=path.join(out,'demo_exact.mp4');
+  execFileSync('ffmpeg',['-v','error','-y','-i',dest,'-c:v','copy','-af','atrim=duration=179.9,asetpts=PTS-STARTPTS','-c:a','aac','-b:a','192k','-movflags','+faststart',temp]);
+  fs.renameSync(temp,dest);
+ }
  console.log('Rendered',id);
 }
